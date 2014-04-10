@@ -8,6 +8,7 @@
 #include "debug.h"
 #include <cmath>
 #include "routing.h"
+#include "Eigen/Dense"
 
 extern "C" TNodeStats*     NodeStats; // Defined in STATS.C
 
@@ -109,7 +110,7 @@ bool ICAP::Open(char *inputFile, char *outputFile, char *reportFile, bool loadhp
 }
 
 
-bool ICAP::Start()
+bool ICAP::Start(bool buildConnMatrix)
 {
     bool result = true;
 
@@ -193,6 +194,40 @@ bool ICAP::Start()
             break;
         }
     }
+
+	std::cout << buildConnMatrix << std::endl;
+
+	// Build the connectivity matrix for the gradient method
+	if (buildConnMatrix)
+	{
+		using namespace Eigen;
+
+		int numNodes = Nobjects[NODE];
+		int numLinks = Nobjects[LINK];
+
+		MatrixXf matrixLhs(numLinks + numNodes, numLinks + numNodes);
+		matrixLhs.setZero();
+
+		for (int nl = 0; nl < numLinks; nl++)
+		{
+			// Set A21 sub-matrix (connectivity)
+			matrixLhs(Link[nl].node1 + numLinks, nl) = -1;
+			matrixLhs(Link[nl].node2 + numLinks, nl) = 1; 
+
+			// Set A11 sub-matrix (hf diagonal)
+			matrixLhs(nl, nl) = 1;
+
+			// Set A12 sub-matrix (transpose of A21)
+			matrixLhs(nl, Link[nl].node1 + numLinks) = -1;
+			matrixLhs(nl, Link[nl].node2 + numLinks) = 1; 
+		}
+
+		this->m_matrixLhs = matrixLhs;
+
+		//std::cout.precision(1);
+		//std::cout << matrixLhs.inverse() <<std::endl;
+		//getchar();
+	}
 
     }
     catch(...)

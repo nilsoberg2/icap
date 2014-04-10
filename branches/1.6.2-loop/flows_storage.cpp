@@ -410,7 +410,7 @@ double ICAP::computeTotalVolumeCurve(TTable& curve)
 
     while (curElev <= (maxVal + ICAP_ZERO))
     {
-		printf("%f\n", curElev);
+		//printf("%f\n", curElev);
 	    // Set a very small depth to compute ponded volume.
 	    Node[m_sinkNodeIdx].newDepth = curElev;
 
