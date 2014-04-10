@@ -174,7 +174,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -186,7 +186,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>hpg-debug-dll.lib;JunctionLib.lib;normcrit-debug-dll.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(Configuration);e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)\icap-dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -197,7 +197,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Static|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -209,7 +209,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>hpg-debug-static.lib;JunctionLib.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\Debug Static\;e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\Debug Static\;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)\icap-dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -220,7 +220,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Static NoDebug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -232,7 +232,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>hpg-debug-static.lib;JunctionLib.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(ConfigurationName)\;e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\$(ConfigurationName)\;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)\icap-dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -243,7 +243,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='EXE Debug Static|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -255,7 +255,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>hpg-debug-static.lib;JunctionLib.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\DEBUG STATIC;e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\DEBUG STATIC;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -268,7 +268,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;ICAP_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -280,7 +280,7 @@
     <Link>
       <AdditionalDependencies>hpg-dll.lib;JunctionLib.lib;normcrit-dll.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(Configuration);e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)\icap-dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -293,7 +293,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;ICAP_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -305,7 +305,7 @@
     <Link>
       <AdditionalDependencies>hpg-static.lib;JunctionLib.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(Configuration);e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\$(Configuration);$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)\icap-dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -318,7 +318,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -330,7 +330,7 @@
     <Link>
       <AdditionalDependencies>hpg-static.lib;JunctionLib.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\Release Static;e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\Release Static;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -344,7 +344,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;e:\dev\boost\include\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\noberg\Desktop\hpg\normcrit\trunk;C:\Users\noberg\Desktop\hpg\headers\trunk;C:\Users\noberg\Desktop\hpg\interpolation\trunk;c:\boost-1_52_0;$(SolutionDir)..\icap-swmm-50019;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ICAP_DEBUG;WIN32;NDEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;ICAP_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -356,7 +356,7 @@
     <Link>
       <AdditionalDependencies>hpg-static.lib;JunctionLib.lib;SWMM_LIB.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\Release Static;e:\dev\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>c:\users\noberg\Desktop\icap-deps;C:\Users\noberg\Desktop\hpg\$(PlatformName)\Release Static;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>$(ProjectDir)\icap-dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>

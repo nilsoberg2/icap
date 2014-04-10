@@ -51,6 +51,14 @@ bool ICAP::Close()
     return result;
 }
 
+bool ICAP::StepMatrix(double* elapsedTime)
+{
+    bool result = true;
+
+	//m_matrixLhs.inverse
+
+	return result;
+}
 
 bool ICAP::Step(double* elapsedTime)
 {

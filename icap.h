@@ -13,7 +13,7 @@
 #include "icap_math.h"
 #include "benchmark.h"
 #include "overflow.h"
-
+#include "Eigen/Dense"
 
 
 // Illinois Conveyance Analysis Program
@@ -45,6 +45,7 @@ protected:
     // Keeps track of overflow status for an event.
     ICAPOverflow m_overflow;
 
+	Eigen::MatrixXf m_matrixLhs;
     
     ///////////////////////////////////////////////////////////////////////////
     // FLAGS
@@ -295,10 +296,13 @@ public:
 
     // This performs some initialization (finding of sources, computation of
     // total volume curve, etc.).
-    bool Start();
+    bool Start(bool buildConnMatrix = false);
 
     // This performs the computations for the next timestep.
     bool Step(double* curStep_in);
+
+	// This uses the gradient method for computations for the next time step.
+	bool StepMatrix(double* curStep_in);
 
     // This is the counterpart of Start() and closes up some loose ends.
     bool End();

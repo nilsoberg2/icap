@@ -11,7 +11,7 @@
 
 
 
-bool getCommandLineParams(int argc, char** argv, char* inputFile, char* reportFile, char* outputFile, char* tvcFile, bool& hasTVC, float& resDepth, float& flowFactor, char* usNodeId, float& targetValue);
+bool getCommandLineParams(int argc, char** argv, char* inputFile, char* reportFile, char* outputFile, char* tvcFile, bool& hasTVC, bool& useMatrix, float& resDepth, float& flowFactor, char* usNodeId, float& targetValue);
 bool getConsoleParams(char* inputFile, char* reportFile, char* outputFile);
 
 
@@ -35,7 +35,8 @@ int main(int argc, char** argv)
     float flowFactor = 1.0;
     float targetHead = -1000000;
 	bool hasTVCFile = false;
-    if (! getCommandLineParams(argc, argv, inputFile, reportFile, outputFile, tvcFile, hasTVCFile, resDepth, flowFactor, usNodeId, targetHead))
+	bool useMatrix = false;
+    if (! getCommandLineParams(argc, argv, inputFile, reportFile, outputFile, tvcFile, hasTVCFile, useMatrix, resDepth, flowFactor, usNodeId, targetHead))
     {
         if (! getConsoleParams(inputFile, reportFile, outputFile))
             DEBUG_EXIT;
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
     }
 
 	printf("Starting ICAP...\n");
-    result = icap.Start();
+    result = icap.Start(useMatrix);
     if (! result)
         DEBUG_EXIT;
 
@@ -115,7 +116,23 @@ int main(int argc, char** argv)
             printf("FINAL\t%f\t%f\t%f\t%f\n", flowFactor, dsNodeHead, dsFlow, usNodeHead);
         }
     }
-    else
+    else if (useMatrix)
+	{
+        double curStep = 0.0;
+
+	    printf("Matrix...\n");
+        // Now iterate over each timestep and route the system for that step.
+        bool toContinue = true;
+        int iterCount = 0;
+        do
+        {
+		    printf("Iteration %f of %f...\n", curStep/1000.0, TotalDuration/1000.0);
+            result = icap.StepMatrix(&curStep);
+            if (! result)
+                break;
+        } while (curStep <= TotalDuration && IS_NOT_ZERO(curStep));
+	}
+	else
     {
         double curStep = 0.0;
 
@@ -146,7 +163,7 @@ int main(int argc, char** argv)
 
 
 
-bool getCommandLineParams(int argc, char** argv, char* inputFile, char* reportFile, char* outputFile, char* tvcFile, bool& hasTVC, float& resDepth, float& flowFactor, char* usNodeId, float& targetValue)
+bool getCommandLineParams(int argc, char** argv, char* inputFile, char* reportFile, char* outputFile, char* tvcFile, bool& hasTVC, bool& useMatrix, float& resDepth, float& flowFactor, char* usNodeId, float& targetValue)
 {
     if (argc < 7)
         return false;
@@ -154,6 +171,8 @@ bool getCommandLineParams(int argc, char** argv, char* inputFile, char* reportFi
     bool hasInput = false,
          hasReport = false,
          hasOutput = false;
+
+	useMatrix = false;
 
     for (int i = 1; i < argc; i++)
     {
@@ -201,6 +220,10 @@ bool getCommandLineParams(int argc, char** argv, char* inputFile, char* reportFi
             i++;
             targetValue = atof(argv[i]);
         }
+		else if (! strcmp(argv[i], "-matrix"))
+		{
+			useMatrix = true;
+		}
     }
 
     return (hasInput && hasReport && hasOutput);
