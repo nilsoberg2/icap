@@ -128,6 +128,7 @@ int main(int argc, char** argv)
         {
 		    printf("Iteration %f of %f...\n", curStep/1000.0, TotalDuration/1000.0);
             result = icap.StepMatrix(&curStep);
+			break;
             if (! result)
                 break;
         } while (curStep <= TotalDuration && IS_NOT_ZERO(curStep));

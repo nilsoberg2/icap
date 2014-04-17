@@ -55,7 +55,110 @@ bool ICAP::StepMatrix(double* elapsedTime)
 {
     bool result = true;
 
-	//m_matrixLhs.inverse
+    try
+    {
+
+	m_counter++;
+
+    if (NewRoutingTime > TotalDuration)
+    {
+        *elapsedTime = 0.0;
+        return true;
+    }
+
+    // Lowercase variable names mean specific to the current timestep.
+    
+    double y_r = 0.0; // y_r = depth in reservoir
+	bool toContinue = true;
+
+    double curStep = NewRoutingTime;
+    double currentDate = getDateTime(curStep);
+
+    // Format the time at the current timestep.
+    char datetimeBuf[30];
+    TSDateTimeStr(currentDate, datetimeBuf);
+
+#ifdef ICAP_DEBUGGING
+    dprintf("%s %f ", datetimeBuf, currentDate);
+#endif
+
+
+	/////////////////////////////////////////////////////////////////
+	// SWMM MASS-BALANCE ERROR CALCS
+
+	// Update mass-balance error calculation over 1/2 the step.
+	massbal_updateRoutingTotals(RouteStep / 2.0);
+
+	// Initialize the totals for the current time step.
+    massbal_initTimeStepTotals();
+
+
+	/////////////////////////////////////////////////////////////////
+	// INFLOWS TO THE SYSTEM
+
+	// Determine the inflow to the input nodes.
+    if (!m_rtMode)
+    {
+        initializeFlows(currentDate);
+    }
+
+	propogateFlows();
+
+	for (int i = 0; i < Nobjects[LINK]; i++)
+	{
+		printf("%s\t%f\n", Link[i].ID, Link[i].newFlow);
+	}
+	//TODO: put something in here
+
+
+
+	/////////////////////////////////////////////////////////////////
+	// SWMM MASS-BALANCE ERROR CALCS
+
+	// Update mass-balance error calculation over 1/2 the step.
+	massbal_updateRoutingTotals(RouteStep / 2.0);
+
+
+	/////////////////////////////////////////////////////////////////
+	// STATISTICS AND REPORTING
+
+    // Flooding is defined as the water height (depth + invert) exceeding
+    // the global overflow value.
+    bool hasOverflowed = updateOverflows();
+
+    // Update the statistics for the report file.
+    stats_updateFlowStats(RouteStep, currentDate, 1, TRUE);
+
+    if ( NewRoutingTime >= ReportTime )
+    {
+        output_saveResults(ReportTime);
+        ReportTime = ReportTime + (double)(1000 * ReportStep);
+    }
+    //// Output the results for the current time.  We ignore the reporting time
+    //// field in the SWMM options and just output based on the routing step.
+    //output_saveResults(curStep);
+
+    // Reset the error code so that an ignorable error doesn't stop the
+    // run next time.
+    m_errorCode = 0;
+
+#ifdef ICAP_DEBUGGING
+    // Write the routing results to the output file.
+    //OutputTimeStep(datetimeBuf, m_debugFile);
+#endif
+
+    curStep += RouteStep * 1000.0;
+    NewRoutingTime = curStep;
+
+    *elapsedTime = curStep / MSECperDAY;
+
+    }
+    catch(...)
+    {
+        result = false;
+        ErrorCode = ERR_SYSTEM;
+        WriteErrorMsg("Exception in step");
+    }
 
 	return result;
 }
