@@ -195,7 +195,7 @@ protected:
     void setFlowsFromSource(int node, int link);
     void addExternalInflows(DateTime currentDate);
 
-    // Set inflows for each node for the given date.
+    // Set inflows for each node for the given date.  Returns the total inflow.
     void initializeFlows(double curDate);
 
     // Propogate flows downstream from their input node to the reservoir.
