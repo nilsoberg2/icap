@@ -1,0 +1,181 @@
+[TITLE]
+
+[OPTIONS]
+  FLOW_UNITS              CFS
+  START_DATE              07/23/2010
+  START_TIME              01:00:00
+  END_DATE                07/26/2010
+  END_TIME                01:00:00
+  ROUTING_STEP            300
+  REPORT_START_DATE       07/23/2010
+  REPORT_START_TIME       01:00:00
+  REPORT_STEP             00:05:00
+
+[EXTENDED_OPTIONS]
+  HPG_PATH                "lawrence hpgs"
+  DUMMY                   'lawrence hpgs'
+  PUMPING_RATE            5
+  DAYS_BEFORE_PUMPING     0
+  PUMPING_THRESHOLD       5
+
+[JUNCTIONS]
+;;               Invert     Max.       Init.      Surcharge  Ponded    
+;;Name           Elev.      Depth      Depth      Depth      Area      
+;;-------------- ---------- ---------- ---------- ---------- ----------
+Melvina          398.77     222.81     0          0          0         
+Menard           392.65     226.83     0          0          0         
+Long             386        229.28     0          0          0         
+Laramie          382.59     230.49     0          0          0         
+Kilbourn         371.5      237.98     0          0          0         
+Kildare          367.5      237.98     0          0          0         
+Harding          362.96     239.02     0          0          0         
+Berteau          379.92     219.56     0          0          0         
+Montrose         376.73     224.75     0          0          0         
+Drake            356.94     241.84     0          0          0         
+T36-1            379.82     0          0          0          0         
+T36-2            377.05     0          0          0          0         
+T36-3            374.27     0          0          0          0         
+T35-1            389.33     0          0          0          0         
+T34-1            395.71     0          0          0          0         
+T40-1            366.40     0          0          0          0         
+T40-2            369.85     0          0          0          0         
+T40-3            373.29     0          0          0          0         
+T38-1            359.95     0          0          0          0         
+T39-1            353.58     0          0          0          0         
+T39-2            350.21     0          0          0          0         
+T39-3            346.85     0          0          0          0         
+
+[STORAGE]
+;;               Invert   Max.     Init.    Shape      Shape                      Ponded   Evap.   
+;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.   
+;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- --------
+Outlet           343.48   200      0        TABULAR ASDF 1000     0        0        0        0       
+
+[CONDUITS]
+;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.      
+;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow      
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+6                Long             Laramie          1364.79    0.015      0          0          0          0         
+11               Kilbourn         Kildare          1638.167883 0.015      0          0          0          0         
+18               Berteau          Montrose         1348.044807 0.015      0          0          0          0         
+37               Kildare          Harding          2471.32506 0.015      0          0          0          0         
+36-1             Laramie          T36-1            1104.55    0.015      0          0          0          0         
+36-2             T36-1            T36-2            1104.55    0.015      0          0          0          0         
+36-3             T36-2            T36-3            1104.55    0.015      0          0          0          0         
+36-4             T36-3            Kilbourn         1104.55    0.015      0          0          0          0         
+35-1             Menard           T35-1            1328.22    0.015      0          0          0          0         
+35-2             T35-1            Long             1328.22    0.015      0          0          0          0         
+34-1             Melvina          T34-1            1295.36    0.015      0          0          0          0         
+34-2             T34-1            Menard           1295.36    0.015      0          0          0          0         
+40-1             Montrose         T40-3            664.3182245 0.015      0          0          0          0         
+40-2             T40-3            T40-2            664.3182245 0.015      0          0          0          0         
+40-3             T40-2            T40-1            664.3182245 0.015      0          0          0          0         
+40-4             T40-1            Harding          664.3182245 0.015      0          0          0          0         
+38-1             Harding          T38-1            1338.134   0.015      0          0          0          0         
+38-2             T38-1            Drake            1338.134   0.015      0          0          0          0         
+39-1             Drake            T39-1            1078.320184 0.01       0          0          0          0         
+39-2             T39-1            T39-2            1078.320184 0.01       0          0          0          0         
+39-3             T39-2            T39-3            1078.320184 0.01       0          0          0          0         
+39-4             T39-3            Outlet           1078.320184 0.01       0          0          0          0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ----------
+6                CIRCULAR     13.75            0          0          0          1         
+11               CIRCULAR     13.75            0          0          0          1         
+18               CIRCULAR     13.75            0          0          0          1         
+37               CIRCULAR     19.4167          0          0          0          1         
+36-1             CIRCULAR     13.75            0          0          0          1         
+36-2             CIRCULAR     13.75            0          0          0          1         
+36-3             CIRCULAR     13.75            0          0          0          1         
+36-4             CIRCULAR     13.75            0          0          0          1         
+35-1             CIRCULAR     13.75            0          0          0          1         
+35-2             CIRCULAR     13.75            0          0          0          1         
+34-1             CIRCULAR     13.75            0          0          0          1         
+34-2             CIRCULAR     13.75            0          0          0          1         
+40-1             CIRCULAR     13.75            0          0          0          1         
+40-2             CIRCULAR     13.75            0          0          0          1         
+40-3             CIRCULAR     13.75            0          0          0          1         
+40-4             CIRCULAR     13.75            0          0          0          1         
+38-1             CIRCULAR     19.4167          0          0          0          1         
+38-2             CIRCULAR     19.4167          0          0          0          1         
+39-1             CIRCULAR     19.4167          0          0          0          1         
+39-2             CIRCULAR     19.4167          0          0          0          1         
+39-3             CIRCULAR     19.4167          0          0          0          1         
+39-4             CIRCULAR     19.4167          0          0          0          1         
+
+[INFLOWS]
+;;                                                 Param    Units    Scale    Baseline
+;;Node           Parameter        Time Series      Type     Factor   Factor   Value   
+;;-------------- ---------------- ---------------- -------- -------- -------- --------
+Laramie          FLOW             Laramie          FLOW     1.0      1.0     
+Melvina          FLOW             Melvina          FLOW     1.0      1.0      0       
+Menard           FLOW             Menard           FLOW     1.0      1.0     
+Long             FLOW             Long             FLOW     1.0      1.0     
+Kilbourn         FLOW             Kilbourn         FLOW     1.0      1.0     
+Kildare          FLOW             Kildare          FLOW     1.0      1.0     
+Harding          FLOW             Harding          FLOW     1.0      1.0     
+Berteau          FLOW             Berteau          FLOW     1.0      1       
+Montrose         FLOW             Montrose         FLOW     1.0      1.0     
+Drake            FLOW             Drake            FLOW     1.0      1.0     
+
+[CURVES]
+;;Name           Type       X-Value    Y-Value   
+;;-------------- ---------- ---------- ----------
+ASDF             Storage    0          0   
+ASDF                        10         20
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+;;-------------- ---------- ---------- ----------
+Laramie                     18:01      0         
+Laramie                     18:11      0
+Laramie                     18:12      1
+Laramie                     18:13      2
+Laramie                     18:14      3
+Laramie                     18:15      4
+Laramie                     18:16      5
+Laramie                     18:17      4
+Laramie                     18:18      3
+Laramie                     18:19      2
+Laramie                     18:20      1
+Laramie                     18:21      0
+Laramie                     20:24      0         
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 1133000.000 1931160.000 1160000.000 1931180.000
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+Melvina          1134215.415        1931257.611       
+Menard           1136747.321        1931323.905       
+Long             1139459.409        1931322.205       
+Laramie          1140793.170        1931418.538       
+Kilbourn         1145210.326        1931515.313       
+Kildare          1146847.835        1931561.775       
+Harding          1149173.709        1931631.897       
+Berteau          1149286.748        1927629.633       
+Montrose         1149256.151        1928975.904       
+Drake            1151849.844        1931658.473       
+T36-1            1141833.179        1931407.720       
+T36-2            1142909.175        1931432.743       
+T36-3            1144035.218        1931432.743       
+T35-1            1138229.842        1931332.651       
+T34-1            1135452.271        1931307.627       
+T40-1            1149215.014        1931057.396       
+T40-2            1149240.037        1930356.747       
+T40-3            1149240.037        1929656.098       
+T38-1            1150491.196        1931632.929       
+T39-1            1152893.420        1931733.021       
+T39-2            1153894.347        1931808.091       
+T39-3            1154795.181        1931933.207       
+Outlet           1155771.084        1932008.276       
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+

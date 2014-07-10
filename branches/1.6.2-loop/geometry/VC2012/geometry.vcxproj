@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A5ACA214-6A18-4386-AEA4-2A9130AB06CD}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>swmmio</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\DEV\Boost\boost_1_55_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\DEV\Boost\boost_1_55_0</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\curve.h" />
+    <ClInclude Include="..\curveFactory.h" />
+    <ClInclude Include="..\fileSection.h" />
+    <ClInclude Include="..\geometry.h" />
+    <ClInclude Include="..\inflow.h" />
+    <ClInclude Include="..\junction.h" />
+    <ClInclude Include="..\link.h" />
+    <ClInclude Include="..\node.h" />
+    <ClInclude Include="..\nodeFactory.h" />
+    <ClInclude Include="..\option.h" />
+    <ClInclude Include="..\parse.h" />
+    <ClInclude Include="..\parseable.h" />
+    <ClInclude Include="..\rtInflow.h" />
+    <ClInclude Include="..\storage.h" />
+    <ClInclude Include="..\timeseries.h" />
+    <ClInclude Include="..\timeseriesFactory.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\curve.cpp" />
+    <ClCompile Include="..\fileSection.cpp" />
+    <ClCompile Include="..\geometry.cpp" />
+    <ClCompile Include="..\inflow.cpp" />
+    <ClCompile Include="..\link.cpp" />
+    <ClCompile Include="..\node.cpp" />
+    <ClCompile Include="..\option.cpp" />
+    <ClCompile Include="..\storage.cpp" />
+    <ClCompile Include="..\timeseries.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\model\VC2012\model.vcxproj">
+      <Project>{91158745-111b-4fde-851c-f1b4d5d639af}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\time\VC2012\time.vcxproj">
+      <Project>{857877dd-d42a-4307-94d2-ebdd1e45b305}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\util\VC2012\util.vcxproj">
+      <Project>{b2cd04c4-e86b-498e-9846-7fc10637837c}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
