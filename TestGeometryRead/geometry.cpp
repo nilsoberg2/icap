@@ -1,0 +1,226 @@
+#include "stdafx.h"
+#include "CppUnitTest.h"
+#include <Windows.h>
+#include "../geometry/geometry.h"
+#include "../geometry/storage.h"
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <algorithm>
+#include <iostream>
+
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+using namespace geometry;
+namespace fs = boost::filesystem;
+
+namespace TestGeometryRead
+{		
+	TEST_CLASS(GeometryTest)
+	{
+	public:
+
+        static bool idComp(const std::string& id1, const std::string& id2)
+        {
+            using namespace std;
+            cout << id1 << " " << id2 << endl;
+            return id1 == id2;
+        }
+
+        Geometry* loadGeometry(bool& status)
+        {
+            wchar_t cwd[MAX_PATH];
+            _wgetcwd(cwd, MAX_PATH);
+
+            std::wstring temp(cwd);
+            fs::path filePath(temp.begin(), temp.end());
+            filePath = filePath / ".." / "geometry_test.inp";
+            
+            Geometry* g = new Geometry();
+            status = g->loadFromFile(filePath.string(), geometry::GeometryFileFormat::FileFormatSwmm5);
+            return g;
+        }
+
+		TEST_METHOD(ParseGeometry)
+		{
+            using namespace std;
+            bool status;
+			Geometry* g = loadGeometry(status);
+            Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
+
+            const vector<string>& linkIds = g->getLinkIds();
+            const vector<string>& nodeIds = g->getNodeIds();
+
+            const vector<string>& actualLinkIds = getLinkIds();
+            const vector<string>& actualNodeIds = getNodeIds();
+
+            //std::pair<std::vector<std::string>::iterator, std::vector<std::string>::iterator> endLinkPair = std::make_pair(linkIds.end(), actualLinkIds.end());
+            //std::pair<std::vector<std::string>::iterator, std::vector<std::string>::iterator> endNodePair = std::make_pair(nodeIds.end(), actualNodeIds.end());
+            //Assert::IsTrue(std::equal(linkIds.begin(), linkIds.end(), actualLinkIds.begin(), idComp), L"Link list is not equal");
+            //Assert::IsTrue(std::equal(nodeIds.begin(), nodeIds.end(), actualNodeIds.begin(), idComp), L"Node list is not equal");
+            Assert::IsTrue(vectorEqual<string>(linkIds, actualLinkIds), L"Link list is not equal");
+            Assert::IsTrue(vectorEqual<string>(nodeIds, actualNodeIds), L"Node list is not equal");
+            
+		}
+
+		TEST_METHOD(CurveTest)
+		{
+            using namespace std;
+            bool status;
+			Geometry* g = loadGeometry(status);
+            Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
+
+            Node* node = g->findNode("outlet");
+            StorageUnit* storNode;
+            if ((storNode = dynamic_cast<StorageUnit*>(node)) == NULL)
+            {
+                Assert::Fail(L"Expected StorageUnit; instead got a Node");
+            }
+
+            const Curve* c = storNode->getStorageCurve();
+            
+            Assert::AreEqual(0.0, c->lookup(-1));
+            Assert::AreEqual(0.0, c->lookup(0));
+            Assert::AreEqual(10.0, c->lookup(5));
+            Assert::AreEqual(20.0, c->lookup(10));
+            Assert::AreEqual(20.0, c->lookup(12));
+		}
+
+		TEST_METHOD(OptionsTest)
+		{
+            using namespace std;
+            bool status;
+			Geometry* g = loadGeometry(status);
+            Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
+
+            Assert::IsTrue(g->hasOption("hpg_path"));
+            Assert::AreEqual(g->getOption("hpg_path"), std::string("lawrence hpgs"));
+            
+            Assert::IsTrue(g->hasOption("dummy"));
+            Assert::AreEqual(g->getOption("dummy"), std::string("lawrence hpgs"));
+
+            Assert::IsTrue(g->hasOption("routing_step"));
+            Assert::AreEqual(g->getOption("routing_step"), std::string("300"));
+
+            DateTime dt(2010, 7, 23, 1, 0, 0);
+            Assert::AreEqual(g->getStartDateTime(), dt);
+		}
+
+		TEST_METHOD(TimeseriesTest)
+		{
+            using namespace std;
+            bool status;
+			Geometry* g = loadGeometry(status);
+            Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
+
+            DateTime start = g->getStartDateTime();
+
+            Node* node = g->findNode("laramie");
+            Inflow* inf = node->getInflow();
+
+            Assert::AreNotEqual((int)inf, NULL);
+            
+            Assert::AreEqual(0.0, inf->getInflow(start.addHours(18)));
+            Assert::AreEqual(1.0, inf->getInflow(start.addHours(18).addMinutes(12)));
+            Assert::AreEqual(5.0, inf->getInflow(start.addHours(18).addMinutes(16)));
+            Assert::AreEqual(4.5, inf->getInflow(start.addHours(18).addMinutes(16).addSeconds(30)));
+            Assert::AreEqual(0.0, inf->getInflow(start.addHours(21)));
+		}
+
+        template<class T>
+        bool vectorEqual(const std::vector<T>& v1, const std::vector<T>& v2) const
+        {
+            if (v1.size() != v2.size())
+            {
+                return false;
+            }
+
+            for (int i = 0; i < v1.size(); i++)
+            {
+                if (v1[i] != v2[i])
+                    return false;
+            }
+
+            return true;
+        }
+
+        std::vector<std::string> getLinkIds() const
+        {
+            std::vector<std::string> ids;
+            ids.push_back("6");
+            ids.push_back("11");
+            ids.push_back("18");
+            ids.push_back("37");
+            ids.push_back("36-1");
+            ids.push_back("36-2");
+            ids.push_back("36-3");
+            ids.push_back("36-4");
+            ids.push_back("35-1");
+            ids.push_back("35-2");
+            ids.push_back("34-1");
+            ids.push_back("34-2");
+            ids.push_back("40-1");
+            ids.push_back("40-2");
+            ids.push_back("40-3");
+            ids.push_back("40-4");
+            ids.push_back("38-1");
+            ids.push_back("38-2");
+            ids.push_back("39-1");
+            ids.push_back("39-2");
+            ids.push_back("39-3");
+            ids.push_back("39-4");
+            std::sort(ids.begin(), ids.end());
+            return ids;
+        }
+
+        std::vector<std::string> getNodeIds() const
+        {
+            std::vector<std::string> ids;
+            ids.push_back("outlet");
+            ids.push_back("melvina");
+            ids.push_back("menard");
+            ids.push_back("long");
+            ids.push_back("laramie");
+            ids.push_back("kilbourn");
+            ids.push_back("kildare");
+            ids.push_back("harding");
+            ids.push_back("berteau");
+            ids.push_back("montrose");
+            ids.push_back("drake");
+            ids.push_back("t36-1");
+            ids.push_back("t36-2");
+            ids.push_back("t36-3");
+            ids.push_back("t35-1");
+            ids.push_back("t34-1");
+            ids.push_back("t40-1");
+            ids.push_back("t40-2");
+            ids.push_back("t40-3");
+            ids.push_back("t38-1");
+            ids.push_back("t39-1");
+            ids.push_back("t39-2");
+            ids.push_back("t39-3");
+            std::sort(ids.begin(), ids.end());
+            return ids;
+        }
+
+        std::wstring makeInfo(wchar_t* p1, std::string p2)
+        {
+            std::wstring str = p1;
+            str = str + std::wstring(p2.begin(), p2.end());
+            return str;
+        }
+
+	};
+
+}
+
+namespace Microsoft{
+    namespace VisualStudio {
+        namespace CppUnitTestFramework {
+
+            template<>
+            static std::wstring ToString<DateTime>(const DateTime& dt) {
+                return dt.toUnicodeString();
+            }
+
+        }
+    }
+}
