@@ -304,7 +304,7 @@ void validateGeneralLayout()
     {
         // --- if node is of type Outfall, check that it has only 1
         //     connecting link (which can either be an outflow or inflow link)
-        if ( Node[i].type == OUTFALL )
+        if ( Node[i].type == STORAGE )
         {
             if ( Node[i].degree + (int)Node[i].inflow > 1 )
             {
