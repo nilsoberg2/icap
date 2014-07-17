@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SWMM_LIB", "..\icap-swmm-50019\VC2012\SWMM_LIB.vcxproj", "{51502880-6791-4BC6-BFB3-D34FE5A02F05}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibTester", "..\icap\VC2012\LibTester.vcxproj", "{104373F3-1933-42A8-B6DA-AC8EBA31BCED}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestGeometryRead", "..\TestGeometryRead\TestGeometryRead.vcxproj", "{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geometry", "..\geometry\VC2012\geometry.vcxproj", "{A5ACA214-6A18-4386-AEA4-2A9130AB06CD}"
@@ -15,7 +13,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "model", "..\model\VC2012\mo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "util", "..\util\VC2012\util.vcxproj", "{B2CD04C4-E86B-498E-9846-7FC10637837C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ICAP_DLL", "..\icap\VC2012\ICAP_DLL.vcxproj", "{D3C7909D-97A3-4038-899F-861873532D6A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "icap", "..\icap\VC2012\icap.vcxproj", "{D3C7909D-97A3-4038-899F-861873532D6A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xslib", "..\xslib\VC2012\xslib.vcxproj", "{CDD6B429-C2F6-43D2-B2E1-F6681E965258}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,10 +27,6 @@ Global
 		{51502880-6791-4BC6-BFB3-D34FE5A02F05}.Debug|Win32.Build.0 = Debug|Win32
 		{51502880-6791-4BC6-BFB3-D34FE5A02F05}.Release|Win32.ActiveCfg = Release|Win32
 		{51502880-6791-4BC6-BFB3-D34FE5A02F05}.Release|Win32.Build.0 = Release|Win32
-		{104373F3-1933-42A8-B6DA-AC8EBA31BCED}.Debug|Win32.ActiveCfg = Debug|Win32
-		{104373F3-1933-42A8-B6DA-AC8EBA31BCED}.Debug|Win32.Build.0 = Debug|Win32
-		{104373F3-1933-42A8-B6DA-AC8EBA31BCED}.Release|Win32.ActiveCfg = Release|Win32
-		{104373F3-1933-42A8-B6DA-AC8EBA31BCED}.Release|Win32.Build.0 = Release|Win32
 		{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}.Debug|Win32.ActiveCfg = Debug|Win32
 		{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}.Debug|Win32.Build.0 = Debug|Win32
 		{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}.Release|Win32.ActiveCfg = Release|Win32
@@ -55,6 +51,10 @@ Global
 		{D3C7909D-97A3-4038-899F-861873532D6A}.Debug|Win32.Build.0 = Debug|Win32
 		{D3C7909D-97A3-4038-899F-861873532D6A}.Release|Win32.ActiveCfg = Release|Win32
 		{D3C7909D-97A3-4038-899F-861873532D6A}.Release|Win32.Build.0 = Release|Win32
+		{CDD6B429-C2F6-43D2-B2E1-F6681E965258}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CDD6B429-C2F6-43D2-B2E1-F6681E965258}.Debug|Win32.Build.0 = Debug|Win32
+		{CDD6B429-C2F6-43D2-B2E1-F6681E965258}.Release|Win32.ActiveCfg = Release|Win32
+		{CDD6B429-C2F6-43D2-B2E1-F6681E965258}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,13 +3,15 @@
 
 #include <map>
 
+#include "../geometry/node_list.h"
 
-class ICAPOverflow
+
+class IcapOverflow
 {
 public:
     bool IsInEvent(int nodeIdx);
     void Reset(int nodeIdx);
-    void Init();
+    void Init(std::shared_ptr<geometry::NodeList> nodeList);
 
 protected:
     std::map<int, bool> eventTracker;

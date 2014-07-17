@@ -3,19 +3,20 @@
 
 #include <string>
 #include <vector>
-#include "parseable.h"
+
+#include "../util/parseable.h"
 #include "../api.h"
 
 
 namespace geometry
 {
-    class ICAP_API Curve : public Parseable
+    class Curve : public Parseable
     {
     private:
         std::string name;
         std::string type;
-        std::vector<double> xVals;
-        std::vector<double> yVals;
+        std::vector<var_type> xVals;
+        std::vector<var_type> yVals;
 
         void Init(std::string theName, std::string theType);
 
@@ -24,14 +25,19 @@ namespace geometry
 
     public:
         Curve(std::string name);
-        double lookup(double x) const;
-        void addEntry(double x, double y);
+        
+        var_type lookup(var_type x) const;
+        var_type inverseLookup(var_type y) const;
+
+        void addEntry(var_type x, var_type y);
         const std::string& getName() const;
+        void setName(std::string& theName) { this->name = theName; }
         const std::string& getType() const;
         bool validate();
         bool parseLine(const std::vector<std::string>& parts);
-
-
+        
+        void getFirstPoint(var_type& x, var_type& y);
+        void getLastPoint(var_type& x, var_type& y);
 
         virtual void setErrorMessage(const std::string& msg) { Parseable::setErrorMessage("[" + this->name + "] " + msg); }
         virtual void appendErrorMessage(const std::string& msg) { Parseable::appendErrorMessage("[" + this->name + "] " + msg); }

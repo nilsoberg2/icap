@@ -1,9 +1,9 @@
 
-#include "common.h"
+
 #include "overflow.h"
 
 
-bool ICAPOverflow::IsInEvent(int nodeIdx)
+bool IcapOverflow::IsInEvent(int nodeIdx)
 {
     if (eventTracker[nodeIdx])
         return true;
@@ -15,15 +15,15 @@ bool ICAPOverflow::IsInEvent(int nodeIdx)
 }
 
 
-void ICAPOverflow::Reset(int nodeIdx)
+void IcapOverflow::Reset(int nodeIdx)
 {
     eventTracker[nodeIdx] = false;
 }
 
 
-void ICAPOverflow::Init()
+void IcapOverflow::Init(std::shared_ptr<geometry::NodeList> nodeList)
 {
-    for (int i = 0; i < GNODE_COUNT; i++)
+    for (int i = 0; i < nodeList->count(); i++)
     {
         eventTracker.insert(std::make_pair(i, false));
     }

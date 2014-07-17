@@ -4,14 +4,16 @@
 
 double gravity[2] = {9.81, 32.174};
 
-
-Units::Units(UnitSystem sys)
+namespace units
 {
-    this->system = sys;
-}
+    Units::Units(UnitSystem sys)
+    {
+        this->system = sys;
+    }
 
 
-double Units::g()
-{
-    return gravity[this->system];
+    double Units::g()
+    {
+        return gravity[this->system];
+    }
 }

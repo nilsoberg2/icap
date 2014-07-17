@@ -2,44 +2,37 @@
 #define __ICAP_H____________________________20080424150000__
 
 #include <string>
-#include <normcrit.h>
 
-#include "common.h"
-#include "source_list.h"
-#include "icapnetwork.h"
+#include "../Eigen/Dense"
+#include "../time/datetime.h"
+#include "../util/parseable.h"
+
 #include "hpg.h"
 #include "routing.h"
 #include "debug.h"
-#include "icap_math.h"
 #include "benchmark.h"
 #include "overflow.h"
-#include "Eigen/Dense"
-#include "geomInterface.h"
 #include "model.h"
-#include "timefuncs.h"
+#include "pumping.h"
+#include "logging.h"
+#include "output.h"
+#include "icap_geometry.h"
 
 
 // Illinois Conveyance Analysis Program
-class ICAP
-#ifdef BENCHMARKYES
-    : public BenchmarkVariables
-#endif
+class ICAP : public Parseable
 {
-protected:
+private:
     
     ///////////////////////////////////////////////////////////////////////////
     // OBJECTS
-
-    // Object that manages the list of input sources (e.g. dropshafts).
-    SourceList m_sources;
     
     // Object that manages the list of HPG's.
-    ICAPHPG m_hpgList;
+    IcapHpg m_hpgList;
 
     // Object that manages the network topology.
-    ICAPNetwork m_network;
-    geometry::Geometry* m_geometry;
-    IModel* m_model;
+    std::shared_ptr<IcapGeometry> m_geometry;
+    std::shared_ptr<Model> m_model;
 
     // Parameters for the normal/critical depth solver.
     NormCritParams m_ncParams;
@@ -48,11 +41,17 @@ protected:
     geometry::Curve m_totalVolumeCurve;
 
     // Keeps track of overflow status for an event.
-    ICAPOverflow m_overflow;
+    IcapOverflow m_overflow;
 
 	Eigen::MatrixXf m_matrixLhs;
 
 	Eigen::VectorXf m_matrixRhs;
+
+    Pumping m_pumping;
+
+    Results m_results;
+
+    Report m_report;
     
     ///////////////////////////////////////////////////////////////////////////
     // FLAGS
@@ -66,10 +65,6 @@ protected:
     // Keep track of the number of time steps.
 	int m_counter;
 
-    // This variable indicates if the model was able to find junction
-    // coordinates.  If not, the model assumes 90 deg lateral angle.
-    bool m_hasJunctionCoords;
-
     // Stores the type of regime that the computation is in currently.
     int m_regime;
 
@@ -82,62 +77,58 @@ protected:
     ///////////////////////////////////////////////////////////////////////////
     // NODE/LINK ID'S
 
-    // Index into SWMM's Node[] array for the reservoir.
-    int m_sinkNodeIdx;
-
-    // Index into SWMM's Link[] array for the link just upstream of the reservoir.
-    int m_sinkLinkIdx;
-
-    // Index into SWMM's Curve[] array for pumping timeseries record.
-    int m_pumpTSIdx;
+    // ID of the sink node.
+    id_type m_sinkNodeIdx;
 
 
     ///////////////////////////////////////////////////////////////////////////
     // MASS-BALANCE VARIABLES
 
     // Current ponded volume.
-    double V_Pond;
+    var_type V_Pond;
 
     // Maximum ponded volume.
-    double V_PondMax;
+    var_type V_PondMax;
 
     // Total inflow volume, cumulative.
-    double V_I;
+    var_type V_I;
 
     // Total pumped volume, cumulative.
-    double V_P;
+    var_type V_P;
 
     // Counter for keeping track of overflowed volume, in a strictly
     // mass-balanced system.
-    double V_Ov;
+    var_type V_Ov;
 
     // The maximum volume that the system as a whole can contain.
-    double V_SysMax;
-
-    // Number of seconds since the last inflow to the system occured.
-	double m_secondsSinceLastInflow;
+    var_type V_SysMax;
 
     // Flag to indicate if this is the first iteration of the matrix.
     bool m_isFirstMatrixIteration;
 
 
 
-#if !defined(SWMM_GEOMETRY)
+    ///////////////////////////////////////////////////////////////////////////
+    // TIME METHODS
+
     // Current routing time (milliseconds)
-    double NewRoutingTime;
-    double TotalDuration;
+    double m_newRoutingTime;
+    double m_totalDuration;
 
     // Routing timestep (seconds)
-    double RouteStep;
+    double m_routeStep;
 
     // Current reporting time (milliseconds)
-    double ReportTime;
+    double m_reportTime;
 
     // Reporting timestep (seconds)
-    int ReportStep;
+    int m_reportStep;
 
-    double getDateTime(double elapsedTime);
-#endif
+    int m_stepCount;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // PROPERTIES
+    std::string m_hpgPath;
 
     ///////////////////////////////////////////////////////////////////////////
     // ERROR AND DEBUGGING VARIABLES
@@ -148,39 +139,48 @@ protected:
     // Current error in text.
     std::string m_errorStr;
 
-#ifdef ICAP_DEBUGGING
-    FILE* m_debugFile;
-#endif
+    boost::log::sources::severity_logger<loglevel::SeverityLevel> m_log;
 
-
-protected:
+private:
 
     ///////////////////////////////////////////////////////////////////////////
     // NETWORK FUNCTIONS
 
-    // Loads the input file and opens the SWMM engine.
-    bool loadInputFile(char* inputFile, char* reportFile, char* outputFile);
+    // Loads the input file.
+    bool loadInputFile(const std::string&  inputFile);
 
     // Load all of the HPG's in the HPG list.
-    bool loadHPGs(char* hpgPath);
+    bool loadHpgs(const std::string& hpgPath);
 
-    // Populate the internal network object.
-    bool populateNetwork(char* inputFile);
-
-    // This function is here to make things a little more generic so that it
-    // doesn't necessarily populate the internal network object.
-    bool populateNetwork(char* inputFile, ICAPNetwork& network, int& sinkType, int& sinkNode, int& sinkLink);
-
-    // This pre-populates the internal network object with the node/link
-    // info from SWMM.
-    void populateNetworkFromSWMM(ICAPNetwork& network);
-
-    // These two functions find the downstream-most link and node.
-    int findSinkLink(int sinkNodeType, int& sinkNodeIdx);
-    int findFirstNode(int sinkNodeType);
+    id_type findFirstNode(geometry::NodeType sinkNodeType);
 
     // This validates the network.
-    bool validateNetwork();
+    bool validateGeometry();
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    // REPORTING AND OUTPUT FUNCTIONS
+    
+    // Open the report file.
+    //TODO
+    bool openReport() { return true; }
+
+    //TODO
+    void writeReportMessage(const std::string& message) {}
+
+    // Close the report file.
+    //TODO
+    void closeReport() {}
+
+    void info(const std::string& message) {}
+    
+    // Open the output file.
+    //TODO
+    bool openOutput() { return true; }
+
+    // Close the output file.
+    //TODO
+    void closeOutput() {}
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -192,103 +192,56 @@ protected:
     // Compute the water volume that can be stored ponded in an adverse-slope
     // pipe network.
 	double computePondedPipeStorage();
-	double computePondedPipeStorage(double h); // optional starting elevation
-
-    // Compute the static pumped volume (using the PumpingRate value from the
-    // GUI) or get the pumped volume using the timeseries if it is present.
-    double computePumpedVolume(double flowAtRes, double currentDate);
-
-    // Get the pumping rate from the pumping time series for the given date.
-    double getPumpedRate(double date);
-
-    // Get the pumped volume using the pumping time series for the given date.
-    double getPumpedVolume(double date);
+	double computePondedPipeStorage(var_type h); // optional starting elevation
     
     // Compute a curve of total volume vs. elevation.  This is used for
     // determining the water depth in the pipes for a given storage in the
     // system.
-    double computeTotalVolumeCurve(geometry::Curve& curve);
+    var_type computeTotalVolumeCurve(geometry::Curve& curve);
 
     // Determine the head in the system for a given volume.
-    double getSystemHead(double vol);
+    var_type getSystemHead(var_type vol);
 
-
-    ///////////////////////////////////////////////////////////////////////////
-    // INFLOW FUNCTIONS
-
-    // Find all of the locations where flow is input to the system and store
-    // them in a SourceList object.
-    int findSources(SourceList& sourceList);
-
-    void setFlowsFromSource(int node, int link);
-    void addExternalInflows(DateTime currentDate);
-
-
+    
     ///////////////////////////////////////////////////////////////////////////
     // ROUTING FUNCTIONS
 
     // Do a steady-state routing (calls steadyRouteNode, pondedRouteNode,
     // steadyRouteLink, or pondedRouteLink accordingly).
-    bool steadyRoute(int sinkNodeIdx, bool ponded = false);
+    bool steadyRoute(const id_type& sinkNodeIdx, bool ponded = false);
 
     /// <summary>
     /// The goal of this function is to pass a node depth to the downstream end
     /// of upstream conduits.  Node depths can be different than conduit depths
     /// because of transition losses in junctions or geometry changes.
     /// </summary>
-    bool steadyRouteNode(int nodeIdx);
+    bool steadyRouteNode(const id_type& nodeIdx);
 
     // Do a steady-state routing for a link.
-    bool steadyRouteLink(int linkIdx);
+    bool steadyRouteLink(const id_type& linkIdx);
 
     // Do a ponded routing for a node (ponded = no flow).
-    bool pondedRouteNode(int nodeIdx);
+    //bool pondedRouteNode(const id_type& nodeIdx);
 
     // Do a ponded routing for a link (ponded = no flow).
-    bool pondedRouteLink(int linkIdx);
+    bool pondedRouteLink(const id_type& linkIdx);
 
 
     ///////////////////////////////////////////////////////////////////////////
     // NODE/LINK ATTRIBUTE ACCESS FUNCTIONS
 
-    // Updates the water DEPTH of the upstream end of a pipe, and the junction
-    // immediately upstream of that pipe. Depth is relative to the pipe/junction
-    // invert.
-    void updateUpstreamDepthForLink(int linkIdx, double usDepth, double volume);
-
-    // Updates the water ELEVATION of the upstream end of a pipe, and the
-    // junction immediately upstream of that pipe. Elevation is absolute, based
-    // on a datum.
-    void updateUpstreamElevationForLink(int linkIdx, double usElev, double volume);
-
-    // Updates the downstream water DEPTH of a pipe (upstream of a node).
-    // Depth is relative to the pipe invert.
-    void updateUpstreamDepthForNode(int linkIdx, double dsDepth);
-
-    // Updates the downstream water ELEVATION of a pipe (upstream of a node).
-    // Elevation is absolute, based on a datum.
-    void updateUpstreamElevationForNode(int linkIdx, double dsElev);
-
-    // Converts an elevation value to a depth (depth = elevation - invert).
-    double elevationToDepthForNode(int nodeIdx);
-    double elevationToDSDepthForLink(int linkIdx);
-    double elevationToUSDepthForLink(int linkIdx);
-
     // Update the overflow value for each node.
-    bool updateOverflows();
+    bool updateOverflows(double routeStep);
 
     // Get the inflow at the given node.
-    double getFlowAtNode(int idx);
+    var_type getFlowAtNode(const id_type& idx);
 
 
     ///////////////////////////////////////////////////////////////////////////
     // JUNCTION LOSS FUNCTIONS
 
     // Compute the loss at the given node.  Updates the water depth at that node.
-    bool computeNodeLosses(int nodeIdx, ICAPNode* node);
-
-    // Compute the angle between two pipes upstream of the junction.
-    bool computeAngle(int downIdx, int mainIdx, int latIdx, double* angle);
+    bool computeNodeLosses(const id_type& nodeId);
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -297,10 +250,13 @@ protected:
     // Cleanup the this object and the SWMM engine in case of abnormal termination.
     bool cleanup();
 
-    // Set the error code and text.
-    void setError(int code, std::string errorStr);
-    void setError(int code, const char* errorStr);
 
+    ///////////////////////////////////////////////////////////////////////////
+    // REPORTING/RESULTS
+
+    void updateTimestepStatistics() {};
+
+    void saveTimestepResults() {};
 
     ///////////////////////////////////////////////////////////////////////////
     // ITERATION FUNCTIONS
@@ -323,15 +279,20 @@ public:
     ICAP();
     ~ICAP();
 
+    void InitializeLog(loglevel::SeverityLevel level, std::string logFilePath);
+
     // This opens the input file, loads everything, and opens the SWMM engine.
-    bool Open(char* inputFile, char* outputFile, char* reportFile, bool loadhpgs);
+    bool Open(const std::string& inputFile, const std::string& outputFile, const std::string& reportFile, bool loadhpgs);
 
     // This performs some initialization (finding of sources, computation of
     // total volume curve, etc.).
     bool Start(bool buildConnMatrix = false);
+    
+    // This performs the computations for the next timestep.
+    bool Step(double* elapsedTime, bool useMatrix);
 
     // This performs the computations for the next timestep.
-    bool Step(double* curStep_in, bool useMatrix);
+    bool Step(double* elapsedTime, double routeStep, bool useMatrix);
 
     // This is the counterpart of Start() and closes up some loose ends.
     bool End();
@@ -341,26 +302,25 @@ public:
 
     // This loads the next HPG in the list.  The list comes from the conduit
     // list.  Returns < 0 for done, 0 for ok, and > 0 for error
-    int LoadNextHPG();
+    int loadNextHpg();
+
+    int GetLinkCount();
 
     // Run an entire simulation.
     bool RunSimulation(int sinkNodeIdx);
 
-    // Return the error text.
-    const char* GetErrorStr();
-
 	// Save total volume curve
-	void SaveTotalVolumeCurve(char* file);
+	void SaveTotalVolumeCurve(const std::string& file);
 
-    int GetReservoirNodeIndex();
+    const id_type& GetReservoirNodeIndex();
 
-    int FindNodeIndex(char* nodeId);
+    const id_type& FindNodeIndex(const std::string& nodeId);
 
-    float GetNodeInvert(int nodeIdx);
+    var_type GetNodeInvert(const id_type& nodeIdx);
 
-    float GetNodeWaterElev(int nodeIdx);
+    var_type GetNodeWaterElev(const id_type& nodeIdx);
 
-    float GetNodeFlow(int nodeIdx);
+    var_type GetNodeFlow(const id_type& nodeIdx);
 
     // Initialize the depths to be zero in all of the nodes and links.
 	void InitializeZeroDepths();
@@ -379,24 +339,24 @@ public:
     /// [FEEDBACK METHOD] Set the current node inflow (override any inflow objects).
     /// If the node is invalid then this method does nothing.
     /// </summary>
-    void SetCurrentNodeInflow(char* nodeId, double flow);
+    void SetCurrentNodeInflow(const std::string& nodeId, var_type flow);
 
     /// <summary>
     /// [FEEDBACK METHOD] Return the head at the given node.  Returns a value less
     /// than or equal to -99999 if the node is invalid.
     /// </summary>
-    double GetCurrentNodeHead(char* nodeId);
+    var_type GetCurrentNodeHead(const std::string& nodeId);
 
     /// <summary>
     /// [FEEDBACK METHOD] Set a specific node as an input node.
     /// </summary>
-    void AddSource(char* nodeId);
+    void AddSource(const std::string& nodeId);
 
     // Set the reservoir depth programmatically
-    void SetReservoirDepth(double resDepth);
+    void SetReservoirDepth(var_type resDepth);
 
     // Set the flow factor (scale factor on all of the constant flows)
-    void SetFlowFactor(double flowFactor);
+    void SetFlowFactor(var_type flowFactor);
 };
 
 

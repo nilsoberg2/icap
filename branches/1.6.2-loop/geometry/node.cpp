@@ -2,34 +2,30 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <algorithm>
-#include "node.h"
-#include "link.h"
-#include "parse.h"
+
+#include "../util/parse.h"
 #include "../util/math.h"
 #include "../model/units.h"
-#include "../calcJunction.h"
+
+#include "node.h"
+#include "link.h"
 
 
 namespace geometry
 {
-    Node::Node(const std::string& theId, IModel* model)
+    Node::Node(const id_type& theId, const std::string& theName, NodeType theType)
+        : id(theId), name(theName), nodeType(theType)
     {
-        this->id = theId;
         this->xCoord = 0;
         this->yCoord = 0;
-        this->theModel = model;
     }
 
     Node::~Node()
     {
-        for (int i = 0; i < this->inflows.size(); i++)
-        {
-            if (this->inflows[i] != NULL)
-                delete this->inflows[i];
-        }
+        clearInflowObjects();
     }
 
-    Inflow* Node::getInflow()
+    std::shared_ptr<Inflow> Node::getInflow()
     {
         if (this->inflows.size() > 0)
         {
@@ -56,9 +52,8 @@ namespace geometry
         return this->simData[var];
     }
 
-    void Node::startInflow()
+    void Node::startInflow(DateTime dateTime)
     {
-        DateTime dateTime = this->theModel->getCurrentDateTime();
         this->lateralInflow = computeLateralInflow(dateTime);
         this->nodeInflow += this->lateralInflow;
 
@@ -99,7 +94,12 @@ namespace geometry
         this->depth = 0;
     }
 
-    void Node::attachInflow(Inflow* inflow)
+    void Node::clearInflowObjects()
+    {
+        this->inflows.clear();
+    }
+
+    void Node::attachInflow(std::shared_ptr<Inflow> inflow)
     {
         this->inflows.push_back(inflow);
     }
@@ -164,133 +164,95 @@ namespace geometry
         return true;
     }
 
-    double Node::getUpstreamLinksAngle()
+
+    const std::vector<std::shared_ptr<Link>>& Node::getUpstreamLinks() const
+    {
+        return this->usLinks;
+    }
+
+
+    const std::vector<std::shared_ptr<Link>>& Node::getDownstreamLinks() const
+    {
+        return this->dsLinks;
+    }
+
+    
+    var_type Node::getDownstreamLinkMaxDepth()
+    {
+        var_type maxDepth = -1;
+        for (auto link: this->dsLinks)
+        {
+            maxDepth = std::max(link->getMaxDepth(), maxDepth);
+        }
+
+        return maxDepth;
+    }
+
+
+    var_type Node::computeUpstreamLinksAngle(int downIdx, int mainIdx, int lateralIdx)
     {
         if (this->usLinks.size() < 2)
         {
-            return 0;
+            return var_type(0);
         }
 
-        double xd = this->xCoord;
-        double yd = this->yCoord;
+        var_type xd = this->xCoord;
+        var_type yd = this->yCoord;
 
-        double xm = this->usLinks[0]->getUpstreamNode()->getXCoord();
-        double ym = this->usLinks[0]->getUpstreamNode()->getYCoord();
-        if (this->usLinks[0]->vertices.size() > 0)
+        const std::vector<std::pair<var_type, var_type>>& vertices = this->usLinks[mainIdx]->getVertices();
+
+        var_type xm = this->usLinks[mainIdx]->getUpstreamNode()->getXCoord();
+        var_type ym = this->usLinks[mainIdx]->getUpstreamNode()->getYCoord();
+        if (vertices.size() > 0)
         {
-            xm = this->usLinks[0]->vertices.back().first;
-            ym = this->usLinks[0]->vertices.back().second;
+            xm = vertices.back().first;
+            ym = vertices.back().second;
         }
+        
+        const std::vector<std::pair<var_type, var_type>>& vertices2 = this->usLinks[lateralIdx]->getVertices();
 
-        double xl = this->usLinks[1]->getUpstreamNode()->getXCoord();
-        double yl = this->usLinks[1]->getUpstreamNode()->getYCoord();
-        if (this->usLinks[1]->vertices.size() > 0)
+        var_type xl = this->usLinks[lateralIdx]->getUpstreamNode()->getXCoord();
+        var_type yl = this->usLinks[lateralIdx]->getUpstreamNode()->getYCoord();
+        if (vertices2.size() > 0)
         {
-            xm = this->usLinks[1]->vertices.back().first;
-            ym = this->usLinks[1]->vertices.back().second;
+            xm = vertices2.back().first;
+            ym = vertices2.back().second;
         }
 
-        double dp = (xd - xm) * (xd - xl) + (yd - ym) * (yd - yl);
-        double cp = (xd - xm) * (yd - yl) - (xd - xl) * (yd - ym);
+        var_type dp = (xd - xm) * (xd - xl) + (yd - ym) * (yd - yl);
+        var_type cp = (xd - xm) * (yd - yl) - (xd - xl) * (yd - ym);
 
         // Compute the angle in radians and then convert to degrees.
         return fabs(atan2(cp, dp) * 180.0 / M_PI);
     }
 
-    void Node::propagateDepthUpstream(double depth)
-    {
-        bool diameterChanges = false;
-        bool hasDownstream = false;
-        double downDiam = 0;
-        for (int i = 0; i < this->dsLinks.size(); i++)
-        {
-            if (this->dsLinks[i]->geomType != link::Dummy)
-            {
-                downDiam = std::max(downDiam, this->dsLinks[i]->maxDepth);
-                hasDownstream = true;
-            }
-        }
 
-        for (int i = 0; i < this->usLinks.size(); i++)
-        {
-            this->usLinks[i]->setDownstreamDepth(depth);
-            if (this->usLinks[i]->geomType != link::Dummy && downDiam > 0 && fabs(this->usLinks[i]->maxDepth - downDiam) > 0.1)
-            {
-                diameterChanges = true;
-            }
-        }
+    //void Node::propagateDepthUpstream(double depth)
+    //{
+    //    bool diameterChanges = false;
+    //    bool hasDownstream = false;
+    //    double downDiam = 0;
+    //    for (int i = 0; i < this->dsLinks.size(); i++)
+    //    {
+    //        if (this->dsLinks[i]->getGeometryType() != xs::xstype::dummy)
+    //        {
+    //            downDiam = std::max(downDiam, this->dsLinks[i]->getMaxDepth());
+    //            hasDownstream = true;
+    //        }
+    //    }
 
-        if (hasDownstream && !this->usLinks.empty() && !isZero(variable(variables::NodeFlow)) && (this->usLinks.size() + this->dsLinks.size() != 2 || diameterChanges))
-            adjustForJunctionLoss();
-    }
+    //    for (int i = 0; i < this->usLinks.size(); i++)
+    //    {
+    //        this->usLinks[i]->setDownstreamDepth(depth);
+    //        if (this->usLinks[i]->getGeometryType() != xs::xstype::dummy && downDiam > 0 && fabs(this->usLinks[i]->getMaxDepth() - downDiam) > 0.1)
+    //        {
+    //            diameterChanges = true;
+    //        }
+    //    }
 
-    void Node::adjustForJunctionLoss()
-    {
-        // Don't compute losses if the there is only one pipe.
-        if (this->dsLinks.size() + this->usLinks.size() < 2)
-            return;
-        
-        // Next we get all of the IDs of the downstream and upstream
-        // nodes.  The main branch (mainId) is just the first ID in the
-        // node list for this junction.
-
-        float yDown = this->dsLinks[0]->variable(variables::LinkDsDepth);
-        float dDown = this->dsLinks[0]->maxDepth;
-        
-        // Get the main branch flow and diameter.  In the case that
-        // the main branch is a structure (dropshaft) we assume that
-        // the diameter of the main branch is the same as the diameter
-        // of the downstream pipe.
-        float qMain = this->usLinks[0]->variable(variables::LinkFlow);
-        float dMain = this->usLinks[0]->maxDepth;
-        
-        // Next get the lateral branch flow and diameter.  These are
-        // zero if there is no lateral branch.  In the case that the
-        // lateral branch is a structure we assume that the diameter
-        // of the lateral branch is the same as the diameter of the
-        // downstream pipe.
-        float qLat = 0;
-        float dLat = 0;
-        if (this->usLinks.size() > 1)
-        {
-            qLat = this->usLinks[1]->variable(variables::LinkFlow);
-            dLat = this->usLinks[1]->maxDepth;
-        }
-        
-        // Next determine the angle.  It is zero if there is no lateral branch.
-        float angle = getUpstreamLinksAngle();
-        
-        // Now we compute the loss
-        float grav = UCS->g();
-        float yMain = 0.0f;
-        float yLat = 0.0f;
-        float err = CALCJUNCTION(&yDown, &qLat, &qMain, &dDown, &dMain, &dLat, &angle, &grav, &yMain, &yLat);
-        
-        // Now, if there is a lateral branch and no flow in one of
-        // the branches, then we need to carry the water depths from
-        // the branch that has flow to the branch that doesn't.
-        if (this->usLinks.size() > 1)
-        {
-            // If there the main branch doesn't have flow and the lateral
-            // branch has flow, then we carry the lateral water depth
-            // over to the main branch.
-            if (isZero(qMain) && !isZero(qLat))
-            {
-                yMain = yLat;
-            }
-
-            // Else if the lateral branch doesn't have flow, and the
-            // main branch has flow, then we carry the main water depth
-            // over to the lateral branch.
-            else if (!isZero(qMain) && isZero(qLat))
-            {
-                yLat = yMain;
-            }
-
-            this->usLinks[1]->variable(variables::LinkDsDepth) = yLat;
-        }
-
-        this->usLinks[0]->variable(variables::LinkDsDepth) = yMain;
-    }
+    //    //TODO:
+    //    //if (hasDownstream && !this->usLinks.empty() && !isZero(variable(variables::NodeFlow)) && (this->usLinks.size() + this->dsLinks.size() != 2 || diameterChanges))
+    //    //    adjustForJunctionLoss();
+    //}
 }
 

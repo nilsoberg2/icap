@@ -11,5 +11,7 @@
 
 #define ERROR_VAL           -999999
 
+#include "type.h"
+
 
 #endif//API_H__

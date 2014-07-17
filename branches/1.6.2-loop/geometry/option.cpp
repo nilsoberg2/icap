@@ -1,6 +1,7 @@
 
 #include <vector>
 #include <boost/algorithm/string.hpp>
+
 #include "option.h"
 
 namespace geometry {

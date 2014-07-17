@@ -1,17 +1,21 @@
 
 #include <boost/algorithm/string.hpp>
+
+#include "../util/parse.h"
+
 #include "link.h"
-#include "parse.h"
 
 
 namespace geometry
 {
 
-    Link::Link(const std::string& idValue, INodeFactory* theNodeFactory, IModel* model)
+    Link::Link(const id_type& theId, const std::string& theName, std::shared_ptr<NodeFactory> theNodeFactory)
+        : xs(xs::Factory::create(xs::xstype::dummy))
     { 
-        this->theModel = model;
-        this->id = idValue;
+        this->name = theName;
+        this->id = theId;
         this->nodeFactory = theNodeFactory;
+        this->dsInvert = this->usInvert = 0;
     }
 
     var_type& Link::variable(variables::Variables var)
@@ -72,20 +76,14 @@ namespace geometry
             return false;
         }
 
-        string geom = boost::algorithm::to_lower_copy(parts[1]);
-        this->geomType = link::Dummy;
-        if (geom == "circular")
+        this->xs = std::unique_ptr<xs::CrossSection>(xs::Factory::create(parts[1]));
+        vector<string>::const_iterator it = parts.begin();
+        it++;
+        it++;
+        
+        if (!this->xs->setParameters(it, parts.end()))
         {
-            this->geomType = link::Circular;
-        }
-        else if (geom == "irregular")
-        {
-            this->geomType = link::Irregular;
-        }
-
-        if (!tryParse(parts[2], this->maxDepth))
-        {
-            setErrorMessage("Unable to parse max depth");
+            setErrorMessage(this->xs->getErrorMessage());
             return false;
         }
 
@@ -117,6 +115,38 @@ namespace geometry
         this->vertices.push_back(std::pair<double, double>(x, y));
 
         return true;
+    }
+
+    void Link::computeInvertsFromNodes()
+    {
+        this->dsInvert = this->outletNode->getInvert() + this->dsOffset;
+        this->usInvert = this->inletNode->getInvert() + this->usOffset;
+        this->slope = (this->usInvert - this->dsInvert) / this->length;
+    }
+
+    var_type Link::computeLevelVolume(var_type dsDepth)
+    {
+        double y2 = dsDepth - this->slope * this->length; // upstream
+        double L = length;
+        double S = slope;
+	    double dx = (L / 100.0);
+	    double xi = 0.0;
+	    double V = 0.0;
+	    double yi, a1, a2;
+
+	    while (xi < L)
+	    {
+		    yi = (-S * (xi - L) + y2);
+		    a1 = this->xs->computeAreaForDepth(yi);
+		
+		    xi += dx;
+		    yi = (-S * (xi - L) + y2);
+		    a2 = this->xs->computeAreaForDepth(yi);
+
+		    V += dx * (a1 + a2) / 2.0;
+	    }
+
+	    return V;
     }
 
     void Link::propogateFlow(double upstreamInflow)

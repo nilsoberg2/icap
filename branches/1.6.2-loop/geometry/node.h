@@ -4,9 +4,11 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "inflow.h"
-#include "parseable.h"
+
+#include "../util/parseable.h"
 #include "../model/modelElement.h"
+
+#include "inflow.h"
 
 
 namespace geometry
@@ -20,96 +22,119 @@ namespace geometry
 
     class Link;
 
-    class ICAP_API Node : public IModelElement, public Parseable
+    class Node : public IModelElement, public Parseable
     {
-    private:
-        std::vector<Inflow*> inflows;
+    protected:
+        std::vector<std::shared_ptr<Inflow>> inflows;
 
-        std::vector<Link*> usLinks;
-        std::vector<Link*> dsLinks;
+        std::vector<std::shared_ptr<Link>> usLinks;
+        std::vector<std::shared_ptr<Link>> dsLinks;
 
         double computeLateralInflow(DateTime dateTime);
 
-        IModel* theModel;
+        std::shared_ptr<Model> theModel;
+
+        std::string name;
+        id_type id;
+        bool canFlood;
 
         std::map<variables::Variables, double> simData;
 
-    protected:
-        Node(const std::string& theId, IModel* model);
-
-        bool baseParseLine(const std::vector<std::string>& parts);
-
-    public:
-        double invertElev;
-        double maxDepth;
-        double initDepth;
-        std::string id;
+        var_type invertElev;
+        var_type maxDepth;
+        var_type initDepth;
         NodeType nodeType;
-        double xCoord, yCoord;
+        var_type xCoord, yCoord;
 
         /// <summary>
         /// The total inflow to this node: all upstream conduit inflows as well
         /// as any lateral inflows.
         /// </summary>
-        double nodeInflow;
+        var_type nodeInflow;
 
         /// <summary>
         /// The lateral inflow to this node only; the sum of all inflows from external
         /// inflows for the given time ste.p    
         /// </summary>
-        double lateralInflow;
-        double depth;
-        double volume;
-        bool canFlood;
+        var_type lateralInflow;
+        var_type depth;
+        var_type volume;
+
+    protected:
+        Node(const id_type& theId, const std::string& theName, NodeType theType);
+
+        bool baseParseLine(const std::vector<std::string>& parts);
+        
 
     public:
         ~Node();
 
-        typedef std::vector<Link*>::iterator LinkIter;
+        typedef std::vector<std::shared_ptr<Link>>::iterator LinkIter;
 
         LinkIter beginUpstreamLink();
         LinkIter endUpstreamLink();
 
-        double getXCoord() { return this->xCoord; }
-        double getYCoord() { return this->yCoord; }
+        var_type getXCoord() { return this->xCoord; }
+        var_type getYCoord() { return this->yCoord; }
+        var_type getInvert() { return this->invertElev; }
+        var_type getMaxDepth() { return this->maxDepth; }
+        std::string getName() { return this->name; }
+        id_type getId() { return this->id; }
+        bool getCanFlood() { return this->canFlood; }
+        NodeType getType() { return this->nodeType; }
+        var_type getInitialDepth() { return this->initDepth; }
+        void setInitialDepth(var_type value) { this->initDepth = value; }
+
+        /// <summary>
+        /// Returns the volume stored in this node for the given depth.
+        /// </summary>
+        virtual var_type lookupVolume(var_type depth) { return 0; }
 
         /// <summary>
         /// Returns 0 if there are not enough upstream links; returns the largest angle between
-        /// any two links.
+        /// the two upstream mainIdx and lateralIdx link indices.
         /// </summary>
-        double getUpstreamLinksAngle();
+        var_type computeUpstreamLinksAngle(int downIdx, int mainIdx, int lateralIdx);
+
+        const std::vector<std::shared_ptr<Link>>& getUpstreamLinks() const;
+        const std::vector<std::shared_ptr<Link>>& getDownstreamLinks() const;
 
         /// <summary>
         /// Add an upstream conduit to this node's connectivity.
         /// </summary>
-        void addUpstreamLink(Link* link) { this->usLinks.push_back(link); }
+        void addUpstreamLink(std::shared_ptr<Link> link) { this->usLinks.push_back(link); }
 
         /// <summary>
         /// Add a downstream conduit to this node's connectivity.
         /// </summary>
-        void addDownstreamLink(Link* link) { this->dsLinks.push_back(link); }
+        void addDownstreamLink(std::shared_ptr<Link> link) { this->dsLinks.push_back(link); }
         
         /// <summary>
         /// Add an external inflow object to this node.
         /// </summary>
-        void attachInflow(Inflow* inflow);
+        void attachInflow(std::shared_ptr<Inflow> inflow);
+
+        /// <summary>
+        /// Clear all inflow objects.
+        /// </summary>
+        void clearInflowObjects();
 
         /// <summary>
         /// Modifies any attached inflow scale factors to the given factor.
         /// </summary>
-        void setInflowFactor(double flowFactor);
+        void setInflowFactor(var_type flowFactor);
         
         /// <summary>
         /// This function takes any external inflows at this node and propogates them downstream
         /// in a steady-state fashion.
         /// </summary>
-        void startInflow();
+        void startInflow(DateTime dateTime);
         
         /// <summary>
         /// This function takes an upstream pipe inflow and propogates it downstream to the next
         /// pipe(s).
         /// </summary>
-        void propogateFlowDownstream(double flow);
+        void propogateFlowDownstream(var_type flow);
         
         /// <summary>
         /// This function resets the inflow parameters (e.g. at the start of a timestep).
@@ -134,16 +159,15 @@ namespace geometry
         
         virtual var_type& variable(variables::Variables var);
 
-        virtual void propagateDepthUpstream(double depth);
+        //virtual void propagateDepthUpstream(var_type depth);
 
-        void adjustForJunctionLoss();
+        std::shared_ptr<Inflow> getInflow();
 
-        Inflow* getInflow();
+        var_type getDownstreamLinkMaxDepth();
 
 
-
-        virtual void setErrorMessage(const std::string& msg) { Parseable::setErrorMessage("[" + this->id + "] " + msg); }
-        virtual void appendErrorMessage(const std::string& msg) { Parseable::appendErrorMessage("[" + this->id + "] " + msg); }
+        virtual void setErrorMessage(const std::string& msg) { Parseable::setErrorMessage("[" + this->name + "] " + msg); }
+        virtual void appendErrorMessage(const std::string& msg) { Parseable::appendErrorMessage("[" + this->name + "] " + msg); }
     };
 
 }

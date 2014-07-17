@@ -92,7 +92,7 @@ int main(int argc, char** argv)
                 double curStep = 0;
                 if (!icap.Step(&curStep, false))
                 {
-                    printf("ERROR in step %s, aborting\n", icap.GetErrorStr());
+                    printf("ERROR in step %s, aborting\n", icap.getErrorMessage());
                     break;
                 }
                 else
@@ -126,11 +126,11 @@ int main(int argc, char** argv)
         int iterCount = 0;
         do
         {
-		    printf("Iteration %f of %f...\n", curStep/1000.0, TotalDuration/1000.0);
+		    printf("Iteration %f of %f...\n", curStep/1000.0, m_totalDuration/1000.0);
             result = icap.Step(&curStep, true);
             if (! result)
                 break;
-        } while (curStep <= TotalDuration && IS_NOT_ZERO(curStep));
+        } while (curStep <= m_totalDuration && !isZero(curStep));
 	}
 	else
     {
@@ -142,11 +142,11 @@ int main(int argc, char** argv)
         int iterCount = 0;
         do
         {
-		    printf("Iteration %f of %f...\n", curStep/1000.0, TotalDuration/1000.0);
+		    printf("Iteration %f of %f...\n", curStep/1000.0, m_totalDuration/1000.0);
             result = icap.Step(&curStep, false);
             if (! result)
                 break;
-        } while (curStep <= TotalDuration && IS_NOT_ZERO(curStep));
+        } while (curStep <= m_totalDuration && !isZero(curStep));
 
     }
 
