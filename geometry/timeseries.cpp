@@ -1,11 +1,11 @@
 
 #include <fstream>
 #include <boost/algorithm/string.hpp>
-#include "timeseries.h"
-#include "parse.h"
 
-#define SWMM_GEOMETRY
+#include "../util/parse.h"
 #include "../time/datetime.h"
+
+#include "timeseries.h"
 
 
 namespace geometry

@@ -1,31 +1,19 @@
 #define _CRT_SECURE_NO_DEPRECATE
+
 #define _USE_MATH_DEFINES
+#include <cmath>
+
+#include "../Eigen/Dense"
+#include "../util/math.h"
 
 #include "icap.h"
-#include "util.h"
-#include "exception.h"
-#include "icap_error.h"
-#include "debug.h"
-#include <cmath>
 #include "routing.h"
-#include "Eigen/Dense"
-
-#if defined(SWMM_GEOMETRY)
-extern "C" TNodeStats*     NodeStats; // Defined in STATS.C
-extern "C" int RouteModel;
-#endif
 
 
 ICAP::ICAP()
+    : m_totalVolumeCurve("")
 {
-#ifdef ICAP_DEBUGGING
-    m_debugFile = fopen("c:\\temp\\debug_icap.txt", "w");
-    if (m_debugFile == NULL)
-        m_debugFile = fopen("debug.txt", "w");
-#endif
-
     m_closed = m_ended = true;
-    m_hasJunctionCoords = false;
 
     V_Pond = 0.0;
     V_PondMax = 0.0;
@@ -33,10 +21,7 @@ ICAP::ICAP()
     V_P = 0.0;
     V_Ov = 0.0;
     V_SysMax = 0.0;
-    m_secondsSinceLastInflow = 0.0;
-
-    m_pumpTSIdx = -1;
-
+    
 	m_counter = 0;
 
     SetNormCritParamDefaults(m_ncParams);
@@ -51,63 +36,75 @@ ICAP::ICAP()
 
     m_isFirstMatrixIteration = false;
     
-    GTABLE_INIT(m_totalVolumeCurve);
 }
 
 ICAP::~ICAP()
 {
-#ifdef ICAP_DEBUGGING
-    if (m_debugFile != NULL)
-        fclose(m_debugFile);
-#endif
     cleanup();
 }
 
 
-bool ICAP::Open(char *inputFile, char *outputFile, char *reportFile, bool loadhpgs)
+int ICAP::GetLinkCount()
+{
+    if (m_geometry != NULL && m_geometry->getLinkList() != NULL)
+    {
+        return m_geometry->getLinkList()->count();
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
+void ICAP::InitializeLog(loglevel::SeverityLevel level, std::string logFilePath)
+{
+    boost::log::add_file_log(logFilePath);
+    boost::log::add_common_attributes();
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= level);
+}
+
+
+bool ICAP::Open(const std::string& inputFile, const std::string& outputFile, const std::string& reportFile, bool loadhpgs)
 {
     bool result = true;
 
     try
     {
-
-	printf("Loading input file...\n");
-    // Load SWMM file.
-    if (! loadInputFile(inputFile, reportFile, outputFile))
+	    info("Loading input file...");
+        // Load SWMM file.
+        if (! loadInputFile(inputFile))
+        {
+            return false;
+        }
+    }
+    catch (...)
     {
-		report_writeErrorMsg(ERROR_INPUT_FILE, (char*)m_errorStr.c_str());
-        ErrorCode = ERROR_INVALID_INPUT;
-        cleanup();
+        setErrorMessage("Failed to load input file due to a system exception.");
         return false;
     }
 
-	printf("Populating network...\n");
-    // Populate the ICAP Network object.
-    if (! populateNetwork(inputFile))
+    m_overflow.Init(m_geometry->getNodeList());
+
+    try
     {
-		report_writeErrorMsg(ERROR_ICAP_NETWORK, (char*)m_errorStr.c_str());
-        ErrorCode = ERROR_INVALID_INPUT;
-        cleanup();
-        return false;
-    }
-
-    m_overflow.Init();
-
-	printf("Loading HPG's...\n");
-    // Load the HPGs.
-    if (loadhpgs && !loadHPGs(HPGPath))
-    {
-		report_writeErrorMsg(ERROR_HPG_LOADING, (char*)m_errorStr.c_str());
-        ErrorCode = ERROR_INVALID_INPUT;
-        cleanup();
-        return false;
-    }
-
+	    info("Loading HPG's...");
+        // Load the HPGs.
+        if (loadhpgs)
+        {
+            if (m_geometry->hasOption("hpg_path"))
+            {
+                m_hpgPath = m_geometry->getOption("hpg_path");
+                if (!loadHpgs(m_hpgPath))
+                {
+                    return false;
+                }
+            }
+        }
     }
     catch(...)
     {
-        ErrorCode = ERROR_SYSTEM;
-		report_writeErrorMsg(ERROR_SYSTEM, "unable to open ICAP engine");
+        setErrorMessage("Exception occured when loading HPGs.");
         result = false;
     }
 
@@ -121,46 +118,28 @@ bool ICAP::Start(bool buildConnMatrix)
 
     try
     {
-
-    // Find all of the inputs to the system.
-    if (!m_rtMode)
-    {
-        int sourceCount = findSources(m_sources);
-        if (sourceCount == 0)
+        // Find all of the inputs to the system.
+        if (!m_rtMode)
         {
-		    report_writeErrorMsg(ERROR_ICAP_NETWORK, "unable to find any source nodes");
-            ErrorCode = ERROR_ICAP_NETWORK;
+          //  int sourceCount = findSources(m_sources);
+          //  if (sourceCount == 0)
+          //  {
+		        //BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to find any source nodes";
+          //      return false;
+          //  }
+        }
+
+        if (isZero(m_geometry->getNode(m_sinkNodeIdx)->getMaxDepth()))
+        {
+		    BOOST_LOG_SEV(m_log, loglevel::error) << "The downstream reservoir max depth must be non-zero";
             return false;
         }
     }
-
-    if (IS_ZERO(GNODE_MAXDEPTH(m_sinkNodeIdx)))
+    catch(...)
     {
-        report_writeErrorMsg(ERROR_ICAP_NETWORK, "The downstream reservoir max depth must be non-zero");
-        ErrorCode = ERROR_ICAP_NETWORK;
-        return false;
     }
 
-    StepCount = 0;
-
-#if defined(SWMM_GEOMETRY)
-    RouteModel = NO_ROUTING;
-#endif
-
-#if defined(SWMM_GEOMETRY)
-    int swmmStatus = swmm_start(TRUE); // returns 1 in case of error, 0 if success
-  //  if (swmmStatus)
-  //  {
-		//report_writeErrorMsg(ERROR_SYSTEM, "unable to start SWMM engine");
-  //      ErrorCode = ERROR_SYSTEM;
-  //      return false;
-  //  }
-#endif
-
-    // Start out the event-to-pumping interval counter with the
-    // correct duration to allow for pumping from the start of a
-    // simulation.
-    m_secondsSinceLastInflow = SECS_PER_DAY * DaysBeforePumping;
+    m_stepCount = 0;
 
 	// Compute the ponded pipe volume
 	V_PondMax = computePondedPipeStorage();
@@ -168,14 +147,11 @@ bool ICAP::Start(bool buildConnMatrix)
     // Also computes the maximum volume that the system can store.
     V_SysMax = computeTotalVolumeCurve(m_totalVolumeCurve);
 
-#ifdef ICAP_DEBUGGING
-	dprintf("V_SysMax=%f V_PondMax=%f\n", V_SysMax, V_PondMax);
-#endif
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "V_SysMax=" << V_SysMax << " V_PondMax=" << V_PondMax;
 
     if (V_SysMax < 0.0)
     {
-        std::string err = "Unable to compute total volume curve.";
-        error_setInpError(ERROR_ICAP_NETWORK, (char*)err.c_str());
+        BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to compute total volume curve.";
         result = false;
     }
 
@@ -183,72 +159,64 @@ bool ICAP::Start(bool buildConnMatrix)
     InitializeZeroDepths();
 
     // Compute the initial volume and water depth of the sink node.
-    GNODE_DEPTH(m_sinkNodeIdx) = GNODE_INITDEPTH(m_sinkNodeIdx);
-	GNODE_VOLUME(m_sinkNodeIdx) = GCURVE_VOLUME(m_sinkNodeIdx, GNODE_INITDEPTH(m_sinkNodeIdx));
+    std::shared_ptr<geometry::Node> node = m_geometry->getNode(m_sinkNodeIdx);
+    var_type initDepth = node->getInitialDepth();
+    m_model->setNodeVariable(m_sinkNodeIdx, variables::NodeDepth, initDepth);
+    m_model->setNodeVariable(m_sinkNodeIdx, variables::NodeVolume, node->lookupVolume(initDepth));
 
-    if (GNODE_DEPTH(m_sinkNodeIdx) > 0.0)
+    if (initDepth > 0.0)
     {
-        V_I = computePondedPipeStorage(GNODE_INVERT(m_sinkNodeIdx) + GNODE_DEPTH(m_sinkNodeIdx)) + GNODE_VOLUME(m_sinkNodeIdx);
+        V_I = computePondedPipeStorage(node->getInvert() + initDepth) + node->lookupVolume(initDepth);
     }
 
-#if defined(SWMM_GEOMETRY)
-    // Reopen the mass balance engine because we've just updated the pip
-    // volumes and we need to take those into account.
-    massbal_open();
-#endif
-
-#if defined(SWMM_GEOMETRY)
-    // Find pumping timeseries curve
-    for (int i = 0; i < Nobjects[TSERIES]; i++)
+    if (!m_pumping.initializeSettings(m_geometry))
     {
-        if (! strcmp(Tseries[i].ID, "PUMPING"))
-        {
-            m_pumpTSIdx = i;
-            break;
-        }
+        appendErrorMessage(m_pumping.getErrorMessage());
+        return false;
     }
-#else
-#error Need to handle the pumping timeseries in the case when SWMM is not present!
-#endif
 
-	// Build the connectivity matrix for the gradient method
-	if (buildConnMatrix)
-	{
-		using namespace Eigen;
+    try
+    {
+	    // Build the connectivity matrix for the gradient method
+	    if (buildConnMatrix)
+	    {
+		    using namespace Eigen;
 
-		int numNodes = GNODE_COUNT;
-		int numLinks = GLINK_COUNT;
+            std::shared_ptr<geometry::NodeList> nodes = m_geometry->getNodeList();
+            std::shared_ptr<geometry::LinkList> links = m_geometry->getLinkList();
+		    int numNodes = nodes->count();
+		    int numLinks = links->count();
 
-		MatrixXf matrixLhs(numLinks + numNodes, numLinks + numNodes);
-		matrixLhs.setZero();
+		    MatrixXf matrixLhs(numLinks + numNodes, numLinks + numNodes);
+		    matrixLhs.setZero();
 
-		for (int nl = 0; nl < numLinks; nl++)
-		{
-			// Set A21 sub-matrix (connectivity)
-			matrixLhs(GLINK_USNODE(nl) + numLinks, nl) = -1;
-			matrixLhs(GLINK_DSNODE(nl) + numLinks, nl) = 1; 
+		    for (int nl = 0; nl < numLinks; nl++)
+		    {
+			    // Set A21 sub-matrix (connectivity)
+                std::shared_ptr<geometry::Link> link = links->get(nl);
+			    matrixLhs(link->getUpstreamNode()->getId() + numLinks, nl) = -1;
+			    matrixLhs(link->getDownstreamNode()->getId() + numLinks, nl) = 1; 
 
-			// Set A11 sub-matrix (hf diagonal)
-			matrixLhs(nl, nl) = 1;
+			    // Set A11 sub-matrix (hf diagonal)
+			    matrixLhs(nl, nl) = 1;
 
-			// Set A12 sub-matrix (transpose of A21)
-			matrixLhs(nl, GLINK_USNODE(nl) + numLinks) = -1;
-			matrixLhs(nl, GLINK_DSNODE(nl) + numLinks) = 1; 
-		}
+			    // Set A12 sub-matrix (transpose of A21)
+			    matrixLhs(nl, link->getUpstreamNode()->getId() + numLinks) = -1;
+			    matrixLhs(nl, link->getDownstreamNode()->getId() + numLinks) = 1; 
+		    }
 
-		this->m_matrixLhs = matrixLhs;
+		    this->m_matrixLhs = matrixLhs;
 
-        this->m_matrixRhs = VectorXf(numLinks + numNodes);
+            this->m_matrixRhs = VectorXf(numLinks + numNodes);
 
-		//std::cout.precision(1);
-		//std::cout << matrixLhs.inverse() <<std::endl;
-		//getchar();
-	}
-
+		    //std::cout.precision(1);
+		    //std::cout << matrixLhs.inverse() <<std::endl;
+		    //getchar();
+	    }
     }
     catch(...)
     {
-        ErrorCode = ERROR_SYSTEM;
+        BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to generate connectivity matrix.";
         result = false;
     }
 
@@ -256,29 +224,29 @@ bool ICAP::Start(bool buildConnMatrix)
 }
 
 
-void ICAP::SetReservoirDepth(float resDepth)
+void ICAP::SetReservoirDepth(var_type resDepth)
 {
-    GNODE_INITDEPTH(m_sinkNodeIdx) = resDepth;
+    m_geometry->getNode(m_sinkNodeIdx)->setInitialDepth(resDepth);
 }
 
 
-int ICAP::GetReservoirNodeIndex()
+const id_type& ICAP::GetReservoirNodeIndex()
 {
     return this->m_sinkNodeIdx;
 }
 
 
-int ICAP::FindNodeIndex(char* nodeId)
+const id_type& ICAP::FindNodeIndex(const std::string& nodeId)
 {
-    return project_findObject(NODE, nodeId);
+    return m_geometry->getNode(nodeId)->getId();
 }
 
 
-float ICAP::GetNodeInvert(int nodeIdx)
+var_type ICAP::GetNodeInvert(const id_type& nodeIdx)
 {
-    if (nodeIdx >= 0 && nodeIdx < GNODE_COUNT)
+    if (nodeIdx >= 0 && nodeIdx < m_geometry->getNodeList()->count())
     {
-        return GNODE_INVERT(nodeIdx);
+        return m_geometry->getNode(nodeIdx)->getInvert();
     }
     else
     {
@@ -287,11 +255,11 @@ float ICAP::GetNodeInvert(int nodeIdx)
 }
 
 
-float ICAP::GetNodeWaterElev(int nodeIdx)
+var_type ICAP::GetNodeWaterElev(const id_type& nodeIdx)
 {
-    if (nodeIdx >= 0 && nodeIdx < GNODE_COUNT)
+    if (nodeIdx >= 0 && nodeIdx < m_geometry->getNodeList()->count())
     {
-        return GNODE_DEPTH(nodeIdx) + GNODE_INVERT(nodeIdx);
+        return m_model->getNodeVariable(nodeIdx, variables::NodeDepth) + m_geometry->getNode(nodeIdx)->getInvert();
     }
     else
     {
@@ -300,9 +268,9 @@ float ICAP::GetNodeWaterElev(int nodeIdx)
 }
 
 
-float ICAP::GetNodeFlow(int nodeIdx)
+var_type ICAP::GetNodeFlow(const id_type& nodeIdx)
 {
-    if (nodeIdx >= 0 && nodeIdx < GNODE_COUNT)
+    if (nodeIdx >= 0 && nodeIdx < m_geometry->getNodeList()->count())
     {
         return getFlowAtNode(nodeIdx);
     }
@@ -313,24 +281,18 @@ float ICAP::GetNodeFlow(int nodeIdx)
 }
 
 
-bool ICAP::loadInputFile(char* inputFile, char* reportFile, char* outputFile)
+// Load the input file and 
+bool ICAP::loadInputFile(const std::string& inputFile)
 {
-    // Start SWMM and read input file.
-#if defined(SWMM_GEOMETRY)
-    int result = swmm_open(inputFile, outputFile, reportFile);
-    if (result)
+    m_geometry = std::shared_ptr<IcapGeometry>(new IcapGeometry());
+    if (!m_geometry->loadFromFile(inputFile, geometry::FileFormatSwmm5))
     {
-        std::string err = "loading SWMM file: ";
-        err += error_getMsg(result);
-        setError(1, err);
+        BOOST_LOG_SEV(m_log, loglevel::error) << m_geometry->getErrorMessage();
         return false;
     }
-#else
-#error TODO
-#endif
 
-    // Validate the SWMM network.
-    if (! validateNetwork())
+    // Validate the network.
+    if (! validateGeometry())
     {
         return false;
     }
@@ -339,57 +301,12 @@ bool ICAP::loadInputFile(char* inputFile, char* reportFile, char* outputFile)
 }
 
 
-// Populate the internal network object.
-bool ICAP::populateNetwork(char* inputFile)
-{
-    int sinkType = 0;
-    return populateNetwork(inputFile, m_network, sinkType, m_sinkNodeIdx, m_sinkLinkIdx);
-}
-
-
-// This function is here to make things a little more generic so that it
-// doesn't necessarily populate the internal network object.
-bool ICAP::populateNetwork(char* inputFile, ICAPNetwork& network, int& sinkType, int& sinkNodeIdx, int& sinkLinkIdx)
-{
-    // Now populate our network from the SWMM network and read in the coordinates
-    // of each node and link.
-    populateNetworkFromSWMM(network);
-
-#if defined(SWMM_GEOMETRY)
-    int coordResult = GetSWMMCoordsAndVerts(inputFile, network);
-    if (coordResult <= 0)
-        m_hasJunctionCoords = false;
-    else
-        m_hasJunctionCoords = true;
-#else
-    m_hasJunctionCoords = true;
-#endif
-    
-    
-    // Now find the sink node.
-    sinkType = STORAGE;
-    sinkNodeIdx = INVALID_IDX;
-    sinkLinkIdx = findSinkLink(sinkType, sinkNodeIdx);
-
-    if (sinkNodeIdx == INVALID_IDX || sinkLinkIdx == INVALID_IDX)
-    {
-        setError(1, "failed to find a STORAGE or OUTFALL node");
-        return false;
-    }
-
-    return true;
-}
-
-
-bool ICAP::loadHPGs(char* hpgPath)
+bool ICAP::loadHpgs(const std::string& hpgPath)
 {
     // Load the HPGs.
-    bool hpgResult = m_hpgList.LoadHPGs(hpgPath);
-    if (! hpgResult)
+    if (! m_hpgList.loadHpgs(hpgPath, m_geometry->getLinkList()))
     {   
-        std::string err = "(LoadHPGs) HPG's failed to load: ";
-        err += m_hpgList.GetErrorStr();
-        setError(1, err);
+        BOOST_LOG_SEV(m_log, loglevel::error) << "HPG's failed to load: " << m_hpgList.getErrorMessage();
         return false;
     }
 
@@ -397,17 +314,13 @@ bool ICAP::loadHPGs(char* hpgPath)
 }
 
 
-// return < 0 for done, 0 for ok, and > 0 for error
-int ICAP::LoadNextHPG()
+int ICAP::loadNextHpg()
 {
     // Load the HPGs.
-    int result = m_hpgList.LoadNextHPG(HPGPath);
+    int result = m_hpgList.loadNextHpg(m_hpgPath, m_geometry->getLinkList());
     if (result > 0)
     {   
-        std::string err = "(LoadNextHPG) HPG's failed to load: ";
-        err += m_hpgList.GetErrorStr();
-        setError(1, err);
-		report_writeErrorMsg(ERROR_HPG_LOADING, (char*)m_errorStr.c_str());
+        BOOST_LOG_SEV(m_log, loglevel::error) << "(loadNextHpg) HPG's failed to load: " << m_hpgList.getErrorMessage();
         return 1; // return error
     }
     else if (result < 0)

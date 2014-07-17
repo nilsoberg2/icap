@@ -1,12 +1,17 @@
 
 #include <algorithm>
 #include <sstream>
+
+#include "../util/parse.h"
+
 #include "curve.h"
-#include "parse.h"
 
 
 namespace geometry
 {
+    var_type lookupEx(double x, const std::vector<var_type>& xVals, const std::vector<var_type>& yVals);
+
+
     Curve::Curve(std::string theName)
     {
         Init(theName, "");
@@ -22,6 +27,24 @@ namespace geometry
         this->name = theName;
         this->type = theType;
     }
+    
+    void Curve::getFirstPoint(var_type& x, var_type& y)
+    {
+        if (this->xVals.size() > 0)
+        {
+            x = *this->xVals.begin();
+            y = *this->yVals.begin();
+        }
+    }
+
+    void Curve::getLastPoint(var_type& x, var_type& y)
+    {
+        if (this->xVals.size() > 0)
+        {
+            x = *this->xVals.end();
+            y = *this->yVals.end();
+        }
+    }
 
     const std::string& Curve::getName() const
     {
@@ -33,7 +56,7 @@ namespace geometry
         return this->type;
     }
 
-    void Curve::addEntry(double x, double y)
+    void Curve::addEntry(var_type x, var_type y)
     {
         this->xVals.push_back(x);
         this->yVals.push_back(y);
@@ -46,7 +69,7 @@ namespace geometry
             return false;
         }
 
-        double val = this->xVals[0];
+        var_type val = this->xVals[0];
         for (int i = 1; i < this->xVals.size(); i++)
         {
             if (this->xVals[i] <= val)
@@ -59,9 +82,9 @@ namespace geometry
         return true;
     }
 
-    double interpolate(double xVal, double x1, double x2, double y1, double y2)
+    var_type interpolate(var_type xVal, var_type x1, var_type x2, var_type y1, var_type y2)
     {
-        double dx = x2 - x1;
+        var_type dx = x2 - x1;
         if (fabs(dx) < 1.0e-20)
         {
             return (y1 + y2) / 2.;
@@ -72,31 +95,41 @@ namespace geometry
         }
     }
 
-    double Curve::lookup(double x) const
+    var_type Curve::inverseLookup(var_type y) const
     {
-        if (this->xVals.size() < 2)
+        return lookupEx(y, this->yVals, this->xVals);
+    }
+
+    var_type Curve::lookup(var_type x) const
+    {
+        return lookupEx(x, this->xVals, this->yVals);
+    }
+
+    var_type lookupEx(double x, const std::vector<var_type>& xVals, const std::vector<var_type>& yVals)
+    {
+        if (xVals.size() < 2)
         {
-            return 0;
+            return var_type();
         }
 
-        if (x <= this->xVals.front())
+        if (x <= xVals.front())
         {
-            return this->yVals.front();
+            return yVals.front();
         }
-        else if (x >= this->xVals.back())
+        else if (x >= xVals.back())
         {
-            return this->yVals.back();
+            return yVals.back();
         }
         else
         {
-            for (int i = 1; i < this->xVals.size(); i++)
+            for (int i = 1; i < xVals.size(); i++)
             {
-                if (this->xVals[i] > x)
+                if (xVals[i] > x)
                 {
-                    return interpolate(x, this->xVals[i - 1], this->xVals[i], this->yVals[i - 1], this->yVals[i]);
+                    return interpolate(x, xVals[i - 1], xVals[i], yVals[i - 1], yVals[i]);
                 }
             }
-            return 0;
+            return var_type();
         }
     }
 

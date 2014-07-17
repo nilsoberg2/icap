@@ -25,14 +25,14 @@ int __stdcall DeleteICAP(int h)
 int __stdcall icap_count_hpg(int h)
 {
 	ICAPHandle handle = (ICAPHandle)h;
-    return GLINK_COUNT;
+    return handle->GetLinkCount();
 }
 
 
 int __stdcall icap_load_hpg_step(int h)
 {
 	ICAPHandle handle = (ICAPHandle)h;
-    return handle->LoadNextHPG();
+    return handle->loadNextHpg();
 }
 
 
@@ -96,8 +96,19 @@ int __stdcall icap_step(int h, double* curStep_in)
 	ICAPHandle handle = (ICAPHandle)h;
     if (handle == NULL)
         return 1;
-    
+
     bool result = handle->Step(curStep_in, false);
+    return (result ? 0 : 1);
+}
+
+
+int __stdcall icap_step_dt(int h, double dt, double* elapsedTime)
+{
+	ICAPHandle handle = (ICAPHandle)h;
+    if (handle == NULL)
+        return 1;
+
+    bool result = handle->Step(elapsedTime, dt, false);
     return (result ? 0 : 1);
 }
 

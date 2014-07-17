@@ -2,16 +2,6 @@
 #define __ROUTING_H_________________________20080424151717__
 
 
-#include "geomInterface.h"
-
-
-#define PRESSURIZED_THRESHOLD           0.8
-#define IS_PRESSURIZED_IDX(idx, depth)  ((depth) > GLINK_MAXDEPTH(idx)*PRESSURIZED_THRESHOLD)
-#define IS_PRESSURIZED(depth, diam)     ((depth) > (diam)*PRESSURIZED_THRESHOLD)
-
-#define GATE_LOSS_DISABLED
-
-
 enum RoutingRegime
 {
     Regime_SteadyState = 1,     // Normal steady-state routing

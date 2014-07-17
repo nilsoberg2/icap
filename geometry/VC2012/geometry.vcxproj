@@ -74,21 +74,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\curve.h" />
-    <ClInclude Include="..\curveFactory.h" />
-    <ClInclude Include="..\fileSection.h" />
+    <ClInclude Include="..\curve_factory.h" />
+    <ClInclude Include="..\element_iterator.h" />
+    <ClInclude Include="..\file_section.h" />
     <ClInclude Include="..\geometry.h" />
     <ClInclude Include="..\inflow.h" />
     <ClInclude Include="..\junction.h" />
     <ClInclude Include="..\link.h" />
+    <ClInclude Include="..\link_list.h" />
     <ClInclude Include="..\node.h" />
-    <ClInclude Include="..\nodeFactory.h" />
+    <ClInclude Include="..\node_factory.h" />
+    <ClInclude Include="..\node_list.h" />
     <ClInclude Include="..\option.h" />
-    <ClInclude Include="..\parse.h" />
-    <ClInclude Include="..\parseable.h" />
-    <ClInclude Include="..\rtInflow.h" />
+    <ClInclude Include="..\options.h" />
     <ClInclude Include="..\storage.h" />
     <ClInclude Include="..\timeseries.h" />
-    <ClInclude Include="..\timeseriesFactory.h" />
+    <ClInclude Include="..\timeseries_factory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\curve.cpp" />
@@ -110,6 +111,9 @@
     </ProjectReference>
     <ProjectReference Include="..\..\util\VC2012\util.vcxproj">
       <Project>{b2cd04c4-e86b-498e-9846-7fc10637837c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xslib\VC2012\xslib.vcxproj">
+      <Project>{cdd6b429-c2f6-43d2-b2e1-f6681e965258}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

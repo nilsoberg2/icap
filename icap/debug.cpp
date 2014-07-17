@@ -1,12 +1,8 @@
 
 #include <cmath>
 
-#include "common.h"
-#include "debug.h"
-#include "routing.h"
 
-
-#ifdef ICAP_DEBUGGING
+#ifdef ICAP_DEBUG
 void OutputTimeStep(char* datetime, FILE* fh)
 {
     fprintf(fh, "TIMESTEP: %s\n", datetime);
@@ -29,7 +25,7 @@ void OutputTimeStep(char* datetime, FILE* fh)
             fprintf(fh, "Transitional");
         
         // No-flow case
-        else if (IS_ZERO(GLINK_FLOW(i)))
+        else if (isZero(GLINK_FLOW(i)))
         {
             if (GLINK_USDEPTH(i) > 0.0)
                 fprintf(fh, "Ponded");

@@ -8,13 +8,12 @@
 
 namespace geometry
 {
-    class ICAP_API Junction : public Node
+    class Junction : public Node
     {
     public:
-        Junction(const std::string& theId, IModel* model)
-            : Node(theId, model)
+        Junction(const id_type& theId, const std::string& theName)
+            : Node(theId, theName, NodeType::NodeType_Junction)
         {
-            this->nodeType = NodeType::NodeType_Junction;
         }
 
         virtual bool parseLine(const std::vector<std::string>& parts)

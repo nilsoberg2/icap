@@ -1,25 +1,29 @@
 #define _CRT_SECURE_NO_DEPRECATE
+
 #define _USE_MATH_DEFINES
+#include <cmath>
+#include <map>
+#include <vector>
+
+#include <hpg/error.hpp>
+#include "../util/math.h"
 
 #include "routing.h"
 #include "icap.h"
 #include "hpg.h"
 #include "debug.h"
-#include <cmath>
-#include <hpg/error.hpp>
-#include <map>
-#include <vector>
 #include "benchmark.h"
 
 
-bool ICAP::steadyRoute(int sinkNodeIdx, bool ponded)
+bool ICAP::steadyRoute(const id_type& sinkNodeIdx, bool ponded)
 {
-    double flow = m_model->getNodeVariable(sinkNodeIdx, variables::NodeFlow);
-    StepCount++;
-
     using namespace std;
-    map<int, bool> followList;
-    vector<int> toFollow;
+
+    var_type flow = m_model->getNodeVariable(sinkNodeIdx, variables::NodeFlow);
+    m_stepCount++;
+
+    map<id_type, bool> followList;
+    vector<id_type> toFollow;
 
     toFollow.push_back(sinkNodeIdx);
 
@@ -27,53 +31,41 @@ bool ICAP::steadyRoute(int sinkNodeIdx, bool ponded)
 
     while (! toFollow.empty())
     {
-        int nodeIdx = toFollow.back();
+        id_type nodeId = toFollow.back();
         toFollow.pop_back();
 
         // Skip nodes already processed.
-        if (followList.find(nodeIdx) != followList.end())
+        if (followList.find(nodeId) != followList.end())
             continue;
 
         // Get the node object associated with the index.
-        ICAPNode* node = m_network.FindNode(nodeIdx);
-        // Commented out this code because the network shouldn't have an
-        // invalid pointer.  If it does, then program should crash and we
-        // shouldn't handle it here.
-        //if (node == NULL)
-        //{
-        //    error("Invalid pointer found in m_network in icap_steadyRoute.");
-        //    exit(1);
-        //}
+        std::shared_ptr<geometry::Node> node = m_geometry->getNode(nodeId);
 
-        if (ponded)
-            toContinue = pondedRouteNode(nodeIdx);
-        else
-            toContinue = steadyRouteNode(nodeIdx);
+        //if (ponded)
+        //    toContinue = pondedRouteNode(nodeId);
+        //else
+            toContinue = steadyRouteNode(nodeId);
 
         if (! toContinue)
             break;
 
-        for (unsigned int i = 0; i < node->linkIdx.size(); i++)
+        for (auto link: node->getUpstreamLinks())
         {
-            int id = node->linkIdx.at(i);
-            if (GLINK_DSNODE(id) == nodeIdx)
-            {
-                if (ponded)
-                    toContinue = pondedRouteLink(id);
-                else
-                    toContinue = steadyRouteLink(id);
+            if (ponded)
+                toContinue = pondedRouteLink(link->getId());
+            else
+                toContinue = steadyRouteLink(link->getId());
 
-                if (! toContinue)
-                    break;
+            if (! toContinue)
+                break;
 
-                toFollow.push_back(GLINK_USNODE(id));
-            }
+            toFollow.push_back(link->getUpstreamNode()->getId());
         }
 
         if (! toContinue)
             break;
 
-        followList.insert(std::make_pair(nodeIdx, true));
+        followList.insert(std::make_pair(nodeId, true));
     }
 
     return toContinue;
@@ -85,74 +77,44 @@ bool ICAP::steadyRoute(int sinkNodeIdx, bool ponded)
 /// of upstream conduits.  Node depths can be different than conduit depths
 /// because of transition losses in junctions or geometry changes.
 /// </summary>
-bool ICAP::steadyRouteNode(const std::string& nodeId)
+bool ICAP::steadyRouteNode(const id_type& nodeId)
 {
-    //dprintf("Routing node %d", nodeIdx);
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing node " << nodeId;
 
     bool okToContinue = true;
 
-    double downDiam = m_geometry->getDownstreamLinkMaxDepth(nodeId);
+    std::shared_ptr<geometry::Node> node = m_geometry->getNode(nodeId);
+    var_type flow = m_model->getNodeVariable(nodeId, variables::NodeFlow);
+    var_type depth = m_model->getNodeVariable(nodeId, variables::NodeDepth);
+    
+    double downDiam = node->getDownstreamLinkMaxDepth();
     if (downDiam < 0)
     {
         downDiam = 0;
     }
-
-    IModelElement* node = m_model->getNodeElement(nodeId);
-
-    double flow = node->variable(variables::NodeFlow);
-    double depth = node->variable(variables::NodeDepth);
-
-    node->propagateDepthUpstream(depth);
-
-
-    m_model->propagateNodeDepth(nodeId, depth);
 
     // Look at every upstream node and carry the elevation upstream.
     // If the elevation is less than the invert of the upstream node,
     // then we just set their elevation to their invert elevation.
     // This is only done if there is flow in the pipes.
     bool geomChanges = false;
-    for (int i = 0; i < degree; i++)
+
+    for (auto link: node->getUpstreamLinks())
     {
-        int linkIdx = node->linkIdx.at(i);
-
-        // Only look at nodes that are upstream of this node.
-        if (GLINK_DSNODE(linkIdx) != nodeIdx)
-            continue;
-
-		// Process the reservoir interface differently.  If the critical depth at
-		// the pipe outlet is greater than the depth in the reservoir, then we
-		// set the downstream depth in the pipe to be equal to the critical depth.
-        // We do this here because we don't want to affect the actual reservoir
-        // depth that is stored in the Node object.
-		if (IS_NOT_ZERO(flow) && nodeIdx == m_sinkNodeIdx)
-		{
-			double resElev = depth + GNODE_INVERT(nodeIdx);
-			
-            double yCrit = 0;
-			double pipeDSDepth = 0;
-            if (!m_hpgList.CalculateCriticalDepth(flow, GLINK_MAXDEPTH(linkIdx), GLINK_MAXDEPTH(linkIdx) / 2, yCrit))
-            {
-                pipeDSDepth = MAX(GLINK_DSINVERT(linkIdx) + GLINK_MAXDEPTH(linkIdx), resElev) - GLINK_DSINVERT(linkIdx) + GLINK_DSOFFSET(linkIdx);
-            }
-            else
-            {
-    			double critElev = GLINK_DSINVERT(linkIdx) + yCrit;
-			    pipeDSDepth = MAX(critElev, resElev) - GLINK_DSINVERT(linkIdx) + GLINK_DSOFFSET(linkIdx);
-            }
-
-			updateUpstreamDepthForNode(linkIdx, pipeDSDepth);
-		}
-        else if (IS_NOT_ZERO(depth) && depth+GNODE_INVERT(nodeIdx) > GLINK_DSINVERT(linkIdx))
-            updateUpstreamDepthForNode(linkIdx, depth);
+        var_type dsInvert = link->getDownstreamInvert();
+        if (!isZero(depth) && depth + node->getInvert() > dsInvert)
+        {
+            link->variable(variables::LinkDsDepth) = depth - dsInvert;
+        }
         else
-            updateUpstreamDepthForNode(linkIdx, 0.0);
+        {
+            link->variable(variables::LinkDsDepth) = 0;
+        }
         
-        if (GLINK_TYPE(linkIdx) == LINKTYPE_CONDUIT &&
-            GLINK_GEOMTYPE(linkIdx) == XSGEOM_CIRCULAR &&
-            IS_NOT_ZERO(downDiam) &&
-            GLINK_MAXDEPTH(linkIdx) != downDiam)
-          geomChanges = true;
+        if (link->getGeometryType() != xs::xstype::dummy && !isZero(downDiam) && link->getMaxDepth() != downDiam)
+        {
+            geomChanges = true;
+        }
     }
 
     // If we're not calculating junction losses, we just return at
@@ -162,322 +124,145 @@ bool ICAP::steadyRouteNode(const std::string& nodeId)
     // losses to calculate, and return if none of the upstream pipes
     // have flow in them.  We also return if there is only one
     // upstream pipe and there is no change in geometry.
-    if (degree < 2 || IS_ZERO(flow) || (degree == 2 && !geomChanges))
+    int degree = node->getDownstreamLinks().size() + node->getUpstreamLinks().size();
+    if (degree < 2 || isZero(flow) || (degree == 2 && !geomChanges))
+    {
         return true;
+    }
     else
-        return computeNodeLosses(nodeIdx, nodeId);
+    {
+        return computeNodeLosses(nodeId);
+    }
 }
 
+//
+//bool ICAP::pondedRouteNode(int nodeId)
+//{
+//    //dprintf("Routing ponded node %d", nodeId);
+//
+//    bool okToContinue = true;
+//
+//    // Get the node from our m_network representation.
+//    ICAPNode* node = m_network.FindNode(nodeId);
+//    if (node == NULL)
+//    {
+//        char temp[25];
+//        sprintf(temp, "%d", nodeId);
+//        m_errorStr += "Unable to find node ";
+//        m_errorStr += temp;
+//        m_errorStr += " in steadyRouteNode.";
+//        return false;
+//    }
+//
+//    int degree = (int)node->linkId.size();
+//
+//    double flow = m_geometry->getNodeVariable(nodeId, variables::NodeInflow);
+//    double depth = GNODE_DEPTH(nodeId);
+//
+//    // Look at every upstream node and carry the elevation upstream.
+//    for (int i = 0; i < degree; i++)
+//    {
+//        int linkId = node->linkId.at(i);
+//
+//        // Only look at nodes that are upstream of this node.
+//        if (GLINK_DSNODE(linkId) != nodeId)
+//            continue;
+//
+//        updateUpstreamElevationForNode(linkId, depth);
+//    }
+//
+//    // After passing the elevation to the upstream pipes, convert the
+//    // water elevation to a water depth for this node.
+//    GNODE_DEPTH(nodeId) = elevationToDepthForNode(nodeId);
+//
+//    return true;
+//}
+//
 
-bool ICAP::pondedRouteNode(int nodeIdx)
+
+bool ICAP::steadyRouteLink(const id_type& linkId)
 {
-    //dprintf("Routing ponded node %d", nodeIdx);
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing link " << linkId;
 
     bool okToContinue = true;
 
-    // Get the node from our m_network representation.
-    ICAPNode* node = m_network.FindNode(nodeIdx);
-    if (node == NULL)
-    {
-        char temp[25];
-        sprintf(temp, "%d", nodeIdx);
-        m_errorStr += "Unable to find node ";
-        m_errorStr += temp;
-        m_errorStr += " in steadyRouteNode.";
-        return false;
-    }
+    std::shared_ptr<geometry::Link> link = m_geometry->getLink(linkId);
 
-    int degree = (int)node->linkIdx.size();
-
-    double flow = GNODE_INFLOW(nodeIdx);
-    double depth = GNODE_DEPTH(nodeIdx);
-
-    // Look at every upstream node and carry the elevation upstream.
-    for (int i = 0; i < degree; i++)
-    {
-        int linkIdx = node->linkIdx.at(i);
-
-        // Only look at nodes that are upstream of this node.
-        if (GLINK_DSNODE(linkIdx) != nodeIdx)
-            continue;
-
-        updateUpstreamElevationForNode(linkIdx, depth);
-    }
-
-    // After passing the elevation to the upstream pipes, convert the
-    // water elevation to a water depth for this node.
-    GNODE_DEPTH(nodeIdx) = elevationToDepthForNode(nodeIdx);
-
-    return true;
-}
-
-
-double ICAP::elevationToDepthForNode(int nodeIdx)
-{
-    double result = GNODE_DEPTH(nodeIdx) - GNODE_INVERT(nodeIdx);
-    if (result < 0.0)
-        return 0.0;
-    else
-        return result;
-}
-
-
-double ICAP::elevationToDSDepthForLink(int linkIdx)
-{
-    double result = GLINK_DSDEPTH(linkIdx) - GLINK_DSINVERT(linkIdx);
-    if (result < 0.0)
-        return 0.0;
-    else
-        return result;
-}
-
-
-double ICAP::elevationToUSDepthForLink(int linkIdx)
-{
-    double result = GLINK_USDEPTH(linkIdx) - GLINK_USINVERT(linkIdx);
-    if (result < 0.0)
-        return 0.0;
-    else
-        return result;
-}
-
-
-void ICAP::updateUpstreamDepthForNode(int linkIdx, double dsDepth)
-{
-    // Set depth on downstream end of pipe.
-    GLINK_DSDEPTH(linkIdx) = dsDepth - GLINK_DSOFFSET(linkIdx);
-
-    if (GLINK_DSDEPTH(linkIdx) < 0.0)
-        GLINK_DSDEPTH(linkIdx) = 0.0;
-}
-
-
-void ICAP::updateUpstreamElevationForNode(int linkIdx, double dsElev)
-{
-    // Set elevation on downstream end of pipe.
-    GLINK_DSDEPTH(linkIdx) = dsElev;
-}
-
-
-void ICAP::updateUpstreamDepthForLink(int linkIdx, double usDepth, double volume)
-{
-    // Set depth on upstream end of pipe.
-    GLINK_USDEPTH(linkIdx) = usDepth;
-
-    if (GLINK_USDEPTH(linkIdx) < 0.0)
-        GLINK_USDEPTH(linkIdx) = 0.0;
-
-	GLINK_VOLUME(linkIdx) = volume;
-
-    // Update the depth for the node upstream.
-    int usNodeIdx = GLINK_USNODE(linkIdx);
-    GNODE_DEPTH(usNodeIdx) = usDepth + GLINK_USOFFSET(linkIdx);
-
-    if (GNODE_DEPTH(usNodeIdx) < 0.0)
-        GNODE_DEPTH(usNodeIdx) = 0.0;
-    else if (IS_ZERO(GLINK_USDEPTH(linkIdx)))
-        GNODE_DEPTH(usNodeIdx) = 0.0;
-}
-
-
-void ICAP::updateUpstreamElevationForLink(int linkIdx, double usElev, double volume)
-{
-    // Set DEPTH, not elevation, on upstream end of pipe.
-    GLINK_USDEPTH(linkIdx) = usElev - GLINK_USINVERT(linkIdx);
-
-	GLINK_VOLUME(linkIdx) = volume;
-
-    // Update the ELEVATION, not depth, for the node upstream.
-    int usNodeIdx = GLINK_USNODE(linkIdx);
-    GNODE_DEPTH(usNodeIdx) = usElev;
-}
-
-
-bool ICAP::steadyRouteLink(int linkIdx)
-{
-    //dprintf("Routing link %d", linkIdx);
-
-    BENCH_INIT;
-    
-    bool okToContinue = true;
-
-    double flow = m_model->getLinkVariable(linkIdx, variables::LinkFlow);
-    double usDepth = GLINK_USDEPTH(linkIdx);
-    double dsDepth = GLINK_DSDEPTH(linkIdx);
-	double volume = 0.0;
-	double slope = GLINK_SLOPE(linkIdx);
+    var_type flow = link->variable(variables::LinkFlow);
+    var_type dsDepth = link->variable(variables::LinkDsDepth);
+    var_type usDepth = 0;
+	var_type volume = 0.0;
+	var_type slope = link->getSlope();
+    var_type length = link->getLength();
+    var_type dsInvert = link->getDownstreamInvert();
+    var_type usInvert = link->getUpstreamInvert();
 
     // Carry the depth across if the link isn't a conduit or doesn't have
     // proper geometry.
-    if (GLINK_TYPE(linkIdx) != LINKTYPE_CONDUIT || ! GLINK_HASGEOM(linkIdx))
+    if (link->getGeometryType() == xs::xstype::dummy)
     {
-        GLINK_VOLUME(linkIdx) = 0.0;
-        if (IS_ZERO(dsDepth))
-            return true;//updateUpstreamDepthForLink(linkIdx, 0.0);
-        else
+        link->variable(variables::LinkVolume) = 0;
+
+        if (!isZero(dsDepth))
         {
-            updateUpstreamDepthForLink(linkIdx, dsDepth - GLINK_SLOPE(linkIdx) * GLINK_LENGTH(linkIdx), 0.0);
-            return true;
+            link->variable(variables::LinkUsDepth) = std::max(0.0, dsDepth - slope * length);
         }
+
+        return true;
     }
 
 	if (slope < 0.0)
+    {
 		flow = -flow;
+    }
+
+    var_type minFlow = m_hpgList.getLowestFlow(linkId, flow < 0);
     
     // If there isn't any flow, then we carry the current water
     // elevation across to upstream nodes (ponding).
-    if (IS_ZERO(flow))
+    if (fabs(flow) < fabs(minFlow))
     {
-		//DEBUG_MSG2("\t0");
         // We only want to carry across the ponding effect if the
         // ponding will actually be above the upstream tunnel invert.
-        if (IS_NOT_ZERO(dsDepth) && dsDepth+GLINK_DSINVERT(linkIdx) > GLINK_USINVERT(linkIdx))
-            usDepth = dsDepth - GLINK_SLOPE(linkIdx) * GLINK_LENGTH(linkIdx);
+        if (!isZero(dsDepth) && dsDepth + dsInvert > usInvert)
+        {
+            usDepth = dsDepth - slope * length;
+        }
 
         // If the water isn't high enough, then we mark this pipe
-        // as having no water.
+        // as having no water at the upstream end.
         else
+        {
             usDepth = 0.0;
+        }
 
-		volume = ComputePipeVolume(GLINK_MAXDEPTH(linkIdx), GLINK_SLOPE(linkIdx),
-			GLINK_LENGTH(linkIdx), dsDepth - GLINK_SLOPE(linkIdx) * GLINK_LENGTH(linkIdx));
+		volume = link->computeLevelVolume(dsDepth);
     }
 
-    // Ok, now there is flow.  So we check to see if that flow is in
-    // the range of the HPG AND there are valid curves with which to
-    // do interpolation.
+    // In this case there is flow.  Interpolate from our HPGs now.
     else
 	{
-        double tempFlow1 = m_hpgList.GetLowestFlow(linkIdx, flow);
-        if (fabs(flow) <= fabs(tempFlow1))
-            flow = tempFlow1 * 1.05;
+        if (!m_hpgList.getUpstream(linkId, dsDepth + dsInvert, flow, usDepth))
+        {
+            BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
+                dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
+            okToContinue = false;
+        }
 
-        BENCH_START;
-
-		int interpOK = m_hpgList.CanInterpolateExtended(linkIdx, dsDepth, flow);
-		int hpgEC = m_hpgList.GetErrorCode();
-
-        BENCH_STOP;
-
-        #if defined(BENCHMARKYES)
-        // We do ifdef here because we don't want std::cout present unless benchmarking
-        BENCH_REPORT_IOS("InterpInit ");
-        #endif
-
-		// If there was an error then we bomb out.
-		if (interpOK == HPG_ERROR)
-			okToContinue = false;
-
-		// Pipe empty or flow/depth is valid for HPG.
-		else if (hpgEC == 0 && (interpOK == HPG_PIPE_EMPTY || interpOK == HPG_PIPE_OK))
-		{
-			//DEBUG_MSG2("\t1");
-
-            BENCH_START;
-
-			// Get the upstream value (either use critical if less than the
-			// invert or the actual curve).  This will return a depth relative
-			// to the pipe invert.
-			bool status = m_hpgList.GetUpstream(linkIdx, dsDepth, flow, usDepth);
-
-            BENCH_STOP;
-
-            #if defined(BENCHMARKYES)
-            // We do ifdef here because we don't want std::cout present unless benchmarking
-            BENCH_REPORT_IOS("GetUpstream ");
-            #endif
-
-			// Check to see if there was an error.
-			if (! status)
-			{
-				char temp[50];
-				sprintf(temp, "link=%s dsDepth=%f flow=%f", GLINK_ID(linkIdx), dsDepth, flow);
-				m_errorStr += "HPG interpolation for ";
-				m_errorStr += temp;
-				m_errorStr += " failed in steadyRouteLink (HPG error: ";
-				m_errorStr += m_hpgList.GetErrorStr();
-				m_errorStr += ").";
-				okToContinue = false;
-			}
-			
-            BENCH_START;
-
-			// Get the volume stored in the pipe
-			status = m_hpgList.GetVolume(linkIdx, dsDepth, flow, volume);
-
-            BENCH_STOP;
-
-            #if defined(BENCHMARKYES)
-            // We do ifdef here because we don't want std::cout present unless benchmarking
-            BENCH_REPORT_IOS("GetVolume ");
-            #endif
-
-			// Check to see if there was an error.
-			if (! status)
-			{
-				char temp[50];
-				sprintf(temp, "link=%s dsDepth=%f flow=%f", GLINK_ID(linkIdx), dsDepth, flow);
-				m_errorStr += "HPG volume interpolation for ";
-				m_errorStr += temp;
-				m_errorStr += " failed in steadyRouteLink (HPG error: ";
-				m_errorStr += m_hpgList.GetErrorStr();
-				m_errorStr += ").";
-				okToContinue = false;
-			}
-		}
-
-		// Ok.  So now we have flow, but it isn't in the interpolation range.
-		// So we handle this with our special interpolation routines.
-		else if (hpgEC == 0 && interpOK == HPG_PIPE_FULL)
-		{
-			//DEBUG_MSG2("\t2");
-
-            BENCH_START;
-
-			// We do our pressurized flow calculations, since the data are
-			// outside of interpolable regions.  This will return a depth relative
-			// to the pipe invert.
-			bool status = m_hpgList.PressurizedInterpolation(linkIdx, dsDepth, flow, usDepth);
-
-            BENCH_STOP;
-
-            #if defined(BENCHMARKYES)
-            // We do ifdef here because we don't want std::cout present unless benchmarking
-            BENCH_REPORT_IOS("PressurizedInterpolation ");
-            #endif
-
-
-			// Check to see if there was an error.
-			if (! status)
-			{
-				char temp[50];
-				sprintf(temp, "link=%d dsDepth=%f flow=%f", linkIdx, dsDepth, flow);
-				m_errorStr += "Pressurized computation for ";
-				m_errorStr += temp;
-				m_errorStr += " failed in steadyRouteLink.";
-				okToContinue = false;
-			}
-
-			double rad = GLINK_MAXDEPTH(linkIdx) / 2.0;
-			volume = M_PI * rad * rad * GLINK_LENGTH(linkIdx);
-		}
-
-		else
-		{
-			char temp[50];
-			sprintf(temp, "%d dsDepth=%f flow=%f", linkIdx, dsDepth, flow);
-			m_errorStr += "A HPG error occurred (";
-			m_errorStr += m_hpgList.GetErrorStr();
-			m_errorStr += ") in steadyRouteLink.";
-			okToContinue = false;
-		}
+        if (okToContinue && !m_hpgList.getVolume(linkId, dsDepth + dsInvert, flow, volume))
+        {
+            BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
+                dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
+            okToContinue = false;
+        }
 	}
 
     // If there wasn't an error, then we carry the interpolated upstream
     // elevation to the upstream nodes.
     if (okToContinue)
     {
-        updateUpstreamDepthForLink(linkIdx, usDepth, volume);
+        link->variable(variables::LinkUsDepth) = usDepth - usInvert;
+        link->variable(variables::LinkVolume) = volume;
         return true;
     }
     else
@@ -485,33 +270,34 @@ bool ICAP::steadyRouteLink(int linkIdx)
 }
 
 
-bool ICAP::pondedRouteLink(int linkIdx)
+bool ICAP::pondedRouteLink(const id_type& linkId)
 {
-    //dprintf("Routing ponded link %d", linkIdx);
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing ponded link " << linkId;
+
+    std::shared_ptr<geometry::Link> link = m_geometry->getLink(linkId);
     
-    double dsElev = GLINK_DSDEPTH(linkIdx); // returns elevation in ponded case
+    double dsElev = link->variable(variables::LinkDsDepth); // returns elevation in ponded case
 	double volume = 0.0;
-    double dsDepth = dsElev - GLINK_DSINVERT(linkIdx);
+    double dsDepth = dsElev - link->getDownstreamInvert();
 
     // If the link is a DUMMY link, then the volume is zero.
-    if (GLINK_TYPE(linkIdx) != LINKTYPE_CONDUIT || ! GLINK_HASGEOM(linkIdx))
+    if (link->getGeometryType() == xs::xstype::dummy)
+    {
         volume = 0.0;
+    }
     else
     {
-        double S = GLINK_SLOPE(linkIdx);
-        double L = GLINK_LENGTH(linkIdx);
-        double usDepth = dsDepth - S * L;
-		double D = GLINK_MAXDEPTH(linkIdx);
-	    volume = ComputePipeVolume(D, S, L, usDepth);
+	    volume = link->computeLevelVolume(dsDepth);
     }
 
-    updateUpstreamElevationForLink(linkIdx, dsElev, volume);
+    link->variable(variables::LinkUsDepth) = dsElev;
+    link->variable(variables::LinkVolume) = volume;
 
     // Set the downstream value to be stored to be DEPTH, not elevation.
     if (dsDepth < 0.0)
-        GLINK_DSDEPTH(linkIdx) = 0.0;
+        link->variable(variables::LinkDsDepth) = 0;
     else
-        GLINK_DSDEPTH(linkIdx) = dsDepth;
+        link->variable(variables::LinkDsDepth) = dsDepth;
 
     return true;
 }

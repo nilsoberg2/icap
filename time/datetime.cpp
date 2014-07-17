@@ -136,8 +136,9 @@ DateTime::~DateTime()
 {
 }
 
-bool DateTime::tryParseDate(const char* s, DateTime& dt, Format::DateFormat format)
+bool DateTime::tryParseDate(std::string str, DateTime& dt, Format::DateFormat format)
 {
+    const char* s = str.c_str();
     int  yr = 0, mon = 0, day = 0, n;
     char month[4];
     char sep1, sep2;
@@ -265,8 +266,9 @@ double encodeDate(int year, int month, int day)
     }
 }
 
-bool DateTime::tryParseTime(const char* s, DateTime& dt)
+bool DateTime::tryParseTime(std::string str, DateTime& dt)
 {
+    const char* s = str.c_str();
     int  n, hr, min = 0, sec = 0;
 
     n = sscanf(s, "%d:%d:%d", &hr, &min, &sec);

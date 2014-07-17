@@ -1,13 +1,15 @@
 
 #include <boost/algorithm/string.hpp>
 #include <string>
+
+#include "../util/parse.h"
+
 #include "inflow.h"
-#include "parse.h"
 
 
 namespace geometry
 {
-    Inflow::Inflow(ITimeseriesFactory* factory)
+    Inflow::Inflow(std::shared_ptr<TimeseriesFactory> factory)
     {
         this->tsFactory = factory;
         this->timeseries = NULL;

@@ -3,15 +3,17 @@
 
 #include <string>
 #include <vector>
-#include "curve.h"
-#include "parseable.h"
+
+#include "../util/parseable.h"
 #include "../time/datetime.h"
 #include "../api.h"
+
+#include "curve.h"
 
 
 namespace geometry
 {
-    class ICAP_API Timeseries : public Curve
+    class Timeseries : public Curve
     {
     private:
         DateTime lastDate;

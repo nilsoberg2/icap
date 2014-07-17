@@ -4,6 +4,10 @@
 #include <circhpg.hpp>
 #include <vector>
 #include <string>
+#include <memory>
+
+#include "../util/parseable.h"
+#include "../geometry/link_list.h"
 
 
 #define HPG_ERROR -100
@@ -12,65 +16,44 @@
 #define HPG_PIPE_EMPTY -1
 
 
-class ICAPHPG
+class IcapHpg : public Parseable
 {
 protected:
-    std::vector<hpgns::CircularHPG*> m_list;
+    std::map<id_type, std::shared_ptr<hpgns::BaseHPG>> m_list;
     
     int m_hpgCount;
 
-    int m_errorCode;
-    std::string m_errorStr;
+    //NormCritParams m_ncParams;
+    //bool m_ncParamsInit;
 
-    NormCritParams m_ncParams;
-    bool m_ncParamsInit;
+    bool checkAndLoadHPG(std::shared_ptr<geometry::Link> link, const std::string& dirPath);
 
-    bool checkAndLoadHPG(int idx, const char* dir);
-
-    bool loadHPG(int idx, const char* path);
-
-    void setError(int code, std::string error);
+    bool loadHPG(id_type linkId, const std::string& path);
 
     int m_currentHPG;
 
 public:
-    ~ICAPHPG();
-    ICAPHPG();
-    bool Allocate(int count);
-    void Free();
+    ~IcapHpg();
+    IcapHpg();
+    bool allocate(int count);
 
-    hpgns::CircularHPG* GetHPG(int idx);
-
-    bool IsValidFlow(int linkIdx, double flow);
-
-    bool CanInterpolate(int linkIdx, double dsDepth, double flow);
-
-	// 0 = ok, -1 = too small flow, +1 = too large flow
-	int CanInterpolateExtended(int linkIdx, double dsDepth, double flow);
+    std::shared_ptr<hpgns::BaseHPG> getHpg(id_type idx);
+    bool getUpstream(id_type linkId, var_type dsHead, var_type flow, var_type& usHead);
+    bool getHf(id_type linkId, var_type dsHead, var_type flow, var_type& hf);
+	bool getVolume(id_type linkId, var_type dsHead, var_type flow, var_type& volume);
+    var_type getLowestFlow(int linkId, bool isAdverse);
     
-    bool GetUpstream(int linkIdx, double dsDepth, double flow, double& usDepth);
-    
-    bool GetHf(int linkIdx, double dsDepth, double flow, double& hf);
+    bool loadHpgs(const std::string& path, std::shared_ptr<geometry::LinkList> linkList);
+    int loadNextHpg(const std::string& path, std::shared_ptr<geometry::LinkList> linkList);
 
-	bool GetVolume(int linkIdx, double dsDepth, double flow, double& volume);
-    
-    bool GetCritUpstream(int linkIdx, double flow, double& usDepth);
-    
-    bool PressurizedInterpolation(int linkIdx, double dsDepth, double flow, double& usDepth);
-
-    bool CalculateCriticalDepth(double flow, double diameter, double initGuess, double& hCrit);
-
-    bool LoadHPGs(char* path);
-
-    bool LoadSingleHPG(char* filePath);
-
-    int LoadNextHPG(char* path);
-
-	double GetLowestFlow(int linkIdx, double inputFlow);
-
-    const char* GetErrorStr();
-    int GetErrorCode();
-    int GetHPGError(int linkIdx);
+    //bool IsValidFlow(int linkId, double flow);
+    //bool CanInterpolate(int linkId, double dsDepth, double flow);
+    //// 0 = ok, -1 = too small flow, +1 = too large flow
+    //int CanInterpolateExtended(int linkId, double dsDepth, double flow);
+    //bool GetCritUpstream(int linkId, double flow, double& usDepth);
+    //bool PressurizedInterpolation(int linkId, double dsDepth, double flow, double& usDepth);
+    //bool CalculateCriticalDepth(double flow, double diameter, double initGuess, double& hCrit);
+    //int GetHPGError(int linkId);
 };
 
 

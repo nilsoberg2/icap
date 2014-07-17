@@ -1,13 +1,12 @@
 #define _CRT_SECURE_NO_DEPRECATE
 
-#include "icap.h"
-
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#ifndef M_PI
-#define M_PI       3.14159265358979323846
-#endif
+#include "../model/units.h"
+#include "../util/math.h"
+
+#include "icap.h"
 
 
 /*
@@ -59,39 +58,33 @@ extern "C" float __cdecl CALCJUNCTION(float* YDown, float* QLat, float* QMain, f
                                       float* Yup, float* YLat);
 
 
-bool ICAP::computeNodeLosses(int nodeIdx, ICAPNode* node)
+bool ICAP::computeNodeLosses(const id_type& nodeId)
 {
-    // At this point we are in cases where we need to compute losses.
+    std::shared_ptr<geometry::Node> node = m_geometry->getNode(nodeId);
+    const std::vector<std::shared_ptr<geometry::Link>>& usLinks = node->getUpstreamLinks();
+    const std::vector<std::shared_ptr<geometry::Link>>& dsLinks = node->getDownstreamLinks();
 
     // Don't compute losses if the there is only one pipe.
-    int degree = (int)node->linkIdx.size();
-    if (degree < 2)
+    if (dsLinks.size() < 1 || usLinks.size() < 1)
+    {
         return true;
-
+    }
+        
     // Next we get all of the IDs of the downstream and upstream
     // nodes.  The main branch (mainId) is just the first ID in the
     // node list for this junction.
 
-    int downIdx, mainIdx, latIdx;
-    downIdx = mainIdx = latIdx = INVALID_IDX;
+    int downIdx = 0;
+    int mainIdx = INVALID_IDX, latIdx = INVALID_IDX;
 
-    for (int i = 0; i < degree; i++)
+    for (int i = 0; i < usLinks.size(); i++)
     {
-        int linkIdx = node->linkIdx.at(i);
-        if (GLINK_USNODE(linkIdx) == nodeIdx)
-            downIdx = linkIdx;
-        else if ((mainIdx == INVALID_IDX && GLINK_FLOW(linkIdx) > 0.0) ||
-                 latIdx != INVALID_IDX)
-            mainIdx = linkIdx;
+        if ((mainIdx == INVALID_IDX && usLinks[i]->variable(variables::LinkFlow) > 0.0) || latIdx != INVALID_IDX)
+            mainIdx = i;
         else
-            latIdx = linkIdx;
+            latIdx = i;
     }
-
-    // If we couldn't find a down index, return true because we can't
-    // compute losses.
-    if (downIdx == INVALID_IDX)
-        return true;
-
+    
     // If no "main" was found but a "lateral" branch was, then swap them.
     if (mainIdx == INVALID_IDX && latIdx != INVALID_IDX)
     {
@@ -99,59 +92,51 @@ bool ICAP::computeNodeLosses(int nodeIdx, ICAPNode* node)
         latIdx = INVALID_IDX;
     }
 
-    // If neither "main" nor "lateral" branches were found, then return an error.
-    else if (mainIdx == INVALID_IDX && latIdx == INVALID_IDX)
-        return false;
-
-    // Work in floats because that's what the junction loss code computes
-    // things in.
-
-    // Get the downstream pipe's depth and diameter.
-    float yDown = (float)GLINK_USDEPTH(downIdx);
-    float dDown = (float)GLINK_MAXDEPTH(downIdx);
-
-    // Get the main branch flow and diameter.  In the case that
+    // Get the downstream pipe's depth and max depth.
+    float yDown = (float)dsLinks[downIdx]->variable(variables::LinkDsDepth);
+    float dDown = (float)dsLinks[downIdx]->getMaxDepth();
+        
+    // Get the main branch flow and max depth.  In the case that
     // the main branch is a structure (dropshaft) we assume that
-    // the diameter of the main branch is the same as the diameter
+    // the max depth of the main branch is the same as the max depth
     // of the downstream pipe.
-    float qMain = (float)GLINK_FLOW(mainIdx);
-    float dMain;
-    if (GLINK_TYPE(mainIdx) == LINKTYPE_CONDUIT && GLINK_GEOMTYPE(mainIdx) == XSGEOM_CIRCULAR)
-        dMain = (float)GLINK_MAXDEPTH(mainIdx);
-    else
+    float qMain = (float)usLinks[mainIdx]->variable(variables::LinkFlow);
+    float dMain = (float)usLinks[mainIdx]->getMaxDepth();
+    if (usLinks[mainIdx]->getGeometryType() == xs::xstype::dummy)
+    {
         dMain = dDown;
+    }
 
     // Next get the lateral branch flow and diameter.  These are
     // zero if there is no lateral branch.  In the case that the
     // lateral branch is a structure we assume that the diameter
     // of the lateral branch is the same as the diameter of the
     // downstream pipe.
-    float qLat = 0.0;
-    float dLat = 0.0;
+    float qLat = 0;
+    float dLat = 0;
     if (latIdx != INVALID_IDX)
     {
-        qLat = (float)GLINK_FLOW(latIdx);
-        if (GLINK_TYPE(latIdx) == LINKTYPE_CONDUIT && GLINK_GEOMTYPE(latIdx) == XSGEOM_CIRCULAR)
-            dLat = (float)GLINK_MAXDEPTH(latIdx);
-        else
+        qLat = usLinks[latIdx]->variable(variables::LinkFlow);
+        dLat = usLinks[latIdx]->getMaxDepth();
+        if (usLinks[latIdx]->getGeometryType() == xs::xstype::dummy)
+        {
             dLat = dDown;
+        }
     }
-
+        
     // Next determine the angle.  It is zero if there is no lateral branch.
-    double angleDbl = 0.0;
-    if (latIdx != INVALID_IDX)
+    float angle = (float)node->computeUpstreamLinksAngle(downIdx, mainIdx, latIdx);
+    if (isZero(angle))
     {
-        if (! computeAngle(downIdx, mainIdx, latIdx, &angleDbl))
-            return false;
+        return false;
     }
-    float angle = (float)angleDbl;
-
+        
     // Now we compute the loss
-    float grav = 32.174f;
+    float grav = (float)UCS->g();
     float yMain = 0.0f;
     float yLat = 0.0f;
     float err = CALCJUNCTION(&yDown, &qLat, &qMain, &dDown, &dMain, &dLat, &angle, &grav, &yMain, &yLat);
-
+        
     // Now, if there is a lateral branch and no flow in one of
     // the branches, then we need to carry the water depths from
     // the branch that has flow to the branch that doesn't.
@@ -160,106 +145,23 @@ bool ICAP::computeNodeLosses(int nodeIdx, ICAPNode* node)
         // If there the main branch doesn't have flow and the lateral
         // branch has flow, then we carry the lateral water depth
         // over to the main branch.
-        if (qMain == 0.0 && qLat != 0.0)
+        if (isZero(qMain) && !isZero(qLat))
+        {
             yMain = yLat;
+        }
 
         // Else if the lateral branch doesn't have flow, and the
         // main branch has flow, then we carry the main water depth
         // over to the lateral branch.
-        else if (qMain != 0.0 && qLat == 0.0)
+        else if (!isZero(qMain) && isZero(qLat))
+        {
             yLat = yMain;
+        }
+
+        usLinks[latIdx]->variable(variables::LinkDsDepth) = yLat;
     }
 
-    // Finally we can save the new water depths.
-    for (unsigned int i = 0; i < node->linkIdx.size(); i++)
-    {
-        int linkIdx = node->linkIdx.at(i);
-        if (linkIdx == mainIdx)
-            updateUpstreamDepthForNode(linkIdx, fabs(yMain));
-        else if (linkIdx == latIdx)
-            updateUpstreamDepthForNode(linkIdx, fabs(yLat));
-        else
-            updateUpstreamDepthForNode(linkIdx, GNODE_DEPTH(nodeIdx));
-    }
+    usLinks[mainIdx]->variable(variables::LinkDsDepth) = yMain;
 
     return true;
 }
-
-
-bool ICAP::computeAngle(int downIdx, int mainIdx, int latIdx, double* angle)
-{
-
-    // First check if junction locations are even included in the input file.
-    // If they're not, then we assume that the lateral angle is 90 deg.
-    if (!m_hasJunctionCoords)
-    {
-        *angle = 90.0;
-        return true;
-    }
-
-
-    //ICAPLink* down = m_network.FindLink(downIdx);
-    //if (down == NULL)
-    //    return false;
-
-    ICAPLink* main = m_network.FindLink(mainIdx);
-    if (main == NULL)
-    {
-        char temp[25];
-        sprintf(temp, "%d", mainIdx);
-        m_errorStr += "Unable to find main link ";
-        m_errorStr += temp;
-        m_errorStr += " in computeAngle.";
-        return false;
-    }
-
-    ICAPLink* lat = m_network.FindLink(latIdx);
-    if (lat == NULL)
-    {
-        char temp[25];
-        sprintf(temp, "%d", latIdx);
-        m_errorStr += "Unable to find lateral link ";
-        m_errorStr += temp;
-        m_errorStr += " in computeAngle.";
-        return false;
-    }
-
-    // Link[downIdx].n1 is equal to Link[mainIdx].n2 and is also equal to
-    // Link[latIdx].n2
-
-    double xd = main->x2,
-           yd = main->y2;
-    
-    double xm, ym;
-    if (main->verts.size() > 0)
-    {
-        xm = main->verts.back().x;
-        ym = main->verts.back().y;
-    }
-    else
-    {
-        xm = main->x1;
-        ym = main->y1;
-    }
-
-    double xl, yl;
-    if (lat->verts.size() > 0)
-    {
-        xl = lat->verts.back().x;
-        yl = lat->verts.back().y;
-    }
-    else
-    {
-        xl = lat->x1;
-        yl = lat->y1;
-    }
-
-    double dp = (xd - xm) * (xd - xl) + (yd - ym) * (yd - yl);
-    double cp = (xd - xm) * (yd - yl) - (xd - xl) * (yd - ym);
-
-    // Compute the angle in radians and then convert to degrees.
-    *angle = fabs(atan2(cp, dp) * 180.0 / M_PI);
-
-    return true;
-}
-

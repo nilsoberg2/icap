@@ -8,8 +8,12 @@
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
 
+#include "../model/modelElement.h"
+#include "../model/units.h"
+#include "../time/datetime.h"
+
 #include "geometry.h"
-#include "fileSection.h"
+#include "file_section.h"
 #include "junction.h"
 #include "storage.h"
 #include "node.h"
@@ -17,16 +21,7 @@
 #include "curve.h"
 #include "timeseries.h"
 #include "inflow.h"
-#include "../model/modelElement.h"
-#include "rtInflow.h"
-//#include "../common.h"
-#include "../model/units.h"
 #include "option.h"
-#include "../time/datetime.h"
-
-
-Units* UCS = new Units(UnitSystem::Units_US);
-
 
 
 namespace geometry
@@ -34,27 +29,22 @@ namespace geometry
     class Geometry::Impl
     {
     public:
-        Geometry* parent;
+        std::shared_ptr<Geometry> parent;
 
         std::map<std::string, FileSection> sectionNameMap;
-        std::map<std::string, Link*> linkMap; // Need to be deleted in dtor
+        std::map<id_type, std::shared_ptr<Link>> linkMap; // Need to be deleted in dtor
 
-        typedef std::map<std::string, Node*>::iterator node_iter;
-        std::map<std::string, Node*> nodeMap; // Need to be deleted in dtor
-        std::map<std::string, Curve*> curveMap; // Need to be deleted in dtor
-        std::map<std::string, Timeseries*> tsMap; // Need to be deleted in dtor
-        std::map<std::string, RealTimeInflow*> rtInflowMap; // DO NOT delete in dtor
+        typedef std::map<id_type, std::shared_ptr<Node>>::iterator node_iter;
+        std::map<id_type, std::shared_ptr<Node>> nodeMap; // Need to be deleted in dtor
+        std::map<std::string, std::shared_ptr<Curve>> curveMap; // Need to be deleted in dtor
+        std::map<std::string, std::shared_ptr<Timeseries>> tsMap; // Need to be deleted in dtor
         std::map<std::string, FileSection> objectTypeMap;
-        std::map<std::string, Option*> options;
+        std::map<std::string, std::shared_ptr<Option>> options;
 
-        std::vector<Node*> sinkNodes;  // NOT needed to delete in dtor
+        std::map<std::string, id_type> nodeIdMap;
+        std::map<std::string, id_type> linkIdMap;
 
-        DateTime startDate;
-        DateTime startTime;
-        DateTime endDate;
-        DateTime endTime;
-
-        DateTime currentDateTime;
+        //std::vector<std::shared_ptr<Node>> sinkNodes;  // NOT needed to delete in dtor
 
         const std::vector<std::string>& getLinkIds() const;
         const std::vector<std::string>& getNodeIds() const;
@@ -67,159 +57,74 @@ namespace geometry
         FileSection parseSectionLine(std::string line);
         bool parseDataLine(FileSection curSection, std::string line);
 
-        Link* getOrCreateLink(std::string id);
+        std::shared_ptr<Link> getOrCreateLink(std::string name);
 
         // Do not delete Inflow objects, that is taken care of by Node.
-        Inflow* createInflow();
+        std::shared_ptr<Inflow> createInflow();
 
-        bool handleOption(Option* option);
+        bool handleOption(std::shared_ptr<Option> option);
 
         std::string errorMsg;
     };
 
 
-    Geometry::NodeIter Geometry::beginNode()
-    {
-        return impl->nodeMap.begin();
-    }
-
-    Geometry::NodeIter Geometry::endNode()
-    {
-        return impl->nodeMap.end();
-    }
-
-
-    Geometry::Geometry()
-        : impl(new Impl())
-    {
-        populateSectionNameMap(impl->sectionNameMap);
-        impl->parent = this;
-    }
-
-    template<typename T>
-    void deleteFunction(std::pair<std::string, T*> ptr)
-    {
-        if (ptr.second != NULL)
-        {
-            delete ptr.second;
-        }
-    }
-
-    Geometry::~Geometry()
-    {
-        std::for_each(impl->curveMap.begin(), impl->curveMap.end(), deleteFunction<Curve>);
-        std::for_each(impl->nodeMap.begin(), impl->nodeMap.end(), deleteFunction<Node>);
-        std::for_each(impl->linkMap.begin(), impl->linkMap.end(), deleteFunction<Link>);
-        std::for_each(impl->tsMap.begin(), impl->tsMap.end(), deleteFunction<Timeseries>);
-        std::for_each(impl->options.begin(), impl->options.begin(), deleteFunction<Option>);
-        // Do not delete Inflow objects, that is taken care of by Node.
-    }
-
-
-    bool Geometry::loadFromFile(const std::string& filePath, GeometryFileFormat format)
-    {
-        if (!boost::filesystem::exists(filePath))
-        {
-            setErrorMessage(std::string("The file '") + filePath + "' does not exist.");
-            return false;
-        }
-
-        if (format == GeometryFileFormat::FileFormatSwmm5)
-        {
-            bool result = impl->loadFromSwmm5File(filePath);
-            if (!result)
-            {
-                setErrorMessage(std::string("Unable to parse file '") + filePath + "': " + impl->errorMsg);
-                return false;
-            }
-            else
-            {
-                if (!impl->validateNetwork())
-                {
-                    setErrorMessage("Failed to validate the network");
-                    return false;
-                }
-
-                if (!impl->validateOptions())
-                {
-                    setErrorMessage("Failed to validate the options: " + impl->errorMsg);
-                    return false;
-                }
-
-                return true;
-            }
-        }
-        else
-        {
-            setErrorMessage("Unsupported file format provided");
-            return false;
-        }
-    }
-
-
-    void validateNetworkFunction(std::pair<std::string, Link*> ptr)
-    {
-        Node* dsNode = ptr.second->outletNode;//getDownstreamNode();
-        dsNode->addUpstreamLink(ptr.second);
-
-        Node* usNode = ptr.second->inletNode;//getUpstreamNode();
-        usNode->addDownstreamLink(ptr.second);
-    }
-    
-    bool Geometry::Impl::validateNetwork()
-    {
-        // Add pointers to the links for each node.
-        std::for_each(this->linkMap.begin(), this->linkMap.end(), validateNetworkFunction);
-
-        // Find all of the sink nodes (nodes with no outlets).
-        node_iter iter = this->nodeMap.begin();
-        while (iter != this->nodeMap.end())
-        {
-            if (iter->second->beginUpstreamLink() == iter->second->endUpstreamLink())
-            {
-                this->sinkNodes.push_back(iter->second);
-            }
-            iter++;
-        }
-
-        return true;
-    }
 
     
-    bool Geometry::Impl::validateOptions()
+    ///////////////////////////////////////////////////////////////////////
+    // NodeList interface
+
+    int Geometry::node_count()
     {
-        if (this->options.count("start_date") == 0 || this->options.count("start_time") == 0 ||
-            this->options.count("end_date") == 0 || this->options.count("end_time") == 0)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
+        return impl->nodeMap.size();
+    }
+
+    std::shared_ptr<Node> Geometry::node_get(int index)
+    {
+        return impl->nodeMap[index];
+    }
+
+    std::shared_ptr<NodeList> Geometry::getNodeList()
+    {
+        return std::shared_ptr<NodeList>(this);
+    }
+
+    id_type Geometry::node_id(int index)
+    {
+        return index;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    // LinkList interface
+
+    int Geometry::link_count()
+    {
+        return impl->linkMap.size();
+    }
+
+    std::shared_ptr<Link> Geometry::link_get(int index)
+    {
+        return impl->linkMap[index];
+    }
+
+    std::shared_ptr<LinkList> Geometry::getLinkList()
+    {
+        return std::shared_ptr<LinkList>(this);
+    }
+
+    id_type Geometry::link_id(int index)
+    {
+        return index;
     }
 
 
-    std::vector<std::string> Geometry::getLinkIds() const
-    {
-        std::vector<std::string> keys;
-        for (auto imap: impl->linkMap)
-        {
-            keys.push_back(imap.first);
-        }
-        std::sort(keys.begin(), keys.end());
-        return keys;
-    }
     
-    std::vector<std::string> Geometry::getNodeIds() const
+
+    ///////////////////////////////////////////////////////////////////////////
+    // OPTIONS interface
+
+    std::shared_ptr<Options> Geometry::asOptions()
     {
-        std::vector<std::string> keys;
-        for (auto imap: impl->nodeMap)
-        {
-            keys.push_back(imap.first);
-        }
-        std::sort(keys.begin(), keys.end());
-        return keys;
+        return std::shared_ptr<Options>(this);
     }
 
     std::vector<std::string> Geometry::getOptionNames() const
@@ -249,16 +154,168 @@ namespace geometry
             return "";
         }
     }
+    
 
+
+
+
+    Geometry::NodeIter Geometry::beginNode()
+    {
+        return impl->nodeMap.begin();
+    }
+
+    Geometry::NodeIter Geometry::endNode()
+    {
+        return impl->nodeMap.end();
+    }
+
+    Geometry::LinkIter Geometry::beginLink()
+    {
+        return impl->linkMap.begin();
+    }
+
+    Geometry::LinkIter Geometry::endLink()
+    {
+        return impl->linkMap.end();
+    }
+
+
+    
     DateTime Geometry::getStartDateTime()
     {
-        return impl->startDate + impl->startTime;
+        return this->startDate + this->startTime;
     }
 
     DateTime Geometry::getEndDateTime()
     {
-        return impl->endDate + impl->endTime;
+        return this->endDate + this->endTime;
     }
+    
+
+    Geometry::Geometry()
+        : impl(new Impl())
+    {
+        populateSectionNameMap(impl->sectionNameMap);
+        impl->parent = std::shared_ptr<Geometry>(this);
+    }
+
+    //template<typename T, typename T2>
+    //void deleteFunction(std::pair<T, T2*> ptr)
+    //{
+    //    if (ptr.second != NULL)
+    //    {
+    //        delete ptr.second;
+    //    }
+    //}
+
+    Geometry::~Geometry()
+    {
+        //std::for_each(impl->curveMap.begin(), impl->curveMap.end(), deleteFunction<std::string, Curve>);
+        //std::for_each(impl->nodeMap.begin(), impl->nodeMap.end(), deleteFunction<id_type, Node>);
+        //std::for_each(impl->linkMap.begin(), impl->linkMap.end(), deleteFunction<id_type, Link>);
+        //std::for_each(impl->tsMap.begin(), impl->tsMap.end(), deleteFunction<std::string, Timeseries>);
+        //std::for_each(impl->options.begin(), impl->options.begin(), deleteFunction<std::string, Option>);
+        // Do not delete Inflow objects, that is taken care of by Node.
+    }
+
+
+    bool Geometry::loadFromFile(const std::string& filePath, GeometryFileFormat format)
+    {
+        if (!boost::filesystem::exists(filePath))
+        {
+            setErrorMessage(std::string("The file '") + filePath + "' does not exist.");
+            return false;
+        }
+
+        if (format == GeometryFileFormat::FileFormatSwmm5)
+        {
+            bool result = impl->loadFromSwmm5File(filePath);
+            if (!result)
+            {
+                setErrorMessage(std::string("Unable to parse file '") + filePath + "': " + impl->errorMsg);
+                return false;
+            }
+            else
+            {
+                if (!impl->validateNetwork())
+                {
+                    setErrorMessage("Failed to validate the network");
+                    return false;
+                }
+
+                if (!this->processOptions())
+                {
+                    setErrorMessage("Failed to validate the options: " + getErrorMessage());
+                    return false;
+                }
+
+                return true;
+            }
+        }
+        else
+        {
+            setErrorMessage("Unsupported file format provided");
+            return false;
+        }
+    }
+
+
+    void validateNetworkFunction(std::pair<id_type, std::shared_ptr<Link>> ptr)
+    {
+        std::shared_ptr<Node> dsNode = ptr.second->getDownstreamNode();
+        dsNode->addUpstreamLink(ptr.second);
+
+        std::shared_ptr<Node> usNode = ptr.second->getUpstreamNode();
+        usNode->addDownstreamLink(ptr.second);
+
+        ptr.second->computeInvertsFromNodes();
+    }
+    
+    bool Geometry::Impl::validateNetwork()
+    {
+        // Add pointers to the links for each node.
+        std::for_each(this->linkMap.begin(), this->linkMap.end(), validateNetworkFunction);
+
+        //// Find all of the sink nodes (nodes with no outlets).
+        //node_iter iter = this->nodeMap.begin();
+        //while (iter != this->nodeMap.end())
+        //{
+        //    if (iter->second->beginUpstreamLink() == iter->second->endUpstreamLink())
+        //    {
+        //        this->sinkNodes.push_back(iter->second);
+        //    }
+        //    iter++;
+        //}
+
+        return true;
+    }
+
+
+    std::vector<std::string> Geometry::getLinkIds() const
+    {
+        std::vector<std::string> keys;
+        for (auto imap: impl->linkMap)
+        {
+            keys.push_back(imap.second->getName());
+        }
+        std::sort(keys.begin(), keys.end());
+        return keys;
+    }
+    
+
+    std::vector<std::string> Geometry::getNodeIds() const
+    {
+        std::vector<std::string> keys;
+        for (auto imap: impl->nodeMap)
+        {
+            keys.push_back(imap.second->getName());
+        }
+        std::sort(keys.begin(), keys.end());
+        return keys;
+    }
+
+
+
 
 
     bool Geometry::Impl::loadFromSwmm5File(const std::string& filePath)
@@ -361,60 +418,8 @@ namespace geometry
     }
 
 
-    bool Geometry::Impl::handleOption(Option* option)
+    bool Geometry::Impl::handleOption(std::shared_ptr<Option> option)
     {
-        if (option->getName() == "start_date")
-        {
-            if (!DateTime::tryParseDate(option->getValue().c_str(), this->startDate, Format::M_D_Y))
-            {
-                this->errorMsg = "Unable to parse option " + option->toString();
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
-        if (option->getName() == "start_time")
-        {
-            if (!DateTime::tryParseTime(option->getValue().c_str(), this->startTime))
-            {
-                this->errorMsg = "Unable to parse option " + option->toString();
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        
-        if (option->getName() == "end_date")
-        {
-            if (!DateTime::tryParseDate(option->getValue().c_str(), this->endDate, Format::M_D_Y))
-            {
-                this->errorMsg = "Unable to parse option " + option->toString();
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
-        if (option->getName() == "end_time")
-        {
-            if (!DateTime::tryParseTime(option->getValue().c_str(), this->startTime))
-            {
-                this->errorMsg = "Unable to parse option " + option->toString();
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
         return true;
     }
 
@@ -446,7 +451,7 @@ namespace geometry
 
         if (curSection == FileSection::File_Option)
         {
-            Option* option = new Option();
+            std::shared_ptr<Option> option = std::shared_ptr<Option>(new Option());
             if (!option->parseLine(line))
             {
                 errorMsg = "Unable to parse option '" + parts[0] + "': " + option->getErrorMessage();
@@ -457,7 +462,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Conduit)
         {
-            Link* link = getOrCreateLink(parts[0]);
+            std::shared_ptr<Link> link = getOrCreateLink(parts[0]);
             if (!link->parseLine(parts))
             {
                 errorMsg = "Unable to parse link '" + parts[0] + "': " + link->getErrorMessage();
@@ -466,7 +471,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Xsection)
         {
-            Link* link = getOrCreateLink(parts[0]);
+            std::shared_ptr<Link> link = getOrCreateLink(parts[0]);
             if (!link->parseXsection(parts))
             {
                 errorMsg = "Unable to parse link cross section '" + parts[0] + "': " + link->getErrorMessage();
@@ -475,7 +480,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Junction || curSection == FileSection::File_Storage)
         {
-            Node* node = parent->getOrCreateNode(parts[0]);
+            std::shared_ptr<Node> node = parent->getOrCreateNode(parts[0]);
             if (!node->parseLine(parts))
             {
                 errorMsg = "Unable to parse node '" + parts[0] + "': " + node->getErrorMessage();
@@ -484,7 +489,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Curve)
         {
-            Curve* curve = parent->getOrCreateCurve(parts[0]);
+            std::shared_ptr<Curve> curve = parent->getOrCreateCurve(parts[0]);
             if (!curve->parseLine(parts))
             {
                 errorMsg = "Unable to parse curve '" + parts[0] + "': " + curve->getErrorMessage();
@@ -493,7 +498,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Timeseries)
         {
-            Timeseries* ts = parent->getOrCreateTimeseries(parts[0]);
+            std::shared_ptr<Timeseries> ts = parent->getOrCreateTimeseries(parts[0]);
             if (!ts->parseLine(parts))
             {
                 errorMsg = "Unable to parse timeseries '" + parts[0] + "': " + ts->getErrorMessage();
@@ -502,7 +507,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Inflow)
         {
-            Inflow* inflow = new Inflow(this->parent);
+            std::shared_ptr<Inflow> inflow = std::shared_ptr<Inflow>(new Inflow(std::shared_ptr<TimeseriesFactory>(this->parent)));
             if (!inflow->parseLine(parts))
             {
                 errorMsg = "Unable to parse inflow '" + parts[0] + "': " + inflow->getErrorMessage();
@@ -512,7 +517,7 @@ namespace geometry
             string nodeName = inflow->getInflowNodeName();
             if (nodeName.length() > 0)
             {
-                Node* node = parent->getOrCreateNode(nodeName);
+                std::shared_ptr<Node> node = parent->getOrCreateNode(nodeName);
                 node->attachInflow(inflow);
             }
             else
@@ -523,12 +528,12 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Coordinate)
         {
-            Node* node = parent->getOrCreateNode(parts[0]);
+            std::shared_ptr<Node> node = parent->getOrCreateNode(parts[0]);
             node->parseCoordLine(parts);
         }
         else if (curSection == FileSection::File_Vertex)
         {
-            Link* link = getOrCreateLink(parts[0]);
+            std::shared_ptr<Link> link = getOrCreateLink(parts[0]);
             link->parseVertexLine(parts);
         }
 
@@ -557,7 +562,7 @@ namespace geometry
         }
     }
 
-    Timeseries* Geometry::getOrCreateTimeseries(std::string tsName)
+    std::shared_ptr<Timeseries> Geometry::getOrCreateTimeseries(std::string tsName)
     {
         using namespace std;
 
@@ -569,14 +574,14 @@ namespace geometry
         }
         else
         {
-            Timeseries* ts = new Timeseries(tsName);
+            std::shared_ptr<Timeseries> ts = std::shared_ptr<Timeseries>(new Timeseries(tsName));
             ts->setStartDateTime(this->getStartDateTime());
             impl->tsMap.insert(make_pair(tsName, ts));
             return ts;
         }
     }
 
-    Curve* Geometry::getOrCreateCurve(std::string curveName)
+    std::shared_ptr<Curve> Geometry::getOrCreateCurve(std::string curveName)
     {
         using namespace std;
 
@@ -588,188 +593,73 @@ namespace geometry
         }
         else
         {
-            Curve* theCurve = new Curve(curveName);
+            std::shared_ptr<Curve> theCurve = std::shared_ptr<Curve>(new Curve(curveName));
             impl->curveMap.insert(make_pair(curveName, theCurve));
             return theCurve;
         }
     }
 
-    Node* Geometry::getOrCreateNode(std::string nodeId)
+    std::shared_ptr<Node> Geometry::getOrCreateNode(std::string nodeId)
     {
         using namespace std;
 
-        if (impl->nodeMap.count(nodeId) > 0)
+        if (impl->nodeIdMap.count(nodeId) > 0)
         {
-            return impl->nodeMap[nodeId];
+            return impl->nodeMap[impl->nodeIdMap[nodeId]];
         }
         else
         {
-            Node* theNode = NULL;
+            std::shared_ptr<Node> theNode = NULL;
             if (impl->objectTypeMap[nodeId] == FileSection::File_Storage)
             {
-                theNode = new StorageUnit(nodeId, this, this);
+                theNode = std::shared_ptr<Node>(new StorageUnit(impl->nodeMap.size(), nodeId, std::shared_ptr<CurveFactory>(this)));
             }
             else
             {
-                theNode = new Junction(nodeId, this);
+                theNode = std::shared_ptr<Node>(new Junction(impl->nodeMap.size(), nodeId));
             }
 
             if (theNode != NULL)
             {
-                impl->nodeMap.insert(make_pair(nodeId, theNode));
+                impl->nodeMap.insert(make_pair(impl->nodeMap.size(), theNode));
+                impl->nodeIdMap.insert(make_pair(nodeId, impl->nodeMap.size() - 1));
             }
 
             return theNode;
         }
     }
 
-    Link* Geometry::Impl::getOrCreateLink(std::string linkId)
+    std::shared_ptr<Link> Geometry::Impl::getOrCreateLink(std::string linkId)
     {
         using namespace std;
 
-        if (this->linkMap.count(linkId) > 0)
+        if (this->linkIdMap.count(linkId) > 0)
         {
-            return this->linkMap[linkId];
+            return this->linkMap[this->linkIdMap[linkId]];
         }
         else
         {
-            Link* theLink = NULL;
+            std::shared_ptr<Link> theLink = NULL;
             if (this->objectTypeMap[linkId] == FileSection::File_Conduit)
             {
-                theLink = new Link(linkId, this->parent, this->parent);
+                theLink = std::shared_ptr<Link>(new Link(this->linkMap.size(), linkId, dynamic_pointer_cast<NodeFactory>(this->parent)));
             }
 
             if (theLink != NULL)
             {
-                this->linkMap.insert(make_pair(linkId, theLink));
+                this->linkMap.insert(make_pair(this->linkMap.size(), theLink));
+                this->linkIdMap.insert(make_pair(linkId, this->linkMap.size()));
             }
 
             return theLink;
         }
     }
 
-    void resetFlowFunction(std::pair<std::string, IModelElement*> ptr)
+    std::shared_ptr<Node> Geometry::getNode(std::string nodeId)
     {
-        ptr.second->resetFlow();
-    }
-
-    void Geometry::resetTimestep(DateTime dateTime)
-    {
-        std::for_each(impl->nodeMap.begin(), impl->nodeMap.end(), resetFlowFunction);
-        std::for_each(impl->linkMap.begin(), impl->linkMap.end(), resetFlowFunction);
-    }
-
-    void propFlowFunction(std::pair<std::string, Node*> ptr)
-    {
-        ptr.second->startInflow();
-    }
-
-    void Geometry::startTimestep(DateTime dateTime)
-    {
-        impl->currentDateTime = dateTime;
-        std::for_each(impl->nodeMap.begin(), impl->nodeMap.end(), propFlowFunction);
-    }
-
-    void Geometry::addRealTimeInput(std::string nodeId)
-    {
-        boost::algorithm::to_lower(nodeId);
-        Node* node = findNode(nodeId);
-        if (node == NULL)
+        if (impl->nodeIdMap.count(nodeId) > 0)
         {
-            return;
-        }
-
-        RealTimeInflow* inflow = new RealTimeInflow();
-
-        node->attachInflow(inflow);
-
-        impl->rtInflowMap.insert(std::pair<std::string, RealTimeInflow*>(nodeId, inflow));
-    }
-
-    void Geometry::setRealTimeInputFlow(std::string nodeId, double flow)
-    {
-        boost::algorithm::to_lower(nodeId);
-        if (impl->rtInflowMap.count(nodeId) == 0)
-        {
-            return;
-        }
-
-        impl->rtInflowMap[nodeId]->setCurrentInflow(flow);
-    }
-
-    double Geometry::getRealTimeNodeHead(std::string nodeId)
-    {
-        Node* node = findNode(nodeId);
-        if (node == NULL)
-        {
-            return ERROR_VAL;
-        }
-
-        return node->depth + node->invertElev;
-    }
-
-    var_type Geometry::getNodeVariable(std::string nodeId, variables::Variables var)
-    {
-        Node* node = findNode(nodeId);
-        if (node == NULL)
-        {
-            return variables::error_val;
-        }
-
-        return node->variable(var);
-    }
-
-    var_type Geometry::getLinkVariable(std::string linkId, variables::Variables var)
-    {
-        Link* link = findLink(linkId);
-        if (link == NULL)
-        {
-            return variables::error_val;
-        }
-
-        return link->variable(var);
-    }
-
-    double Geometry::getDownstreamLinkMaxDepth(const std::string& nodeId)
-    {
-        Node* node = findNode(nodeId);
-        if (node == NULL)
-        {
-            return variables::error_val;
-        }
-
-        //return node->getDownstreamLinkMaxDepth(
-    }
-
-    bool Geometry::propagateNodeDepth(std::string nodeId, double depth)
-    {
-        Node* node = findNode(nodeId);
-        if (node == NULL)
-        {
-            return false;
-        }
-
-        node->propagateDepthUpstream(depth);
-
-        return true;
-    }
-
-    DateTime Geometry::getCurrentDateTime()
-    {
-        //TODO:
-        return DateTime();
-    }
-
-    void Geometry::resetDepths()
-    {
-        //TODO:
-    }
-
-    Node* Geometry::findNode(std::string nodeId)
-    {
-        if (impl->nodeMap.count(nodeId) > 0)
-        {
-            return impl->nodeMap[nodeId];
+            return getNode(impl->nodeIdMap[nodeId]);
         }
         else
         {
@@ -777,11 +667,35 @@ namespace geometry
         }
     }
 
-    Link* Geometry::findLink(std::string linkId)
+    std::shared_ptr<Node> Geometry::getNode(id_type nodeIdx)
     {
-        if (impl->linkMap.count(linkId) > 0)
+        if (impl->nodeMap.count(nodeIdx) > 0)
         {
-            return impl->linkMap[linkId];
+            return impl->nodeMap[nodeIdx];
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    
+    std::shared_ptr<Link> Geometry::getLink(std::string linkId)
+    {
+        if (impl->linkIdMap.count(linkId) > 0)
+        {
+            return getLink(impl->linkIdMap[linkId]);
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+
+    std::shared_ptr<Link> Geometry::getLink(id_type linkIdx)
+    {
+        if (impl->linkMap.count(linkIdx) > 0)
+        {
+            return impl->linkMap[linkIdx];
         }
         else
         {

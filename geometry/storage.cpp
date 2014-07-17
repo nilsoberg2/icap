@@ -1,15 +1,16 @@
 
 #include <boost/algorithm/string.hpp>
+
+#include "../util/parse.h"
+
 #include "storage.h"
-#include "parse.h"
 
 
 namespace geometry
 {
-    StorageUnit::StorageUnit(const std::string& theId, ICurveFactory* factory, IModel* model)
-        : Node(theId, model)
+    StorageUnit::StorageUnit(const id_type& theId, const std::string& theName, std::shared_ptr<CurveFactory> factory)
+        : Node(theId, theName, NodeType::NodeType_Storage)
     {
-        this->nodeType = NodeType::NodeType_Storage;
         this->curveFactory = factory;
         this->storageCurve = NULL;
     }

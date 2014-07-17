@@ -20,7 +20,6 @@ class DateTime
 private:
     class Impl;
     std::unique_ptr<Impl> impl;
-    //Impl* impl;
 
 public:
     DateTime();
@@ -37,8 +36,8 @@ public:
     DateTime& operator =(const double& value);
     bool operator ==(const DateTime& value) const;
     
-    static bool tryParseDate(const char* str, DateTime& theDateTime, Format::DateFormat format = Format::M_D_Y);
-    static bool tryParseTime(const char* str, DateTime& theDateTime);
+    static bool tryParseDate(std::string str, DateTime& theDateTime, Format::DateFormat format = Format::M_D_Y);
+    static bool tryParseTime(std::string str, DateTime& theDateTime);
 
     std::string toString() const;
     std::wstring toUnicodeString() const;
@@ -48,6 +47,10 @@ public:
     DateTime addMinutes(int minutes);
     DateTime addSeconds(int seconds);
 };
+
+
+#define SECS_PER_DAY	86400.0
+#define MSEC_PER_DAY    86400000.0
 
 
 #endif//DATETIME_H__

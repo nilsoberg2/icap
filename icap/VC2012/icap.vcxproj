@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D3C7909D-97A3-4038-899F-861873532D6A}</ProjectGuid>
+    <RootNamespace>ICAP_DLL</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>icap</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">icap</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">icap</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\icap-swmm-50019;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;_DEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>xslib.lib;geometry.lib;model.lib;time.lib;util.lib;boost_log-vc110-1_55.lib;JunctionLib.lib;hpg-debug-dll.lib;normcrit-debug-dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\DEV\Boost\boost_1_55_0\lib32-msvc-11.0;E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(Configuration);e:\dev\lib;$(SolutionDir)\..\deps;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\icap-swmm-50019;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;NDEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;ICAP_DEBUG;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>xslib.lib;geometry.lib;model.lib;time.lib;util.lib;boost_log-vc110-1_55.lib;JunctionLib.lib;hpg-dll.lib;normcrit-dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalLibraryDirectories>E:\DEV\Boost\boost_1_55_0\lib32-msvc-11.0;E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(Configuration);e:\dev\lib;$(SolutionDir)\..\deps;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\benchmark.cpp" />
+    <ClCompile Include="..\debug.cpp" />
+    <ClCompile Include="..\flows_storage.cpp" />
+    <ClCompile Include="..\hpg.cpp" />
+    <ClCompile Include="..\icap_console.cpp" />
+    <ClCompile Include="..\icap_geometry.cpp" />
+    <ClCompile Include="..\icap_interface.cpp" />
+    <ClCompile Include="..\rt.cpp" />
+    <ClCompile Include="..\run.cpp" />
+    <ClCompile Include="..\init.cpp" />
+    <ClCompile Include="..\junction_loss.cpp" />
+    <ClCompile Include="..\network.cpp" />
+    <ClCompile Include="..\overflow.cpp" />
+    <ClCompile Include="..\pumping.cpp" />
+    <ClCompile Include="..\routing.cpp" />
+    <ClCompile Include="..\ucf.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\api.h" />
+    <ClInclude Include="..\..\type.h" />
+    <ClInclude Include="..\benchmark.h" />
+    <ClInclude Include="..\hpg.h" />
+    <ClInclude Include="..\icap.h" />
+    <ClInclude Include="..\icap_geometry.h" />
+    <ClInclude Include="..\icap_interface.h" />
+    <ClInclude Include="..\logging.h" />
+    <ClInclude Include="..\output.h" />
+    <ClInclude Include="..\overflow.h" />
+    <ClInclude Include="..\pumping.h" />
+    <ClInclude Include="..\routing.h" />
+    <ClInclude Include="..\rt_inflow.h" />
+    <ClInclude Include="..\ucf.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\model\VC2012\model.vcxproj">
+      <Project>{91158745-111b-4fde-851c-f1b4d5d639af}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\util\VC2012\util.vcxproj">
+      <Project>{b2cd04c4-e86b-498e-9846-7fc10637837c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\xslib\VC2012\xslib.vcxproj">
+      <Project>{cdd6b429-c2f6-43d2-b2e1-f6681e965258}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\geometry\VC2012\geometry.vcxproj">
+      <Project>{a5aca214-6a18-4386-aea4-2a9130ab06cd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\time\VC2012\time.vcxproj">
+      <Project>{857877dd-d42a-4307-94d2-ebdd1e45b305}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

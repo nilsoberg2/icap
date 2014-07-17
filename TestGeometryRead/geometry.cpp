@@ -68,14 +68,14 @@ namespace TestGeometryRead
 			Geometry* g = loadGeometry(status);
             Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
 
-            Node* node = g->findNode("outlet");
-            StorageUnit* storNode;
-            if ((storNode = dynamic_cast<StorageUnit*>(node)) == NULL)
+            std::shared_ptr<Node> node = g->getNode("outlet");
+            std::shared_ptr<StorageUnit> storNode;
+            if ((storNode = dynamic_pointer_cast<StorageUnit>(node)) == NULL)
             {
                 Assert::Fail(L"Expected StorageUnit; instead got a Node");
             }
 
-            const Curve* c = storNode->getStorageCurve();
+            const std::shared_ptr<Curve> c = storNode->getStorageCurve();
             
             Assert::AreEqual(0.0, c->lookup(-1));
             Assert::AreEqual(0.0, c->lookup(0));
@@ -113,10 +113,10 @@ namespace TestGeometryRead
 
             DateTime start = g->getStartDateTime();
 
-            Node* node = g->findNode("laramie");
-            Inflow* inf = node->getInflow();
+            std::shared_ptr<Node> node = g->getNode("laramie");
+            std::shared_ptr<Inflow> inf = node->getInflow();
 
-            Assert::AreNotEqual((int)inf, NULL);
+            Assert::IsTrue(inf != NULL);
             
             Assert::AreEqual(0.0, inf->getInflow(start.addHours(18)));
             Assert::AreEqual(1.0, inf->getInflow(start.addHours(18).addMinutes(12)));

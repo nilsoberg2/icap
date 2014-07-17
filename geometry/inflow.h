@@ -3,30 +3,32 @@
 
 #include <vector>
 #include <string>
-#include "timeseries.h"
-#include "timeseriesFactory.h"
-#include "parseable.h"
+
+#include "../util/parseable.h"
 #include "../api.h"
+
+#include "timeseries.h"
+#include "timeseries_factory.h"
 
 
 namespace geometry
 {
-    class ICAP_API Inflow : public Parseable
+    class Inflow : public Parseable
     {
     private:
         std::string inflowNodeName;
         std::string parameter;
         std::string paramType;
 
-        ITimeseriesFactory* tsFactory;
-        Timeseries* timeseries;
+        std::shared_ptr<TimeseriesFactory> tsFactory;
+        std::shared_ptr<Timeseries> timeseries;
 
         double scaleFactor;
         double baseLine;
         double unitsFactor;
 
     public:
-        Inflow(ITimeseriesFactory* factory);
+        Inflow(std::shared_ptr<TimeseriesFactory> factory);
 
         bool parseLine(const std::vector<std::string>& parts);
 
