@@ -1,0 +1,5 @@
+NAMING CONVENTION
+
+Variables beginning with d represent data.
+Variables beginning with spl represent splines.
+Variables beginning with s represent status indicators.

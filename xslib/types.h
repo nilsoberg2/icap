@@ -1,5 +1,5 @@
-#ifndef TYPES_H__
-#define TYPES_H__
+#ifndef TYPES_XS_H__
+#define TYPES_XS_H__
 
 
 namespace xs
@@ -12,4 +12,4 @@ namespace xs
 }
 
 
-#endif//TYPES_H__
+#endif//TYPES_XS_H__

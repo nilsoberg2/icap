@@ -11,8 +11,16 @@ namespace xs
     {
     public:
         Dummy() { CrossSection::xsType = xstype::dummy; }
-        virtual double computeAreaForDepth(double depth) { return 0; }
         virtual bool setParameters(std::vector<std::string>::const_iterator firstPart, std::vector<std::string>::const_iterator end) { return true; }
+
+        virtual double getMaxDepth() { return 0; }
+
+        virtual double computeArea(double depth) { return 0; }
+        virtual double computeWettedPerimiter(double depth) { return 0; }
+        virtual double computeTopWidth(double depth) { return 0; }
+        virtual double computeDpDy(double depth) { return 0; }
+        virtual double computeDaDy(double depth) { return 0; }
+        virtual double computeDtDy(double depth) { return 0; }
     };
 }
 

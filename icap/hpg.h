@@ -1,11 +1,11 @@
 #ifndef __HPG_LIST_H________________________20080814110707__
 #define __HPG_LIST_H________________________20080814110707__
 
-#include <circhpg.hpp>
 #include <vector>
 #include <string>
 #include <memory>
 
+#include "../hpg_interp/hpg.hpp"
 #include "../util/parseable.h"
 #include "../geometry/link_list.h"
 
