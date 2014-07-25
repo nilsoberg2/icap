@@ -112,9 +112,6 @@
     <ProjectReference Include="..\..\util\VC2012\util.vcxproj">
       <Project>{b2cd04c4-e86b-498e-9846-7fc10637837c}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\xslib\VC2012\xslib.vcxproj">
-      <Project>{cdd6b429-c2f6-43d2-b2e1-f6681e965258}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

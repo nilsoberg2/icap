@@ -10,29 +10,42 @@
 
 namespace xs
 {
-    CrossSection* Factory::create(xstype xsType)
+    std::shared_ptr<CrossSection> Factory::create(xstype xsType)
     {
         if (xsType == xstype::circular)
         {
-            return new Circular();
+            return std::shared_ptr<CrossSection>(new Circular());
         }
         else
         {
-            return new Dummy();
+            return std::shared_ptr<CrossSection>(new Dummy());
         }
     }
 
-    CrossSection* Factory::create(const std::string& type)
+    template<typename XSType>
+    std::shared_ptr<CrossSection> Factory::create()
+    {
+        if (typeid(Circular) == typeid(XSType))
+        {
+            return std::shared_ptr<CrossSection>(new Circular());
+        }
+        else
+        {
+            return std::shared_ptr<CrossSection>(new Dummy());
+        }
+    }
+
+    std::shared_ptr<CrossSection> Factory::create(const std::string& type)
     {
         std::string geom = boost::algorithm::to_lower_copy(type);
         
         if (geom == "circular")
         {
-            return new Circular();
+            return std::shared_ptr<CrossSection>(new Circular());
         }
         else// if (geom == "irregular")
         {
-            return new Dummy();
+            return std::shared_ptr<CrossSection>(new Dummy());
         }
     }
 }

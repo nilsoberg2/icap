@@ -64,7 +64,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\icap-swmm-50019;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;_DEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -89,7 +89,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>e:\PROJECTS\Code\hpg\oberg\cpp\normcrit\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\headers\trunk;e:\PROJECTS\Code\hpg\oberg\cpp\interpolation\trunk;E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\icap-swmm-50019;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;NDEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;ICAP_DEBUG;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -151,9 +151,6 @@
     </ProjectReference>
     <ProjectReference Include="..\..\util\VC2012\util.vcxproj">
       <Project>{b2cd04c4-e86b-498e-9846-7fc10637837c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\xslib\VC2012\xslib.vcxproj">
-      <Project>{cdd6b429-c2f6-43d2-b2e1-f6681e965258}</Project>
     </ProjectReference>
     <ProjectReference Include="..\geometry\VC2012\geometry.vcxproj">
       <Project>{a5aca214-6a18-4386-aea4-2a9130ab06cd}</Project>

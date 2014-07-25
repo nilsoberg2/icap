@@ -10,12 +10,26 @@ namespace xs
     {
     private:
         double diameter;
+        double lastDepth;
+        double theta;
+        double getTheta(double depth);
+
     public:
         Circular();
         Circular(double diameter);
+
         void setDiameter(double diameter) { this->diameter = diameter; }
-        virtual double computeAreaForDepth(double depth);
+        virtual double getMaxDepth() { return this->diameter; }
+
         virtual bool setParameters(std::vector<std::string>::const_iterator firstPart, std::vector<std::string>::const_iterator end);
+
+        virtual double computeArea(double depth);
+        virtual double computeWettedPerimiter(double depth);
+        virtual double computeTopWidth(double depth);
+        virtual double computeDpDy(double depth);
+        virtual double computeDaDy(double depth);
+        virtual double computeDtDy(double depth);
+
     };
 }
 

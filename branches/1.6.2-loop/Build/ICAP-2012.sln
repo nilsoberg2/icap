@@ -17,6 +17,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "icap", "..\icap\VC2012\icap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xslib", "..\xslib\VC2012\xslib.vcxproj", "{CDD6B429-C2F6-43D2-B2E1-F6681E965258}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hpg_interp", "..\hpg_interp\VC2012\hpg_interp.vcxproj", "{C15B6F9F-9A9A-46E2-A892-069D04C47585}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hpg_create", "..\hpg_creation\VC2012\hpg_create.vcxproj", "{CB7F2CBB-56D0-45F4-9FB0-EC4C3028B9C0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -55,6 +59,14 @@ Global
 		{CDD6B429-C2F6-43D2-B2E1-F6681E965258}.Debug|Win32.Build.0 = Debug|Win32
 		{CDD6B429-C2F6-43D2-B2E1-F6681E965258}.Release|Win32.ActiveCfg = Release|Win32
 		{CDD6B429-C2F6-43D2-B2E1-F6681E965258}.Release|Win32.Build.0 = Release|Win32
+		{C15B6F9F-9A9A-46E2-A892-069D04C47585}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C15B6F9F-9A9A-46E2-A892-069D04C47585}.Debug|Win32.Build.0 = Debug|Win32
+		{C15B6F9F-9A9A-46E2-A892-069D04C47585}.Release|Win32.ActiveCfg = Release|Win32
+		{C15B6F9F-9A9A-46E2-A892-069D04C47585}.Release|Win32.Build.0 = Release|Win32
+		{CB7F2CBB-56D0-45F4-9FB0-EC4C3028B9C0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CB7F2CBB-56D0-45F4-9FB0-EC4C3028B9C0}.Debug|Win32.Build.0 = Debug|Win32
+		{CB7F2CBB-56D0-45F4-9FB0-EC4C3028B9C0}.Release|Win32.ActiveCfg = Release|Win32
+		{CB7F2CBB-56D0-45F4-9FB0-EC4C3028B9C0}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -79,6 +79,7 @@
     <ClInclude Include="..\circular.h" />
     <ClInclude Include="..\cross_section.h" />
     <ClInclude Include="..\dummy.h" />
+    <ClInclude Include="..\reach.h" />
     <ClInclude Include="..\types.h" />
   </ItemGroup>
   <ItemGroup>

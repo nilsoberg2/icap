@@ -5,10 +5,8 @@
 #include <sstream>
 #include <boost/filesystem.hpp>
 
-#include <normcrit.h>
-#include <circhpg.hpp>
-#include <hpg/error.hpp>
-#include <hpg/math.hpp>
+#include "../hpg_interp/hpg.hpp"
+#include "../hpg/error.hpp"
 
 #include "hpg.h"
 #include "routing.h"

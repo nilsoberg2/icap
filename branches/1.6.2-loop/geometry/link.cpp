@@ -10,7 +10,7 @@ namespace geometry
 {
 
     Link::Link(const id_type& theId, const std::string& theName, std::shared_ptr<NodeFactory> theNodeFactory)
-        : xs(xs::Factory::create(xs::xstype::dummy))
+        : xs(std::shared_ptr<xs::CrossSection>(xs::Factory::create(xs::xstype::dummy)))
     { 
         this->name = theName;
         this->id = theId;
@@ -76,7 +76,7 @@ namespace geometry
             return false;
         }
 
-        this->xs = std::unique_ptr<xs::CrossSection>(xs::Factory::create(parts[1]));
+        this->xs = std::shared_ptr<xs::CrossSection>(xs::Factory::create(parts[1]));
         vector<string>::const_iterator it = parts.begin();
         it++;
         it++;
@@ -137,11 +137,11 @@ namespace geometry
 	    while (xi < L)
 	    {
 		    yi = (-S * (xi - L) + y2);
-		    a1 = this->xs->computeAreaForDepth(yi);
+		    a1 = this->xs->computeArea(yi);
 		
 		    xi += dx;
 		    yi = (-S * (xi - L) + y2);
-		    a2 = this->xs->computeAreaForDepth(yi);
+		    a2 = this->xs->computeArea(yi);
 
 		    V += dx * (a1 + a2) / 2.0;
 	    }
