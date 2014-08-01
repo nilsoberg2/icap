@@ -5,13 +5,12 @@
 #include <map>
 #include <vector>
 
-#include <hpg/error.hpp>
+#include "../hpg/error.hpp"
 #include "../util/math.h"
 
 #include "routing.h"
 #include "icap.h"
 #include "hpg.h"
-#include "debug.h"
 #include "benchmark.h"
 
 
@@ -216,46 +215,43 @@ bool ICAP::steadyRouteLink(const id_type& linkId)
 		flow = -flow;
     }
 
-    var_type minFlow = m_hpgList.getLowestFlow(linkId, flow < 0);
-    
-    // If there isn't any flow, then we carry the current water
-    // elevation across to upstream nodes (ponding).
-    if (fabs(flow) < fabs(minFlow))
+    //var_type minFlow = m_hpgList.getLowestFlow(linkId, flow < 0);
+    //
+    //// If there isn't any flow, then we carry the current water
+    //// elevation across to upstream nodes (ponding).
+    //if (fabs(flow) < fabs(minFlow))
+    //{
+    //    // We only want to carry across the ponding effect if the
+    //    // ponding will actually be above the upstream tunnel invert.
+    //    if (!isZero(dsDepth) && dsDepth + dsInvert > usInvert)
+    //    {
+    //        usDepth = dsDepth - slope * length;
+    //    }
+    //    // If the water isn't high enough, then we mark this pipe
+    //    // as having no water at the upstream end.
+    //    else
+    //    {
+    //        usDepth = 0.0;
+    //    }
+	//    volume = link->computeLevelVolume(dsDepth);
+    //}
+    //// In this case there is flow.  Interpolate from our HPGs now.
+    //else
+    //{
+    if (!m_hpgList.getUpstream(linkId, dsDepth + dsInvert, flow, usDepth))
     {
-        // We only want to carry across the ponding effect if the
-        // ponding will actually be above the upstream tunnel invert.
-        if (!isZero(dsDepth) && dsDepth + dsInvert > usInvert)
-        {
-            usDepth = dsDepth - slope * length;
-        }
-
-        // If the water isn't high enough, then we mark this pipe
-        // as having no water at the upstream end.
-        else
-        {
-            usDepth = 0.0;
-        }
-
-		volume = link->computeLevelVolume(dsDepth);
+        BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
+            dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
+        okToContinue = false;
     }
 
-    // In this case there is flow.  Interpolate from our HPGs now.
-    else
-	{
-        if (!m_hpgList.getUpstream(linkId, dsDepth + dsInvert, flow, usDepth))
-        {
-            BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
-                dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
-            okToContinue = false;
-        }
-
-        if (okToContinue && !m_hpgList.getVolume(linkId, dsDepth + dsInvert, flow, volume))
-        {
-            BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
-                dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
-            okToContinue = false;
-        }
-	}
+    if (okToContinue && !m_hpgList.getVolume(linkId, dsDepth + dsInvert, flow, volume))
+    {
+        BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
+            dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
+        okToContinue = false;
+    }
+	//}
 
     // If there wasn't an error, then we carry the interpolated upstream
     // elevation to the upstream nodes.

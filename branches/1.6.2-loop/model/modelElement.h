@@ -9,6 +9,7 @@
 class IModelElement
 {
 public:
+    virtual ~IModelElement() {}
     virtual void resetFlow() = 0;
     virtual void resetDepth() = 0;
     virtual var_type& variable(variables::Variables var) = 0;

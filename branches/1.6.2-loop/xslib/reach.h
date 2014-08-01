@@ -21,6 +21,7 @@ namespace xs
         double roughness;
 
     public:
+        Reach() : length(0), dsInvert(0), usInvert(0), dsStation(-99999), usStation(-99999), roughness(0) {}
         std::shared_ptr<CrossSection> getXs() const { return this->xs; }
         void setXs(std::shared_ptr<CrossSection> value) { this->xs = value; }
 

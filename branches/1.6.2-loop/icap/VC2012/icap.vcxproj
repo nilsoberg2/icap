@@ -24,7 +24,7 @@
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
@@ -65,17 +65,17 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;_DEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;_DEBUG;_WINDOWS;ICAP_EXPORT_DLL;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>xslib.lib;geometry.lib;model.lib;time.lib;util.lib;boost_log-vc110-1_55.lib;JunctionLib.lib;hpg-debug-dll.lib;normcrit-debug-dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>hpgcreate.lib;hpg.lib;xslib.lib;geometry.lib;model.lib;time.lib;util.lib;boost_log-vc110-1_55.lib;JunctionLib.lib;hpg-debug-dll.lib;normcrit-debug-dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\DEV\Boost\boost_1_55_0\lib32-msvc-11.0;E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(Configuration);e:\dev\lib;$(SolutionDir)\..\deps;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
@@ -99,7 +99,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>xslib.lib;geometry.lib;model.lib;time.lib;util.lib;boost_log-vc110-1_55.lib;JunctionLib.lib;hpg-dll.lib;normcrit-dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>hpgcreate.lib;hpg.lib;xslib.lib;geometry.lib;model.lib;time.lib;util.lib;boost_log-vc110-1_55.lib;JunctionLib.lib;hpg-dll.lib;normcrit-dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>E:\DEV\Boost\boost_1_55_0\lib32-msvc-11.0;E:\Projects\Code\hpg\oberg\cpp\$(PlatformName)\$(Configuration);e:\dev\lib;$(SolutionDir)\..\deps;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>

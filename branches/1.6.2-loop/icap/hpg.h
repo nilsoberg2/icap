@@ -19,7 +19,7 @@
 class IcapHpg : public Parseable
 {
 protected:
-    std::map<id_type, std::shared_ptr<hpgns::BaseHPG>> m_list;
+    std::map<id_type, std::shared_ptr<hpg::Hpg>> m_list;
     
     int m_hpgCount;
 
@@ -37,14 +37,14 @@ public:
     IcapHpg();
     bool allocate(int count);
 
-    std::shared_ptr<hpgns::BaseHPG> getHpg(id_type idx);
+    std::shared_ptr<hpg::Hpg> getHpg(id_type idx);
     bool getUpstream(id_type linkId, var_type dsHead, var_type flow, var_type& usHead);
     bool getHf(id_type linkId, var_type dsHead, var_type flow, var_type& hf);
 	bool getVolume(id_type linkId, var_type dsHead, var_type flow, var_type& volume);
-    var_type getLowestFlow(int linkId, bool isAdverse);
+    //var_type getLowestFlow(int linkId, bool isAdverse);
     
-    bool loadHpgs(const std::string& path, std::shared_ptr<geometry::LinkList> linkList);
-    int loadNextHpg(const std::string& path, std::shared_ptr<geometry::LinkList> linkList);
+    bool loadHpgs(const std::string& path, geometry::LinkList* linkList);
+    int loadNextHpg(const std::string& path, geometry::LinkList* linkList);
 
     //bool IsValidFlow(int linkId, double flow);
     //bool CanInterpolate(int linkId, double dsDepth, double flow);

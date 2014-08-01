@@ -14,7 +14,7 @@ namespace geometry
         virtual std::vector<std::string> getOptionNames() const = 0;
         virtual std::string getOption(std::string optionName) const = 0;
         virtual bool hasOption(std::string optionName) const = 0;
-        virtual std::shared_ptr<Options> asOptions() = 0;
+        virtual Options* asOptions() = 0;
     };
 }
 

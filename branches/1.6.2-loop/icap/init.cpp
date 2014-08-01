@@ -21,26 +21,17 @@ ICAP::ICAP()
     V_P = 0.0;
     V_Ov = 0.0;
     V_SysMax = 0.0;
-    
 	m_counter = 0;
-
-    SetNormCritParamDefaults(m_ncParams);
-
-    // For the purposes of calculating critical depth, the unsteady depth
-    // should be slighly less than the crown of the pipe?
-    m_ncParams.UnsteadyDepth = 0.95;
-
     m_regime = 0;
-
     m_rtMode = false;
-
     m_isFirstMatrixIteration = false;
-    
+    m_geometry = NULL;
 }
 
 ICAP::~ICAP()
 {
     cleanup();
+    delete m_geometry;
 }
 
 
@@ -69,44 +60,42 @@ bool ICAP::Open(const std::string& inputFile, const std::string& outputFile, con
 {
     bool result = true;
 
-    try
+    //try
     {
 	    info("Loading input file...");
         // Load SWMM file.
+        //m_geometry = new IcapGeometry();
         if (! loadInputFile(inputFile))
         {
             return false;
         }
     }
-    catch (...)
-    {
-        setErrorMessage("Failed to load input file due to a system exception.");
-        return false;
-    }
+    //catch (...)
+    //{
+    //    setErrorMessage("Failed to load input file due to a system exception.");
+    //    return false;
+    //}
 
     m_overflow.Init(m_geometry->getNodeList());
 
-    try
+    //try
     {
 	    info("Loading HPG's...");
         // Load the HPGs.
         if (loadhpgs)
         {
-            if (m_geometry->hasOption("hpg_path"))
+            m_hpgPath = m_geometry->getHpgPath();
+            if (!loadHpgs(m_hpgPath))
             {
-                m_hpgPath = m_geometry->getOption("hpg_path");
-                if (!loadHpgs(m_hpgPath))
-                {
-                    return false;
-                }
+                return false;
             }
         }
     }
-    catch(...)
-    {
-        setErrorMessage("Exception occured when loading HPGs.");
-        result = false;
-    }
+    //catch(...)
+    //{
+    //    setErrorMessage("Exception occured when loading HPGs.");
+    //    result = false;
+    //}
 
     return result;
 }
@@ -115,6 +104,8 @@ bool ICAP::Open(const std::string& inputFile, const std::string& outputFile, con
 bool ICAP::Start(bool buildConnMatrix)
 {
     bool result = true;
+
+    m_model = m_geometry;
 
     try
     {
@@ -175,15 +166,15 @@ bool ICAP::Start(bool buildConnMatrix)
         return false;
     }
 
-    try
-    {
+    //try
+    //{
 	    // Build the connectivity matrix for the gradient method
 	    if (buildConnMatrix)
 	    {
 		    using namespace Eigen;
 
-            std::shared_ptr<geometry::NodeList> nodes = m_geometry->getNodeList();
-            std::shared_ptr<geometry::LinkList> links = m_geometry->getLinkList();
+            geometry::NodeList* nodes = m_geometry->getNodeList();
+            geometry::LinkList* links = m_geometry->getLinkList();
 		    int numNodes = nodes->count();
 		    int numLinks = links->count();
 
@@ -213,12 +204,12 @@ bool ICAP::Start(bool buildConnMatrix)
 		    //std::cout << matrixLhs.inverse() <<std::endl;
 		    //getchar();
 	    }
-    }
-    catch(...)
-    {
-        BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to generate connectivity matrix.";
-        result = false;
-    }
+    //}
+    //catch(...)
+    //{
+    //    BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to generate connectivity matrix.";
+    //    result = false;
+    //}
 
     return result;
 }
@@ -284,7 +275,7 @@ var_type ICAP::GetNodeFlow(const id_type& nodeIdx)
 // Load the input file and 
 bool ICAP::loadInputFile(const std::string& inputFile)
 {
-    m_geometry = std::shared_ptr<IcapGeometry>(new IcapGeometry());
+    m_geometry = new IcapGeometry();
     if (!m_geometry->loadFromFile(inputFile, geometry::FileFormatSwmm5))
     {
         BOOST_LOG_SEV(m_log, loglevel::error) << m_geometry->getErrorMessage();

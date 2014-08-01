@@ -6,111 +6,120 @@
 
 namespace hpg
 {
+    Hpg::Hpg()
+    {
+        impl = new Impl();
+        initialize();
+    }
+
     Hpg::~Hpg()
     {
+        deinitialize();
+        delete impl;
     }
 
-    unsigned int Hpg::NumPosFlows()
-    {
-        return impl->PosFlowCount;
-    }
+    //unsigned int Hpg::NumPosFlows()
+    //{
+    //    return impl->posFlowCount;
+    //}
 
-    unsigned int Hpg::NumAdvFlows()
-    {
-        return impl->AdvFlowCount;
-    }
+    //unsigned int Hpg::NumAdvFlows()
+    //{
+    //    return impl->advFlowCount;
+    //}
 
-    double Hpg::PosFlowAt(unsigned int f)
-    {
-        return impl->PosFlows.at(f);
-    }
+    //double Hpg::PosFlowAt(unsigned int f)
+    //{
+    //    return impl->posFlows.at(f);
+    //}
 
-    double Hpg::AdvFlowAt(unsigned int f)
-    {
-        return impl->AdvFlows.at(f);
-    }
+    //double Hpg::AdvFlowAt(unsigned int f)
+    //{
+    //    return impl->advFlows.at(f);
+    //}
 
-    hpgvec& Hpg::PosValuesAt(unsigned int f)
-    {
-        return impl->PosValues.at(f);
-    }
+    //hpgvec& Hpg::PosValuesAt(unsigned int f)
+    //{
+    //    return impl->posValues.at(f);
+    //}
 
-    hpgvec& Hpg::AdvValuesAt(unsigned int f)
-    {
-        return impl->AdvValues.at(f);
-    }
+    //hpgvec& Hpg::AdvValuesAt(unsigned int f)
+    //{
+    //    return impl->advValues.at(f);
+    //}
 
-    bool Hpg::IsMildAt(unsigned int curve)
+    bool Hpg::isCurveSteep(unsigned int curve)
     {
-        point p = impl->PosValues.at(curve).at(0);
+        point p = impl->posValues.at(curve).at(0);
         if (p.x <= p.y)
-            return true;
-        else
             return false;
+        else
+            return true;
     }
 
     void Hpg::AddCurve(double flow, hpgvec& curve, point crit)
     {
-        if (flow > 0.0)
+        if (flow >= -1e-6)
         {
-            impl->PosFlowCount++;
-            impl->PosFlows.push_back(flow);
-            impl->PosValues.push_back(curve);
-            impl->PosCritical.push_back(crit);
-            if (flow < impl->MinPosFlow)
-                impl->MinPosFlow = flow;
-            if (flow > impl->MaxPosFlow)
-                impl->MaxPosFlow = flow;
+            impl->posFlowCount++;
+            impl->posFlows.push_back(flow);
+            impl->posValues.push_back(curve);
+            impl->posCritical.push_back(crit);
+            if (flow < impl->minPosFlow)
+                impl->minPosFlow = flow;
+            if (flow > impl->maxPosFlow)
+                impl->maxPosFlow = flow;
         }
         else
         {
-            impl->AdvFlowCount++;
-            impl->AdvFlows.push_back(flow);
-            impl->AdvValues.push_back(curve);
-            impl->AdvCritical.push_back(crit);
-            if (flow > impl->MinAdvFlow)
-                impl->MinAdvFlow = flow;
-            if (flow < impl->MaxAdvFlow)
-                impl->MaxAdvFlow = flow;
+            impl->advFlowCount++;
+            impl->advFlows.push_back(flow);
+            impl->advValues.push_back(curve);
+            impl->advCritical.push_back(crit);
+            if (flow > impl->minAdvFlow)
+                impl->minAdvFlow = flow;
+            if (flow < impl->maxAdvFlow)
+                impl->maxAdvFlow = flow;
         }
     }
 
-    hpgvec& Hpg::GetPosCritical()
-    {
-        return impl->PosCritical;
-    }
+    //hpgvec& Hpg::GetPosCritical()
+    //{
+    //    return impl->posCritical;
+    //}
 
-    hpgvec& Hpg::GetAdvCritical()
-    {
-        return impl->AdvCritical;
-    }
+    //hpgvec& Hpg::GetAdvCritical()
+    //{
+    //    return impl->advCritical;
+    //}
 
-    void Hpg::Deinitialize()
+    void Hpg::deinitialize()
     {
         impl->SplPosCritUS_DS.clear();
         impl->SplPosCritUS_DS_ranges.clear();
     }
 
-    void Hpg::Initialize()
+    void Hpg::initialize()
     {
-        impl->ErrorCode = S_OK;
-        impl->MinPosFlow = 1000000.0;
-        impl->MaxPosFlow = 0.0;
-        impl->MaxAdvFlow = 0.0;
-        impl->MinAdvFlow = -1000000.0;
-        //    MinPosFlow = MaxPosFlow = MinAdvFlow = MaxAdvFlow = 0.0;
-        impl->PosFlowCount = impl->AdvFlowCount = 0;
+        impl->errorCode = S_OK;
+        impl->minPosFlow = 1000000.0;
+        impl->maxPosFlow = 0.0;
+        impl->maxAdvFlow = 0.0;
+        impl->minAdvFlow = -1000000.0;
+        //    minPosFlow = maxPosFlow = minAdvFlow = maxAdvFlow = 0.0;
+        impl->posFlowCount = impl->advFlowCount = 0;
 
         impl->dsInvertValid = impl->usInvertValid = impl->dsStationValid = impl->usStationValid =
             impl->slopeValid = impl->lengthValid = impl->roughnessValid = impl->maxDepthValid = impl->unsteadyDepthPctValid = false;
         impl->dsInvert = impl->usInvert = impl->dsStation = impl->usStation = impl->slope =
             impl->length = impl->roughness = impl->maxDepth = impl->unsteadyDepthPct = 0.0;
-        impl->nodeID = -1;
+        impl->nodeId = "";
+        impl->version = 2;
     }
 
-    void Hpg::CopyInto(const Hpg& copy)
+    void Hpg::copyFrom(const Hpg& copy)
     {
-        impl->CopyInto(copy.impl);
+        impl->copyFrom(copy.impl);
 
         // Erase all the splines.  We recreate them in setupSplines below.
         //for (unsigned int i = 0; i < SplPosUS_QDS.size(); i++)
@@ -157,159 +166,148 @@ namespace hpg
         //if (SplAdvCritUS_Q != NULL)
         //    gsl_spline_free(SplAdvCritUS_Q);
 
-        if (impl->PosFlowCount || impl->AdvFlowCount)
-            SetupSplines();
+        if (impl->posFlowCount || impl->advFlowCount)
+            setupSplines();
     }
 
-    bool Hpg::IsDSInvertValid()
+    int Hpg::getVersion()
+    {
+        return impl->version;
+    }
+
+    bool Hpg::isDsInvertValid()
     {
         return impl->dsInvertValid;
     }
 
-    double Hpg::GetDSInvert()
+    double Hpg::getDsInvert()
     {
         return impl->dsInvert;
     }
 
-    void Hpg::SetDSInvert(double dsinvert)
+    void Hpg::setDsInvert(double dsinvert)
     {
         impl->dsInvert = dsinvert;
         impl->dsInvertValid = true;
     }
 
-    int Hpg::GetNodeID()
+    std::string Hpg::getNodeId()
     {
-        return impl->nodeID;
+        return impl->nodeId;
     }
 
-    void Hpg::SetNodeID(int id)
+    void Hpg::setNodeId(std::string id)
     {
-        impl->nodeID = id;
+        impl->nodeId = id;
     }
 
-    bool Hpg::IsUSInvertValid()
+    bool Hpg::isUsInvertValid()
     {
         return impl->usInvertValid;
     }
 
-    double Hpg::GetUSInvert()
+    double Hpg::getUsInvert()
     {
         return impl->usInvert;
     }
 
-    void Hpg::SetUSInvert(double usinvert)
+    void Hpg::setUsInvert(double usinvert)
     {
         impl->usInvert = usinvert;
         impl->usInvertValid = true;
     }
 
-    bool Hpg::IsDSStationValid()
+    bool Hpg::isDsStationValid()
     {
         return impl->dsStationValid;
     }
 
-    double Hpg::GetDSStation()
+    double Hpg::getDsStation()
     {
         return impl->dsStation;
     }
 
-    void Hpg::SetDSStation(double dsstation)
+    void Hpg::setDsStation(double dsstation)
     {
         impl->dsStation = dsstation;
         impl->dsStationValid = true;
     }
 
-    bool Hpg::IsUSStationValid()
+    bool Hpg::isUsStationValid()
     {
         return impl->usStationValid;
     }
 
-    double Hpg::GetUSStation()
+    double Hpg::getUsStation()
     {
         return impl->usStation;
     }
 
-    void Hpg::SetUSStation(double usstation)
+    void Hpg::setUsStation(double usstation)
     {
         impl->usStation = usstation;
         impl->usStationValid = true;
     }
 
-    bool Hpg::IsSlopeValid()
-    {
-        return impl->slopeValid;
-    }
-
-    double Hpg::GetSlope()
-    {
-        return impl->slope;
-    }
-
-    void Hpg::SetSlope(double slope)
-    {
-        impl->slope = slope;
-        impl->slopeValid = true;
-    }
-
-    bool Hpg::IsLengthValid()
+    bool Hpg::isLengthValid()
     {
         return impl->lengthValid;
     }
 
-    double Hpg::GetLength()
+    double Hpg::getLength()
     {
         return impl->length;
     }
 
-    void Hpg::SetLength(double length)
+    void Hpg::setLength(double length)
     {
         impl->length = length;
         impl->lengthValid = true;
     }
 
-    bool Hpg::IsRoughnessValid()
+    bool Hpg::isRoughnessValid()
     {
         return impl->roughnessValid;
     }
 
-    double Hpg::GetRoughness()
+    double Hpg::getRoughness()
     {
         return impl->roughness;
     }
 
-    void Hpg::SetRoughness(double roughness)
+    void Hpg::setRoughness(double roughness)
     {
         impl->roughness = roughness;
         impl->roughnessValid = true;
     }
 
-    bool Hpg::IsMaxDepthValid()
+    bool Hpg::isMaxDepthValid()
     {
         return impl->maxDepthValid;
     }
 
-    double Hpg::GetMaxDepth()
+    double Hpg::getMaxDepth()
     {
         return impl->maxDepth;
     }
 
-    void Hpg::SetMaxDepth(double maxDepth)
+    void Hpg::setMaxDepth(double maxDepth)
     {
         impl->maxDepth = maxDepth;
         impl->maxDepthValid = true;
     }
 
-    bool Hpg::IsUnsteadyDepthPctValid()
+    bool Hpg::isMaxDepthFractionValid()
     {
         return impl->unsteadyDepthPctValid;
     }
 
-    double Hpg::GetUnsteadyDepthPct()
+    double Hpg::getMaxDepthFraction()
     {
         return impl->unsteadyDepthPct;
     }
 
-    void Hpg::SetUnsteadyDepthPct(double maxdepth)
+    void Hpg::setMaxDepthFraction(double maxdepth)
     {
         impl->unsteadyDepthPct = maxdepth;
         impl->unsteadyDepthPctValid = true;

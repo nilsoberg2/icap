@@ -11,7 +11,7 @@ class IcapOverflow
 public:
     bool IsInEvent(int nodeIdx);
     void Reset(int nodeIdx);
-    void Init(std::shared_ptr<geometry::NodeList> nodeList);
+    void Init(geometry::NodeList* nodeList);
 
 protected:
     std::map<int, bool> eventTracker;

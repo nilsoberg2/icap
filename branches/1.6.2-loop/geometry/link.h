@@ -39,7 +39,8 @@ namespace geometry
         std::shared_ptr<Node> outletNode;
         std::vector<std::pair<var_type, var_type>> vertices;
 
-        std::shared_ptr<xs::CrossSection> xs;
+        std::unique_ptr<xs::CrossSection> xs;
+        //xs::CrossSection* xs;
         double flow;
         
     public:

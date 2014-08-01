@@ -40,7 +40,7 @@ bool IcapHpg::allocate(int count_in)
 }
 
 
-std::shared_ptr<hpgns::BaseHPG> IcapHpg::getHpg(id_type linkId)
+std::shared_ptr<hpg::Hpg> IcapHpg::getHpg(id_type linkId)
 {
     if (m_list.count(linkId))
         return m_list[linkId];
@@ -55,20 +55,20 @@ bool IcapHpg::loadHPG(id_type linkId, const std::string& path)
 
 	int errCode = 0;
     //TODO:
-	hpgns::BaseHPG* h = new hpgns::CircularHPG((char*)path.c_str());
-    if (h == NULL)
+	hpg::Hpg* h = new hpg::Hpg();
+    if (!h->LoadFromFile(path))
         return false;
-    else if (errCode = h->GetError())
+    else if (errCode = h->getErrorCode())
         return false;
 
-	m_list.insert(std::make_pair(linkId, std::shared_ptr<hpgns::BaseHPG>(h)));
+	m_list.insert(std::make_pair(linkId, std::shared_ptr<hpg::Hpg>(h)));
 	return true;
 }
 
 //
 //bool IcapHpg::IsValidFlow(int linkId, double flow)
 //{
-//    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+//    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
 //    if (hpg == NULL)
 //    {
 //        setErrorMessage("Invalid HPG object");
@@ -84,7 +84,7 @@ bool IcapHpg::loadHPG(id_type linkId, const std::string& path)
 //int IcapHpg::CanInterpolateExtended(int linkId, double dsDepth, double flow)
 //{
 //    // Get the HPG.
-//    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+//    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
 //    if (hpg == NULL)
 //    {
 //        setErrorMessage("Invalid HPG object");
@@ -116,7 +116,7 @@ bool IcapHpg::loadHPG(id_type linkId, const std::string& path)
 //
 //    // We get the last points available for interpolation so we can
 //    // tell if we are in the pressurized flow region.
-//    hpgns::point lastP1, lastP2;
+//    hpg::point lastP1, lastP2;
 //
 //    if (HPGFAILURE(hpg->GetLastPointOnCurve(flow, curve1, lastP1)))
 //        return HPG_ERROR;
@@ -125,7 +125,7 @@ bool IcapHpg::loadHPG(id_type linkId, const std::string& path)
 //
 //	// If the depth is greater than the max allowed depth in the HPG, then
 //	// return pipe full.
-//	//if (dsDepth > diam * hpg->GetMaxDepth())
+//	//if (dsDepth > diam * hpg->getMaxDepth())
 //    if (dsElev > lastP1.x || dsElev > lastP2.x)
 //		return HPG_PIPE_FULL;
 //
@@ -148,7 +148,7 @@ bool IcapHpg::loadHPG(id_type linkId, const std::string& path)
 
 bool IcapHpg::getUpstream(id_type linkId, var_type dsHead, var_type flow, var_type& usHead)
 {
-    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
     if (hpg == NULL)
     {
         setErrorMessage("Invalid HPG object");
@@ -156,13 +156,13 @@ bool IcapHpg::getUpstream(id_type linkId, var_type dsHead, var_type flow, var_ty
     }
 
     double depth;
-    int errCode = hpg->GetUpstream(flow, dsHead, usHead);
+    int errCode = hpg->InterpUpstreamHead(flow, dsHead, usHead);
 
     if (HPGFAILURE(errCode))
     {
         char code[20];
         sprintf(code, "%d", errCode);
-        setErrorMessage("hpg_getUpstream failed: code=" + std::string(code) + " message=" + hpg->GetErrorStr());
+        setErrorMessage("hpg_getUpstream failed: code=" + std::string(code) + " message=" + hpg->getErrorMessage());
         return false;
     }
     else
@@ -174,20 +174,20 @@ bool IcapHpg::getUpstream(id_type linkId, var_type dsHead, var_type flow, var_ty
 
 bool IcapHpg::getHf(id_type linkId, var_type dsHead, var_type flow, var_type& hf)
 {
-    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
     if (hpg == NULL)
     {
         setErrorMessage("Invalid HPG object");
         return false;
     }
 
-    int errCode = hpg->GetHf(flow, dsHead, hf);
+    int errCode = hpg->InterpHf(flow, dsHead, hf);
 
     if (HPGFAILURE(errCode))
     {
         char code[20];
         sprintf(code, "%d", errCode);
-        setErrorMessage("hpg_getHf failed: code=" + std::string(code) + " message=" + hpg->GetErrorStr());
+        setErrorMessage("hpg_getHf failed: code=" + std::string(code) + " message=" + hpg->getErrorMessage());
         return false;
     }
     else
@@ -197,41 +197,41 @@ bool IcapHpg::getHf(id_type linkId, var_type dsHead, var_type flow, var_type& hf
 }
 
 
-var_type IcapHpg::getLowestFlow(id_type linkId, bool isAdverse)
-{
-    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
-    if (hpg == NULL)
-    {
-        setErrorMessage("Invalid HPG object");
-    }
-	else
-	{
-		if (isAdverse)
-			return hpg->AdvFlowAt(0);
-        else
-			return hpg->PosFlowAt(0);
-	}
-
-	return 0.0;
-}
+//var_type IcapHpg::getLowestFlow(id_type linkId, bool isAdverse)
+//{
+//    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
+//    if (hpg == NULL)
+//    {
+//        setErrorMessage("Invalid HPG object");
+//    }
+//	else
+//	{
+//		if (isAdverse)
+//			return hpg->getFlow(0);AdvFlowAt(0);
+//        else
+//			return hpg->PosFlowAt(0);
+//	}
+//
+//	return 0.0;
+//}
 
 
 bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type& volume)
 {
-    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
     if (hpg == NULL)
     {
         setErrorMessage("Invalid HPG object");
         return false;
     }
 
-    int errCode = hpg->GetVolume(flow, dsHead, volume);
+    int errCode = hpg->InterpVolume(flow, dsHead, volume);
 
     if (HPGFAILURE(errCode))
     {
         char code[20];
         sprintf(code, "%d", errCode);
-        setErrorMessage("hpg_getVolume failed: code=" + std::string(code) + " message=" + hpg->GetErrorStr());
+        setErrorMessage("hpg_getVolume failed: code=" + std::string(code) + " message=" + hpg->getErrorMessage());
         return false;
     }
 	else
@@ -241,7 +241,7 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //
 //bool IcapHpg::GetCritUpstream(int linkId, double flow, double& usDepth)
 //{
-//    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+//    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
 //    if (hpg == NULL)
 //    {
 //        setErrorMessage("Invalid HPG object");
@@ -282,7 +282,7 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //    double diameter = GLINK_MAXDEPTH(linkId);
 //    double dsInvert = GLINK_DSINVERT(linkId);
 //
-//    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+//    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
 //    if (hpg == NULL)
 //    {
 //        setErrorMessage("Invalid HPG object");
@@ -304,7 +304,7 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //    if (flow > 0.0)
 //    {
 //        unsigned int numFlows = hpg->NumPosFlows();
-//        hpgns::point tempP = hpg->PosValuesAt(numFlows-1).front();
+//        hpg::point tempP = hpg->PosValuesAt(numFlows-1).front();
 //        isSteep = (tempP.x > tempP.y ? true : false);
 //    }
 //
@@ -364,7 +364,7 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //            // Get the last point on the curve for that flow.  This may not
 //            // be equal to the 80% full point, so we want to be slightly more
 //            // accurate.
-//            hpgns::point fullPoint;
+//            hpg::point fullPoint;
 //            if (! HPGFAILURE(hpg->GetLastPoint(flow, fullPoint)))
 //            {
 //                yDnAt80Pct = fullPoint.x;
@@ -392,14 +392,14 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //
 //int IcapHpg::GetHPGError(int linkId)
 //{
-//    std::shared_ptr<hpgns::BaseHPG> hpg = getHpg(linkId);
+//    std::shared_ptr<hpg::Hpg> hpg = getHpg(linkId);
 //    if (hpg == NULL)
 //    {
 //        setErrorMessage("Invalid HPG object");
 //        return 1;
 //    }
 //
-//    return hpg->GetError();
+//    return hpg->getErrorCode();
 //}
 //
 //
@@ -449,7 +449,7 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //        double feedToAcos = 1.0 - 2.0 * yCrit / diameter;
 //        if (feedToAcos < -1.0 || feedToAcos > 1.0)
 //        {
-//            errorCode = hpgns::error::imaginary;
+//            errorCode = hpg::error::imaginary;
 //            break;
 //        }
 //
@@ -477,12 +477,12 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //    // If we've maxed out the number of iterations, then return non-converged flag
 //    if (iterCount >= maxIter)
 //    {
-//        errorCode = hpgns::error::divergence;
+//        errorCode = hpg::error::divergence;
 //        hpg_setError("hpg_calculateCriticalDepth: Solution did not converge.");
 //    }
 //    else if (iterCount == 0)
 //    {
-//        errorCode = hpgns::error::at_max_depth;
+//        errorCode = hpg::error::at_max_depth;
 //        hpg_setError("hpg_calculateCriticalDepth: Solution exceeded maximum depth.");
 //    }
 //
@@ -500,7 +500,7 @@ bool IcapHpg::getVolume(id_type linkId, var_type dsHead, var_type flow, var_type
 //}
 //
 
-int IcapHpg::loadNextHpg(const std::string& path, std::shared_ptr<geometry::LinkList> linkList)
+int IcapHpg::loadNextHpg(const std::string& path, geometry::LinkList* linkList)
 {
     if (m_currentHPG < 0)
     {
@@ -525,7 +525,7 @@ int IcapHpg::loadNextHpg(const std::string& path, std::shared_ptr<geometry::Link
 }
 
 
-bool IcapHpg::loadHpgs(const std::string& path, std::shared_ptr<geometry::LinkList> linkList)
+bool IcapHpg::loadHpgs(const std::string& path, geometry::LinkList* linkList)
 {
     bool result = allocate(linkList->count());
     if (! result)
@@ -538,13 +538,14 @@ bool IcapHpg::loadHpgs(const std::string& path, std::shared_ptr<geometry::LinkLi
 		printf("Loading HPG %d of %d...\n", i + 1, count);
         // We don't load the HPG if this isn't a conduit.
         //TODO:
-        if (linkList->get(i)->getGeometryType() != xs::xstype::circular)
+        auto link = linkList->get(i);
+        if (link->getGeometryType() != xs::xstype::circular)
         {
             m_list[i] = NULL;
             continue;
         }
 
-        if (! checkAndLoadHPG(linkList->get(i), path))
+        if (! checkAndLoadHPG(link, path))
         {
             ok = false;
             break;

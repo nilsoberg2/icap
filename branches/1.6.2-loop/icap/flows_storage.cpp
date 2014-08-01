@@ -43,7 +43,7 @@ var_type ICAP::getFlowAtNode(const id_type& nodeIdx)
 var_type ICAP::computePipeStorage()
 {
 	double volume = 0.0;
-    std::shared_ptr<geometry::LinkList> links = m_geometry->getLinkList();
+    geometry::LinkList* links = m_geometry->getLinkList();
 	for (int i = 0; i < links->count(); i++)
 	{
 		volume += m_model->getLinkVariable(links->id(i), variables::LinkVolume);
@@ -116,7 +116,7 @@ var_type ICAP::computeTotalVolumeCurve(geometry::Curve& curve)
     // as well (e.g. no adverse slope to reservoir but reservoir is on a
     // branch and one of the branches slopes down lower than the res.
 
-    std::shared_ptr<geometry::NodeList> nodes = m_geometry->getNodeList();
+    geometry::NodeList* nodes = m_geometry->getNodeList();
 
     //double resInvert = GNODE_INVERT(m_sinkNodeIdx);
     //double pipeCrown = GLINK_MAXDEPTH(m_sinkLinkIdx) + GNODE_INVERT(m_sinkNodeIdx);

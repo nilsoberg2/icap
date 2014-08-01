@@ -83,9 +83,9 @@ namespace geometry
         return impl->nodeMap[index];
     }
 
-    std::shared_ptr<NodeList> Geometry::getNodeList()
+    NodeList* Geometry::getNodeList()
     {
-        return std::shared_ptr<NodeList>(this);
+        return this;
     }
 
     id_type Geometry::node_id(int index)
@@ -106,9 +106,9 @@ namespace geometry
         return impl->linkMap[index];
     }
 
-    std::shared_ptr<LinkList> Geometry::getLinkList()
+    LinkList* Geometry::getLinkList()
     {
-        return std::shared_ptr<LinkList>(this);
+        return this;
     }
 
     id_type Geometry::link_id(int index)
@@ -122,9 +122,9 @@ namespace geometry
     ///////////////////////////////////////////////////////////////////////////
     // OPTIONS interface
 
-    std::shared_ptr<Options> Geometry::asOptions()
+    Options* Geometry::asOptions()
     {
-        return std::shared_ptr<Options>(this);
+        return this;
     }
 
     std::vector<std::string> Geometry::getOptionNames() const
@@ -226,6 +226,8 @@ namespace geometry
             setErrorMessage(std::string("The file '") + filePath + "' does not exist.");
             return false;
         }
+
+        this->geomFilePath = filePath;
 
         if (format == GeometryFileFormat::FileFormatSwmm5)
         {
@@ -621,8 +623,8 @@ namespace geometry
 
             if (theNode != NULL)
             {
+                impl->nodeIdMap.insert(make_pair(nodeId, impl->nodeMap.size()));
                 impl->nodeMap.insert(make_pair(impl->nodeMap.size(), theNode));
-                impl->nodeIdMap.insert(make_pair(nodeId, impl->nodeMap.size() - 1));
             }
 
             return theNode;
@@ -647,8 +649,8 @@ namespace geometry
 
             if (theLink != NULL)
             {
-                this->linkMap.insert(make_pair(this->linkMap.size(), theLink));
                 this->linkIdMap.insert(make_pair(linkId, this->linkMap.size()));
+                this->linkMap.insert(make_pair(this->linkMap.size(), theLink));
             }
 
             return theLink;

@@ -46,6 +46,7 @@ namespace geometry
         DateTime startTime;
         DateTime endDate;
         DateTime endTime;
+        std::string geomFilePath;
 
     public:
 
@@ -60,14 +61,14 @@ namespace geometry
         virtual int node_count();
         virtual std::shared_ptr<Node> node_get(int index);
         virtual id_type node_id(int index);
-        std::shared_ptr<NodeList> getNodeList();
+        NodeList* getNodeList();
 
         ///////////////////////////////////////////////////////////////////////
         // LinkList interface
         virtual int link_count();
         virtual std::shared_ptr<Link> link_get(int index);
         virtual id_type link_id(int index);
-        std::shared_ptr<LinkList> getLinkList();
+        LinkList* getLinkList();
 
         ///////////////////////////////////////////////////////////////////////
         // CurveFactory interface
@@ -88,7 +89,7 @@ namespace geometry
         virtual std::vector<std::string> getOptionNames() const;
         virtual std::string getOption(std::string optionName) const;
         virtual bool hasOption(std::string optionName) const;
-        virtual std::shared_ptr<Options> asOptions();
+        virtual Options* asOptions();
         DateTime getStartDateTime();
         DateTime getEndDateTime();
         

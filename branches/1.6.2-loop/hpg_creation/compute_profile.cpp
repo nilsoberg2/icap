@@ -47,7 +47,7 @@ inline void compute_variables(double y, solver_params& params, profile_params& x
 //      Based on previous version by JM Mier, November 2007, UIUC
 //      JM Mier, UIUC, September 2013 - Modified to include English units
 
-int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, bool isFree, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach);
+int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, bool freeOnly, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach);
 
 int ComputeFreeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach)
 {
@@ -59,7 +59,7 @@ int ComputeCombinedProfile(const xs::Reach& reach, double flow, double yInit, in
     return ComputeProfile(reach, flow, yInit, nC, isSteep, reverseSlope, false, g, kn, maxDepthFrac, yUp, volume, hf_reach);
 }
 
-int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, bool isFree, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach)
+int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, bool freeOnly, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach)
 {
     // Initialization
 	hf_reach = 0;
@@ -157,10 +157,12 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
     }
     
     X[0] = 0;
-    if (yCvalid)
+    if (!isZero(flow))
         Y[0] = std::max(y_c, yInit);
     else
         Y[0] = yInit;
+    //else
+    //    Y[0] = yInit;
     Z[0] = x1.Z;
 
     // Starting out empty case
@@ -184,9 +186,9 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
         PoG[0] = std::max(std::min(0., y_c - maxDepth), yInit - maxDepth);
         Sf[0] = x1.Sf;
         V[0] = x1.V;
-        if (isFree)
+        if (freeOnly)
         {
-            return 0;
+            return hpg::error::at_max_depth;
         }
     }
 
@@ -201,9 +203,14 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
     }
 
     // If the area is zero, then the reach is empty and we return empty.
-    if (profile_error_code == ERR_ZERO_AREA)
+    if (!isEmpty && profile_error_code == ERR_ZERO_AREA)
     {
-        return 0;
+        isEmpty = true;
+        compute_variables(Y[0], params, x1);
+        Y[0] = 0;
+        Sf[0] = slope;
+        PoG[0] = 0;
+        V[0] = 0;
     }
 
     H[0] = Z[0] + Y[0] + PoG[0] + V[0] * V[0] / (2. * g);
@@ -215,19 +222,24 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
     profile_params x2;
     int error = 0;
 
+    if (Y[0] >= 0.98 * maxDepth)
+    {
+        isFull = true;
+    }
+
     int i = 0;
     for (i = 1; i < nC + 1; i++)
     {
         curX += params.dx;
-        x2.Z = slope * curX;
 
         X[i] = X[i - 1] + params.dx;
-        Z[i] = slope * (X[i] - X[0]);
+        Z[i] = Z[0] + slope * (X[i] - X[0]);
+        x2.Z = Z[i];
 
         // If the flow is zero we simply use this to compute the volume
         if (isZero(flow))
         {
-            y2 = std::max(0., Y[0] - curX * slope);
+            y2 = std::max(0., yInit - curX * slope);
             compute_variables(y2, params, x2);
             Y[i] = y2;
             V[i] = 0;
@@ -252,6 +264,10 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
             y2 = maxDepth;
             Sf2 = x2.Sf;
             V2 = x2.V;
+            if (freeOnly)
+            {
+                return hpg::error::at_max_depth;
+            }
         }
 
         // Otherwise, the previous section was not pressurized.
@@ -334,9 +350,9 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
                 compute_variables(maxDepth, params, x2);
                 Sf2 = x2.Sf;
                 V2 = x2.V;
-                if (isFree)
+                if (freeOnly)
                 {
-                    return 0;
+                    return hpg::error::at_max_depth;
                 }
             }
             else
@@ -386,11 +402,15 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
         // If flow gets UNPRESSURIZED in this section, recalculate
         else if (isFull && PoG[i] <= 0)
         {
-            isFull = false;
-            p2[i] = true;
-            PoG[i] = 0;
-            y2k = H[i] - Z[i] - PoG[i] - V[i] * V[i] / (2. * g);
-            i--;
+            double yTemp = H[i] - Z[i] - V[i] * V[i] / (2. * g);
+            if (yTemp < 0.98 * maxDepth)
+            {
+                isFull = false;
+                p2[i] = true;
+                PoG[i] = 0;
+                y2k = H[i] - Z[i] - PoG[i] - V[i] * V[i] / (2. * g);
+                i--;
+            }
         }
 
         if (!isEmpty)
@@ -446,7 +466,7 @@ inline void compute_variables(double y, solver_params& params, profile_params& x
     x.V = params.Q / x.A;
     x.Y = y;
     //x.E = x.Z + y + params.Q * params.Q / (x.A * x.A * 2.0 * params.g);
-    x.Sf = (params.Q * params.N * pow(x.P, 2.0/3.0)) / (params.kn * pow(x.A, 5.0/3.0));
+    x.Sf = (params.Q * params.N * std::pow(x.P, 2.0/3.0)) / (params.kn * std::pow(x.A, 5.0/3.0));
     x.Sf = x.Sf * x.Sf; // square it
     x.PoG = 0;
 
@@ -487,7 +507,7 @@ inline double profile_func_deriv(double y, solver_params& params, profile_params
 
     double dfn = 1 - Q*Q * dAdy / (g * A*A*A) - Q*Q * n*n / 2. * dx *
         (
-            4./3. * pow(P, ONETHIRD) / pow(A, TENTHIRDS) * dPdy - TENTHIRDS * dAdy * pow(P, FOURTHIRDS) / pow(A, THIRTEENTHIRDS)
+            4./3. * std::pow(P, ONETHIRD) / std::pow(A, TENTHIRDS) * dPdy - TENTHIRDS * dAdy * std::pow(P, FOURTHIRDS) / std::pow(A, THIRTEENTHIRDS)
         );
 
     return dfn * params.isSteep;

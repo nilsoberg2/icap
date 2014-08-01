@@ -4,7 +4,6 @@
 
 #include "icap.h"
 #include "icap_interface.h"
-#include "debug.h"
 #include <cmath>
 #include <iostream>
 #include <ctime>

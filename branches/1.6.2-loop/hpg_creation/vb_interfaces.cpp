@@ -49,7 +49,7 @@
 //
 //    hpg::CircularHpg* h;
 //	// create positive slope version
-//	h = c.AutoCreateHPG(diameter, length, roughness, slope, dsInvert, nodeID, dsStation);
+//	h = c.AutoCreateHpg(diameter, length, roughness, slope, dsInvert, nodeID, dsStation);
 //
 //	if (h == NULL)
 //		retval = 1;

@@ -21,7 +21,7 @@ void IcapOverflow::Reset(int nodeIdx)
 }
 
 
-void IcapOverflow::Init(std::shared_ptr<geometry::NodeList> nodeList)
+void IcapOverflow::Init(geometry::NodeList* nodeList)
 {
     for (int i = 0; i < nodeList->count(); i++)
     {

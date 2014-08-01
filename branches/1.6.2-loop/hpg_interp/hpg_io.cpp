@@ -16,17 +16,17 @@ namespace hpg
 {
     typedef std::vector<std::string> svec;
 
-    bool Hpg::LoadFromFile(const char* file, bool splineSetup)
+    bool Hpg::LoadFromFile(const std::string& file, bool splineSetup)
     {
         using namespace std;
 
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
         int status = S_OK;
 
         ifstream fh(file);
         if (! fh.is_open())
         {
-            impl->ErrorCode = err::FileReadFailed;
+            impl->errorCode = err::FileReadFailed;
             return false;
         }
         else if (fh.eof())
@@ -35,7 +35,7 @@ namespace hpg
         //
         // Parse up the header line and obtain attributes.
         //
-        this->LoadHeader(fh);
+        this->loadHeader(fh);
 
         // If there isn't anything else to read, this file is empty and
         // we return true (true because the HPG is valid, it's just empty).
@@ -69,7 +69,7 @@ namespace hpg
                 // read it.
                 if (line.length() < 3)
                 {
-                    impl->ErrorCode = err::InvalidFileFormat;
+                    impl->errorCode = err::InvalidFileFormat;
                     return false;
                 }
                 else
@@ -98,7 +98,7 @@ namespace hpg
                 // that the line isn't valid, indicating a corrupt file.
                 if (parts.size() < 2)
                 {
-                    impl->ErrorCode = err::InvalidFileFormat;
+                    impl->errorCode = err::InvalidFileFormat;
                     return false;
                 }
 
@@ -124,13 +124,13 @@ namespace hpg
 
         fh.close();
 
-        PostLoadActions();
+        //PostLoadActions();
 
         if (splineSetup)
         {
-            if (HPGFAILURE(status = SetupSplines()))
+            if (HPGFAILURE(status = setupSplines()))
             {
-                //ErrorCode = status;
+                //errorCode = status;
                 return false;
             }
         }
@@ -138,7 +138,7 @@ namespace hpg
         return true;
     }
 
-    bool Hpg::LoadHeader(std::ifstream& fh)
+    bool Hpg::loadHeader(std::ifstream& fh)
     {
         using namespace std;
 
@@ -150,7 +150,7 @@ namespace hpg
 
         if (parts.at(0) != "HPG")
         {
-            impl->ErrorCode = err::InvalidFileFormat;
+            impl->errorCode = err::InvalidFileFormat;
             fh.close();
             return false;
         }
@@ -163,7 +163,13 @@ namespace hpg
             if (kv.size() > 1)
             {
                 if (kv.at(0) == "nid")
-                    impl->nodeID = atoi(kv.at(1).c_str());
+                {
+                    impl->nodeId = kv.at(1);
+                }
+                else if (kv.at(0) == "ver")
+                {
+                    impl->version = atoi(kv.at(1).c_str());
+                }
                 else if (kv.at(0) == "ds_invert")
                 {
                     impl->dsInvert = atof(kv.at(1).c_str());
@@ -174,21 +180,21 @@ namespace hpg
                     impl->usInvert = atof(kv.at(1).c_str());
                     impl->usInvertValid = true;
                 }
-                else if (kv.at(0) == "dsta")
+                else if (kv.at(0) == "dsta" || kv.at(0) == "ds_sta")
                 {
                     impl->dsStation = atof(kv.at(1).c_str());
                     impl->dsStationValid = true;
                 }
-                else if (kv.at(0) == "usta")
+                else if (kv.at(0) == "usta" || kv.at(0) == "us_sta")
                 {
                     impl->usStation = atof(kv.at(1).c_str());
                     impl->usStationValid = true;
                 }
-                else if (kv.at(0) == "slope")
-                {
-                    impl->slope = atof(kv.at(1).c_str());
-                    impl->slopeValid = true;
-                }
+                //else if (kv.at(0) == "slope")
+                //{
+                //    impl->slope = atof(kv.at(1).c_str());
+                //    impl->slopeValid = true;
+                //}
                 else if (kv.at(0) == "diameter" || kv.at(0) == "max_chan_depth")
                 {
                     impl->maxDepth = atof(kv.at(1).c_str());
@@ -204,7 +210,7 @@ namespace hpg
                     impl->roughness = atof(kv.at(1).c_str());
                     impl->roughnessValid = true;
                 }
-                else if (kv.at(0) == "maxdepth" || kv.at(0) == "unsteadydepth")
+                else if (kv.at(0) == "maxdepth" || kv.at(0) == "unsteadydepth" || kv.at(0) == "max_depth_frac")
                 {
                     impl->unsteadyDepthPct = atof(kv.at(1).c_str());
                     impl->unsteadyDepthPctValid = true;
@@ -212,12 +218,18 @@ namespace hpg
             }
         }
 
+        if (impl->dsInvertValid && impl->usInvertValid && impl->lengthValid)
+        {
+            impl->slope = (impl->usInvert - impl->dsInvert) / impl->length;
+            impl->slopeValid = true;
+        }
+
         return true;
     }
 
-    bool Hpg::SaveToFile(const char* file, bool append)
+    bool Hpg::SaveToFile(const std::string& file, bool append)
     {
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // We're using <stdio.h> stuff (i.e. FILE* and fprintf) since we
         // have greater control over formatting of numbers.
@@ -227,31 +239,31 @@ namespace hpg
         // If the append flag is set, then we append instead of creating the file.
         FILE *fh = NULL;
         if (append)
-            fh = fopen(file, "a");
+            fh = fopen(file.c_str(), "a");
         else
-            fh = fopen(file, "w");
+            fh = fopen(file.c_str(), "w");
 
         if (fh == NULL)
         {
-            impl->ErrorCode = err::FileWriteFailed;
+            impl->errorCode = err::FileWriteFailed;
             return false;
         }
 
         // Format the header line and only print it out if we're not appending.
         if (! append)
         {
-            std::string header = SaveHeader();
+            std::string header = saveHeader();
             // Print the header lines
             fprintf(fh, "HPG %s\n", header.c_str());
             fprintf(fh, "Downstream depth\tUpstream depth\tWater volume\n");
         }
 
         // Print out the curves to the file
-        for (unsigned int i = 0; i < impl->PosFlows.size(); i++)
+        for (unsigned int i = 0; i < impl->posFlows.size(); i++)
         {
-            fprintf(fh, "Q=%.2f\n", impl->PosFlows[i]);
+            fprintf(fh, "Q=%.2f\n", impl->posFlows[i]);
 
-            hpgvec vec = impl->PosValues[i];
+            hpgvec vec = impl->posValues[i];
             for (unsigned int j = 0; j < vec.size(); j++)
 			{
 				if (vec[j].hf_valid)
@@ -264,11 +276,11 @@ namespace hpg
 				}
 			}
 		}
-        for (unsigned int i = 0; i < impl->AdvFlows.size(); i++)
+        for (unsigned int i = 0; i < impl->advFlows.size(); i++)
         {
-            fprintf(fh, "Q=%.2f\n", impl->AdvFlows[i]);
+            fprintf(fh, "Q=%.2f\n", impl->advFlows[i]);
 
-            hpgvec vec = impl->AdvValues[i];
+            hpgvec vec = impl->advValues[i];
             for (unsigned int j = 0; j < vec.size(); j++)
 			{
 				if (vec[j].hf_valid)
@@ -291,13 +303,14 @@ namespace hpg
         return true;
     }
 
-    std::string Hpg::SaveHeader()
+    std::string Hpg::saveHeader()
     {
         std::stringstream header;
-        if (impl->nodeID != -1)
-            header << "nid=" << impl->nodeID << " ";
-        else
-            header << "nid=-1 ";
+
+        if (impl->version != -1)
+            header << "ver=" << impl->version << " ";
+
+        header << "nid=" << impl->nodeId << " ";
 
         if (impl->dsInvertValid)
             header << "ds_invert=" << impl->dsInvert << " ";
@@ -310,19 +323,19 @@ namespace hpg
             header << "us_invert= ";
 
         if (impl->dsStationValid)
-            header << "dsta=" << impl->dsStation << " ";
+            header << "ds_sta=" << impl->dsStation << " ";
         else
-            header << "dsta= ";
+            header << "ds_sta= ";
 
         if (impl->usStationValid)
-            header << "usta=" << impl->usStation << " ";
+            header << "us_sta=" << impl->usStation << " ";
         else
-            header << "usta= ";
+            header << "us_sta= ";
 
-        if (impl->slopeValid)
-            header << "slope=" << impl->slope << " ";
-        else
-            header << "slope= ";
+        //if (impl->slopeValid)
+        //    header << "slope=" << impl->slope << " ";
+        //else
+        //    header << "slope= ";
 
         if (impl->lengthValid)
             header << "length=" << impl->length << " ";
@@ -340,9 +353,9 @@ namespace hpg
             header << "max_chan_depth= ";
 
         if (impl->unsteadyDepthPctValid)
-            header << "unsteadydepth=" << impl->unsteadyDepthPct << " ";
+            header << "max_depth_frac=" << impl->unsteadyDepthPct << " ";
         else
-            header << "unsteadydepth= ";
+            header << "max_depth_frac= ";
 
         return header.str();
     }

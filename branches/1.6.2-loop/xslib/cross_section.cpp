@@ -10,42 +10,45 @@
 
 namespace xs
 {
-    std::shared_ptr<CrossSection> Factory::create(xstype xsType)
+    //std::shared_ptr<CrossSection>
+    CrossSection* Factory::create(xstype xsType)
     {
         if (xsType == xstype::circular)
         {
-            return std::shared_ptr<CrossSection>(new Circular());
+            return new Circular();
         }
         else
         {
-            return std::shared_ptr<CrossSection>(new Dummy());
+            return new Dummy();
         }
     }
 
     template<typename XSType>
-    std::shared_ptr<CrossSection> Factory::create()
+    //std::shared_ptr<CrossSection>
+    CrossSection* Factory::create()
     {
         if (typeid(Circular) == typeid(XSType))
         {
-            return std::shared_ptr<CrossSection>(new Circular());
+            return new Circular();
         }
         else
         {
-            return std::shared_ptr<CrossSection>(new Dummy());
+            return new Dummy();
         }
     }
 
-    std::shared_ptr<CrossSection> Factory::create(const std::string& type)
+    //std::shared_ptr<CrossSection> Factory::create(const std::string& type)
+    CrossSection* Factory::create(const std::string& type)
     {
         std::string geom = boost::algorithm::to_lower_copy(type);
         
         if (geom == "circular")
         {
-            return std::shared_ptr<CrossSection>(new Circular());
+            return new Circular();
         }
         else// if (geom == "irregular")
         {
-            return std::shared_ptr<CrossSection>(new Dummy());
+            return new Dummy();
         }
     }
 }

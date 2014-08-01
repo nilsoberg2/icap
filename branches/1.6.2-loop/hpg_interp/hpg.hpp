@@ -26,108 +26,112 @@ namespace hpg
     class Hpg
     {
     public:
-        //Destructor. Implemented in derived classes.
+        Hpg();
+
+        //Destructor.
         ~Hpg();
+
         /** Load a HPG.  Optionally sets up the splines.
         * @param file          HPG file to load as string
         * @param setupSplines  Setup splines as boolean
         * @return true if successful, false otherwise
         */
-        bool LoadFromFile(const char* file, bool splineSetup = true);
+        bool LoadFromFile(const std::string& path, bool splineSetup = true);
         /** Save a HPG to a file.
         * @param file HPG file to load as string
         * @return true if successful, false otherwise
         */
-        bool SaveToFile(const char* file, bool append = false);
+        bool SaveToFile(const std::string& path, bool append = false);
 
         // ACCESSOR FUNCTIONS
 
-        unsigned int NumPosFlows();
-        unsigned int NumAdvFlows();
-        double PosFlowAt(unsigned int f);
-        double AdvFlowAt(unsigned int f);
-        hpgvec& PosValuesAt(unsigned int f);
-        hpgvec& AdvValuesAt(unsigned int f);
+        //unsigned int NumPosFlows();
+        //unsigned int NumAdvFlows();
+        //hpgvec& PosValuesAt(unsigned int f);
+        //hpgvec& AdvValuesAt(unsigned int f);
         // Determine if curve is mild-slope.
-        bool IsMildAt(unsigned int curve);
-        // Determine if curve is steep-slope. negative = steep, positive = mild, 0 = error
-        int IsSteepAt(unsigned int curve);
+        //bool IsMildAt(unsigned int curve);
         // Add a curve to the HPG. Automatically determines if pos or adverse.
         void AddCurve(double flow, hpgvec& curve, point crit);
 
         // INTERPOLATION FUNCTIONS
 
-        int GetUpstream(double flow, double downstream, double& result);
-        int GetDownstreamExactFlow(double flow, double upstream, double& result);
-		int GetVolume(double flow, double downstream, double& volume);
-		int GetHf(double flow, double downstream, double& value);
+        int InterpUpstreamHead(double flow, double downstream, double& result);
+		int InterpVolume(double flow, double downstream, double& volume);
+		int InterpHf(double flow, double downstream, double& value);
         //int GetCritUpstream(double flow, double& result) = 0;
         //int GetCritDownstream(double flow, double& result) = 0;
         //int GetCritUpFromDown(double flow, double downstream, double& result);
         //int GetZeroUpstream(double downstream, double& result);
         //int GetZeroDownstream(double upstream, double& result);
-        int GetLastPoint(double flow, point& result);
-        int GetFlowIndex(double flow, unsigned int& index);
-        int FindMatchingFlowIndex(double flow, unsigned int& index);
-        bool IsValidFlow(double flow);
-		int IsValidFlowExtended(double flow);
-        int GetFirstPointOnCurve(double flow, unsigned int curve, point& result);
-        int GetLastPointOnCurve(double flow, unsigned int curve, point& result);
-        hpgvec& GetPosCritical();
-        hpgvec& GetAdvCritical();
 
         // ERROR FUNCTIONS
 
         // Get the error as a string.  Returns the null string if no error.
-        char* GetErrorStr();
+        std::string getErrorMessage();
         // Get the error code as an integer.
-        int GetError();
-
-        int SetupSplines();
+        int getErrorCode();
 
     public:
 
-        bool IsDSInvertValid();
-        double GetDSInvert();
-        void SetDSInvert(double dsinvert);
-        bool IsUSInvertValid();
-        double GetUSInvert();
-        void SetUSInvert(double usinvert);
-        bool IsDSStationValid();
-        double GetDSStation();
-        void SetDSStation(double dsstation);
-        bool IsUSStationValid();
-        double GetUSStation();
-        void SetUSStation(double usstation);
-        bool IsSlopeValid();
-        double GetSlope();
-        void SetSlope(double slope);
-        bool IsLengthValid();
-        double GetLength();
-        void SetLength(double length);
-        bool IsRoughnessValid();
-        double GetRoughness();
-        void SetRoughness(double roughness);
-        
-        //ATTRIBUTE ACCESSORS
+        bool isDsInvertValid();
+        double getDsInvert();
+        void setDsInvert(double dsinvert);
+        bool isUsInvertValid();
+        double getUsInvert();
+        void setUsInvert(double usinvert);
+        bool isDsStationValid();
+        double getDsStation();
+        void setDsStation(double dsstation);
+        bool isUsStationValid();
+        double getUsStation();
+        void setUsStation(double usstation);
+        bool isLengthValid();
+        double getLength();
+        void setLength(double length);
+        bool isRoughnessValid();
+        double getRoughness();
+        void setRoughness(double roughness);
+        bool isMaxDepthValid();
+        double getMaxDepth();
+        void setMaxDepth(double maxDepth);
+        bool isMaxDepthFractionValid();
+        double getMaxDepthFraction();
+        void setMaxDepthFraction(double maxdepth);
+        std::string getNodeId();
+        void setNodeId(std::string id);
 
-        bool IsMaxDepthValid();
-        double GetMaxDepth();
-        void SetMaxDepth(double maxDepth);
-        bool IsUnsteadyDepthPctValid();
-        double GetUnsteadyDepthPct();
-        void SetUnsteadyDepthPct(double maxdepth);
-        int GetNodeID();
-        void SetNodeID(int id);
+        // Returns -1 if the HPG is not versioned, otherwise returns > 0
+        int getVersion();
 
-    protected:
-        void Initialize();
-        void Deinitialize();
-        void CopyInto(const Hpg& hpg);
+    private:
+        class Impl;
+        Impl* impl;
+
+
+    private:
+        //double PosFlowAt(unsigned int f);
+        //double AdvFlowAt(unsigned int f);
+
+        // Determine if curve is steep-slope. negative = steep, positive = mild, 0 = error
+        bool isCurveSteep(unsigned int curve);
+        //int GetLastPoint(double flow, point& result);
+        int findLowerBracketingCurve(double flow, unsigned int& index);
+        //int FindMatchingFlowIndex(double flow, unsigned int& index);
+        bool isValidFlow(double flow);
+		int isValidFlowExtended(double flow);
+        int getFirstPointOnCurve(double flow, unsigned int curve, point& result);
+        int getLastPointOnCurve(double flow, unsigned int curve, point& result);
+        //hpgvec& GetPosCritical();
+        //hpgvec& GetAdvCritical();
+        int setupSplines();
+        void initialize();
+        void deinitialize();
+        void copyFrom(const Hpg& hpg);
         
-        std::string SaveHeader();
-        bool LoadHeader(std::ifstream& fh);
-        void PostLoadActions();
+        std::string saveHeader();
+        bool loadHeader(std::ifstream& fh);
+        //void PostLoadActions();
 
         int standardInterpolation(unsigned int curve, double flow, double input, double& result, InterpValue interpAction = Interp_Upstream);
         int standardExtrapolation(unsigned int curve, double flow, double downstream, double& result);
@@ -138,9 +142,7 @@ namespace hpg
         int setupAdvSplines();
         int setupCritPosSplines();
         int setupCritAdvSplines();
-    private:
-        class Impl;
-        Impl* impl;
+
     };
 
     const point NULL_POINT;

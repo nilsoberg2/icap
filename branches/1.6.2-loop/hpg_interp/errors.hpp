@@ -22,7 +22,7 @@ namespace hpg
 }
 
 
-#define CLEARERR          ErrorCode=0;
+#define CLEARERR          errorCode=0;
 
 
 #endif//__ERRORS_HPP________________________20051114145959__
