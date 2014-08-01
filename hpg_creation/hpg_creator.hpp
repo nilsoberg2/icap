@@ -50,10 +50,12 @@ public:
     */
     HpgCreator();
 
-    std::shared_ptr<hpg::Hpg> AutoCreateHPG(const xs::Reach& reach);
+    std::shared_ptr<hpg::Hpg> AutoCreateHpg(const xs::Reach& reach);
 
-    double FindMaxFlow(const xs::Reach& reach, bool reverseSlope, double &yCritMax);
-    void FindFlowIncrements(const xs::Reach& reach, bool reverseSlope, double minFlow, double maxFlow, std::deque<double> &flows);
+    // These should be private
+    double findMaxFlow(const xs::Reach& reach, bool reverseSlope, double &yCritMax);
+    void findFlowIncrements(const xs::Reach& reach, bool reverseSlope, double minDepth, double maxDepth, std::deque<double> &flows);
+    void findFlowIncrementsByFlow(const xs::Reach& reach, bool reverseSlope, double minFlow, double maxFlow, std::deque<double> &flows);
 
 private:
     //HPG * AutoCreateHPG2(double diameter, double length, double roughness, double slope, double dsInvert, long nodeID = -1, double dsStation = hpg::error::bad_value);
@@ -61,9 +63,10 @@ private:
     //double FindCriticalFlow(const xs::Reach& reach, double depth);
     //double FindMinFlow(const xs::Reach& reach, bool reverseSlope, double starting_discharge, double ending_discharge, double &y_critical_min);
 
-    void ComputeHPGCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec &curve);
-    bool ComputeValidHPGCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec &curve);
+    void computeHpgCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec &curve);
+    bool computeValidHpgCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec &curve);
 
+public:
     /**
     * getConvergenceTolerance returns the convergence factor for
     * creating HPGs.

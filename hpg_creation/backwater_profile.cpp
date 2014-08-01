@@ -1,8 +1,11 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <string>
+#include <algorithm>
 
 #include "../hpg/error.hpp"
+#include "../util/math.h"
 
 #include "hpg_creator.hpp"
 #include "benchmark.h"
@@ -13,24 +16,34 @@
 // NOTE: BENCH_* macros will be empty unless BENCHMARKYES is defined
 // (usually in project settings)
 
-void HpgCreator::ComputeHPGCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec& curve)
+void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec& curve)
 {
     BENCH_INIT;
+
+    bool computeFreeOnly = pressurizedHeight < 1e-6;
 
     double slope = reach.getSlope() * (reverseSlope ? -1. : 1.);
     double maxDepth = reach.getMaxDepth();
     double dsInvert = reach.getDsInvert();
     double usInvert = reach.getUsInvert();
 
+    bool yNvalid = false;
     // Normal depth is only defined for positive slope channels.
-    if (slope >= 0.0)
+    if (slope >= 0.0 && !isZero(flow))
     {
         BENCH_START;
     	
         if (ComputeNormalDepth(reach, flow, this->g, this->kn, yNormal))
         {
-            this->errorCode = hpg::error::divergence;
-            return;
+            if (computeFreeOnly)
+            {
+                this->errorCode = hpg::error::divergence;
+                return;
+            }
+        }
+        else
+        {
+            yNvalid = true;
         }
         
         BENCH_STOP;
@@ -38,17 +51,25 @@ void HpgCreator::ComputeHPGCurve(const xs::Reach& reach, double flow, double pre
 
     BENCH_START;
 
-	if (ComputeCriticalDepth(reach, flow, this->g, yCritical))
+    bool yCvalid = false;
+	if (!isZero(flow))
     {
-        this->errorCode = hpg::error::divergence;
-        return;
+        if (!ComputeCriticalDepth(reach, flow, this->g, yCritical))
+        {
+            yCvalid = true;
+        }
+        else
+        {
+            //this->errorCode = hpg::error::divergence;
+            //return;
+        }
     }
         
     BENCH_STOP;
 
 
     // isSteep = true if the channel is steep-slope and the slope is positive.
-    bool isSteep = (yCritical > yNormal && slope >= 0.0);
+    bool isSteep = (yNvalid && yCvalid && yCritical > yNormal && slope >= 0.0);
 
     // Set the min/max according to the channel characteristics (steep/mild).
     double yMin, yMax;
@@ -58,24 +79,42 @@ void HpgCreator::ComputeHPGCurve(const xs::Reach& reach, double flow, double pre
         //yMin = diameter * 0.005; // 0.5% of diameter is the minimum
         //yMax = yCritical;
         // This is the case for S1 curves.
-        yMin = yCritical;
+        if (yCvalid)
+            yMin = yCritical;
+        else
+            yMin = maxDepth * 0.01; // 1% of diameter
         yMax = this->maxDepthFrac * maxDepth;
     }
     else
     {
-        yMin = yCritical;
+        if (yCvalid)
+            yMin = yCritical;
+        else
+            yMin = maxDepth * 0.01; // 1% of diameter
         yMax = this->maxDepthFrac * maxDepth;
     }
 
-    bool computeFreeOnly = pressurizedHeight < 1e-6;
+    int np = this->numPoints;
+
+    if (yMax < yMin)
+        yMax = yMin;
+
+    if (isZero(yMax - yMin))
+    {
+        np = 1;
+    }
+    else
+    {
+        np = std::min(this->numPoints, std::max(1, (int)std::floor((yMax - yMin) / (0.005 * maxDepth) + 0.5)));
+    }
 
     // Compute the depth increment in vertical direction.
-    double dy = (yMax - yMin) / this->numPoints;
+    double dy = (yMax - yMin) / np;
 
     // If the user specified a pressurized height, then we do two executions of the loop, the first
     // to do the free-surface computations and the second to do the pressurized computations.
     // If the pressurized height is zero, then just do the free-surface computations.
-    int freePressLoopActivation = pressurizedHeight > 0 ? 2 : 1;
+    int freePressLoopActivation = computeFreeOnly ? 1 : 2;
     for (int i = 0; i < freePressLoopActivation; i++)
     {
         // Starting depth.
@@ -165,14 +204,25 @@ void HpgCreator::ComputeHPGCurve(const xs::Reach& reach, double flow, double pre
 }
 
 
-// This is a wrapper around ComputeHPGCurve.  It returns true if a valid
+#if defined(_DEBUG)
+#include <Windows.h>
+#endif
+
+
+// This is a wrapper around computeHpgCurve.  It returns true if a valid
 // HPC was computed and false otherwise.  If false, then it also clears
 // the curve variable so that no possibly bad values are stored.
-bool HpgCreator::ComputeValidHPGCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec &curve)
+bool HpgCreator::computeValidHpgCurve(const xs::Reach& reach, double flow, double pressurizedHeight, bool reverseSlope, double& yNormal, double& yCritical, hpg::hpgvec &curve)
 {
     this->errorCode = 0;
+    using namespace std;
 
-    ComputeHPGCurve(reach, flow, pressurizedHeight, reverseSlope, yNormal, yCritical, curve);
+    computeHpgCurve(reach, flow, pressurizedHeight, reverseSlope, yNormal, yCritical, curve);
+    OutputDebugStringA(std::to_string(flow).c_str());
+    OutputDebugStringA(" ");
+    OutputDebugStringA(std::to_string(curve.size()).c_str());
+    OutputDebugStringA("\n");
+    //printf("Curve size: %d\n", curve.size());
 
     // We want to clear the error code if there was any, but we got valid points.
     if ((!this->errorCode ||

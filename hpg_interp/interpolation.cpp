@@ -13,101 +13,78 @@ namespace hpg
     /// Get the upstream value given the downstream value and the flow.
     /// This will select the proper interpolation/extrapolation routine
     /// and perform the interpolation/extrapolation.
-    int Hpg::GetUpstream(double flow, double downstream, double& result)
+    int Hpg::InterpUpstreamHead(double flow, double downstream, double& result)
     {
-        // If there is no flow, then we return the downstream value,
-        // as we are on the no-flow (Z-line).
-        if (! flow)
-        {
-            result = downstream;
-            return S_OK;
-        }
-
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // Get the Q_lower flow index
         unsigned int curve;
         int status = S_OK;
-        if (HPGFAILURE(status = GetFlowIndex(flow, curve)))
+        if (HPGFAILURE(status = findLowerBracketingCurve(flow, curve)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the first point on the Q_lower curve
         point c1firstp;
-        if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve, c1firstp)))
+        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve, c1firstp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the first point on the Q_upper curve
         point c2firstp;
-        if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve+1, c2firstp)))
+        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve+1, c2firstp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the last point on the Q_lower curve. This is used to determine
         // if we need to perform extrapolation or interpolation.
         point lastp;
-        if (HPGFAILURE(status = GetLastPointOnCurve(flow, curve, lastp)))
+        if (HPGFAILURE(status = getLastPointOnCurve(flow, curve, lastp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
-        // steepness from IsSteepAt: negative = steep, positive = mild, 0 = error
-        int steepC1 = 1;
-        int steepC2 = 1;
+        // steepness from isCurveSteep: negative = steep, positive = mild, 0 = error
+        bool steepC1 = false;
+        bool steepC2 = false;
 
         // Make sure that the flow is positive before computing the steepness.
-        if (flow > 0.0)
+        if (flow >= 0.0)
         {
-            steepC1 = IsSteepAt(curve);
-            steepC2 = IsSteepAt(curve+1);
-        }
-        
-        // Check for an error in the steepness determination
-        if (steepC1 == 0 || steepC2 == 0)
-        {
-            //impl->ErrorCode = err::CantComputeNormCrit; // errorcode is set by IsSteepAt
-            return impl->ErrorCode;
+            steepC1 = isCurveSteep(curve);
+            steepC2 = isCurveSteep(curve+1);
         }
 
         // This tests to see if Q_lower is steep.
-        if (steepC1 < 0)
+        if (steepC1)
         {
             // If Q_lower and Q_upper are steep, then we do steep interpolation.
-            if (steepC2 < 0)
+            if (steepC2)
             {
-                // Get the downstream critical value for the flow
-                double critDown = -99999.0;
-//TODO                if (HPGFAILURE(status = GetCritDownstream(flow, critDown)))
-                {
-                    impl->ErrorCode = status;
-                    return impl->ErrorCode;
-                }
-
                 double upstream;
 
                 // If our downstream point is less than the downstream critical
                 // value for our flow, then we use the upstream critical value
                 // for the result.
-                if (downstream < critDown || downstream < c1firstp.x)
+                if (downstream < c1firstp.x)
                 {
 					double flow1, flow2;
-					if (flow > 0.0)
+					if (flow >= 0.0)
 					{
-						flow1 = impl->PosFlows.at(curve);
-						flow2 = impl->PosFlows.at(curve + 1);
+						flow1 = impl->posFlows.at(curve);
+						flow2 = impl->posFlows.at(curve + 1);
 					}
 					else
 					{
-						flow1 = impl->AdvFlows.at(curve);
-						flow2 = impl->AdvFlows.at(curve + 1);
+						flow1 = impl->advFlows.at(curve);
+						flow2 = impl->advFlows.at(curve + 1);
 					}
 					upstream = linearInterp(flow, flow1, c1firstp.y, flow2, c2firstp.y);
                 }
@@ -118,8 +95,8 @@ namespace hpg
                 {
                     if (HPGFAILURE(status = interpolateSteepSpecial(curve, flow, downstream, upstream)))
                     {
-                        impl->ErrorCode = status;
-                        return impl->ErrorCode;
+                        impl->errorCode = status;
+                        return impl->errorCode;
                     }
                 }
 
@@ -129,8 +106,8 @@ namespace hpg
                 {
                     if (HPGFAILURE(status = standardExtrapolation(curve, flow, downstream, upstream)))
                     {
-                        impl->ErrorCode = status;
-                        return impl->ErrorCode;
+                        impl->errorCode = status;
+                        return impl->errorCode;
                     }
                 }
 
@@ -139,29 +116,24 @@ namespace hpg
                 {
                     if (HPGFAILURE(status = standardInterpolation(curve, flow, downstream, upstream, InterpValue::Interp_Upstream)))
                     {
-                        impl->ErrorCode = status;
-                        return impl->ErrorCode;
+                        impl->errorCode = status;
+                        return impl->errorCode;
                     }
                 }
 
                 // Save the result.
                 result = upstream;
 
-            }//end if (steepC2 < 0)
+            }//end if (steepC2)
 
             // Else, if Q_lower is steep and Q_upper is mild, then we are
             // in a transitional region.
             else
             {
-                double upstream;
-//TODO:                //if (HPGFAILURE(status = GetCritUpstream(flow, upstream)))
-                {
-                    impl->ErrorCode = status;
-                    return impl->ErrorCode;
-                }
+                double upstream = (c1firstp.y + c2firstp.y) / 2.;
                 result = upstream;
             }//end else
-        }//end if (steepC1 < 0)
+        }//end if (steepC1)
 
         // If the matching if conditional is false, then this means
         // our Q_lower curve is mild.
@@ -169,29 +141,17 @@ namespace hpg
         {
             // If Q_lower is mild and Q_upper is steep, then we are in
             // a transitional region.
-            if (steepC2 < 0)
+            if (steepC2)
             {
                 double upstream;
-//TODO:                if (HPGFAILURE(status = GetCritUpstream(flow, upstream)))
-                {
-                    impl->ErrorCode = status;
-                    return impl->ErrorCode;
-                }
+                upstream = (c1firstp.y + c2firstp.y) / 2.;
                 result = upstream;
-            }//end if (steepC2 < 0)
+            }//end if (steepC2)
 
             // Else, if Q_lower and Q_upper are mild, then we do mild
             // interpolation.
             else
             {
-                // Get the downstream critical value for the flow
-                double critDown = -99999.0;
-//TODO:                if (HPGFAILURE(status = GetCritDownstream(flow, critDown)))
-                {
-                    impl->ErrorCode = status;
-                    return impl->ErrorCode;
-                }
-
                 double upstream;
 
                 // If our downstream is less than the first point downstream, then
@@ -201,15 +161,15 @@ namespace hpg
                 if (downstream < c1firstp.x || downstream < c2firstp.x)
                 {
 					double flow1, flow2;
-					if (flow > 0.0)
+					if (flow >= 0.0)
 					{
-						flow1 = impl->PosFlows.at(curve);
-						flow2 = impl->PosFlows.at(curve + 1);
+						flow1 = impl->posFlows.at(curve);
+						flow2 = impl->posFlows.at(curve + 1);
 					}
 					else
 					{
-						flow1 = impl->AdvFlows.at(curve);
-						flow2 = impl->AdvFlows.at(curve + 1);
+						flow1 = impl->advFlows.at(curve);
+						flow2 = impl->advFlows.at(curve + 1);
 					}
 					upstream = linearInterp(flow, flow1, c1firstp.y, flow2, c2firstp.y);
                 }
@@ -220,8 +180,8 @@ namespace hpg
                 {
                     if (HPGFAILURE(status = standardExtrapolation(curve, flow, downstream, upstream)))
                     {
-                        impl->ErrorCode = status;
-                        return impl->ErrorCode;
+                        impl->errorCode = status;
+                        return impl->errorCode;
                     }
                 }
 
@@ -230,8 +190,8 @@ namespace hpg
                 {
                     if (HPGFAILURE(status = standardInterpolation(curve, flow, downstream, upstream, InterpValue::Interp_Upstream)))
                     {
-                        impl->ErrorCode = status;
-                        return impl->ErrorCode;
+                        impl->errorCode = status;
+                        return impl->errorCode;
                     }
                 }
 
@@ -242,101 +202,88 @@ namespace hpg
         return S_OK;
     }
     
-    int Hpg::GetDownstreamExactFlow(double flow, double upstream, double& result)
-    {
-        if (fabs(flow) < 0.00001)
-        {
-            result = upstream;
-            return S_OK;
-        }
-
-        impl->ErrorCode = S_OK;
-
-        unsigned int curveIndex = 99999;
-        if (HPGFAILURE(impl->ErrorCode = FindMatchingFlowIndex(flow, curveIndex)))
-        {
-            return impl->ErrorCode;
-        }
-
-        point p1;
-        if (HPGFAILURE(impl->ErrorCode = GetFirstPointOnCurve(flow, curveIndex, p1)))
-        {
-            return impl->ErrorCode;
-        }
-
-        if (flow > 0)
-        {
-            if (upstream >= p1.y)
-            {
-                result = impl->SplPosDS_QUS[curveIndex](upstream);
-            }
-            else
-            {
-                return (impl->ErrorCode = hpg::err::InvalidFlow);
-            }
-        }
-        else
-        {
-            if (upstream >= p1.y)
-            {
-                result = impl->SplAdvDS_QUS[curveIndex](upstream);
-            }
-            else
-            {
-                return (impl->ErrorCode = hpg::err::InvalidFlow);
-            }
-        }
-
-        return S_OK;
-    }
+    //int Hpg::GetDownstreamExactFlow(double flow, double upstream, double& result)
+    //{
+    //    if (fabs(flow) < 0.00001)
+    //    {
+    //        result = upstream;
+    //        return S_OK;
+    //    }
+    //    impl->errorCode = S_OK;
+    //    unsigned int curveIndex = 99999;
+    //    if (HPGFAILURE(impl->errorCode = FindMatchingFlowIndex(flow, curveIndex)))
+    //    {
+    //        return impl->errorCode;
+    //    }
+    //    point p1;
+    //    if (HPGFAILURE(impl->errorCode = getFirstPointOnCurve(flow, curveIndex, p1)))
+    //    {
+    //        return impl->errorCode;
+    //    }
+    //    if (flow > 0)
+    //    {
+    //        if (upstream >= p1.y)
+    //        {
+    //            result = impl->SplPosDS_QUS[curveIndex](upstream);
+    //        }
+    //        else
+    //        {
+    //            return (impl->errorCode = hpg::err::InvalidFlow);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        if (upstream >= p1.y)
+    //        {
+    //            result = impl->SplAdvDS_QUS[curveIndex](upstream);
+    //        }
+    //        else
+    //        {
+    //            return (impl->errorCode = hpg::err::InvalidFlow);
+    //        }
+    //    }
+    //    return S_OK;
+    //}
 
     /// Get the upstream value given the downstream value and the flow.
     /// This will select the proper interpolation/extrapolation routine
     /// and perform the interpolation/extrapolation.
-    int Hpg::GetVolume(double flow, double downstream, double& result)
+    int Hpg::InterpVolume(double flow, double downstream, double& result)
     {
-        // If there is no flow, then we return the downstream value,
-        // as we are on the no-flow (Z-line).
-        if (! flow)
-        {
-            result = 0.0;
-            return S_OK;
-        }
-
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // Get the Q_lower flow index
         unsigned int curve;
         int status = S_OK;
-        if (HPGFAILURE(status = GetFlowIndex(flow, curve)))
+        if (HPGFAILURE(status = findLowerBracketingCurve(flow, curve)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the first point on the Q_lower curve
         point c1firstp;
-        if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve, c1firstp)))
+        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve, c1firstp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the first point on the Q_upper curve
         point c2firstp;
-        if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve+1, c2firstp)))
+        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve+1, c2firstp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the last point on the Q_lower curve. This is used to determine
         // if we need to perform extrapolation or interpolation.
         point lastp;
-        if (HPGFAILURE(status = GetLastPointOnCurve(flow, curve, lastp)))
+        if (HPGFAILURE(status = getLastPointOnCurve(flow, curve, lastp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // If our downstream is less than the first point on the upper and lower
@@ -344,15 +291,15 @@ namespace hpg
         if (downstream < c1firstp.x || downstream < c2firstp.x)
         {
 			double f1, f2;
-			if (flow > 0.0)
+			if (flow >= 0.0)
 			{
-				f1 = impl->PosFlows.at(curve);
-				f2 = impl->PosFlows.at(curve+1);
+				f1 = impl->posFlows.at(curve);
+				f2 = impl->posFlows.at(curve+1);
 			}
 			else
 			{
-				f1 = impl->AdvFlows.at(curve);
-				f2 = impl->AdvFlows.at(curve+1);
+				f1 = impl->advFlows.at(curve);
+				f2 = impl->advFlows.at(curve+1);
 			}
 
 			result = linearInterpQ(flow, f1, f2, c1firstp.v, c2firstp.v);
@@ -365,8 +312,8 @@ namespace hpg
         {
             if (HPGFAILURE(status = standardExtrapolation(curve, flow, downstream, result)))
             {
-                impl->ErrorCode = status;
-                return impl->ErrorCode;
+                impl->errorCode = status;
+                return impl->errorCode;
             }
         }
 
@@ -375,8 +322,8 @@ namespace hpg
         {
             if (HPGFAILURE(status = standardInterpolation(curve, flow, downstream, result, InterpValue::Interp_Volume))) // true for volumes
             {
-                impl->ErrorCode = status;
-                return impl->ErrorCode;
+                impl->errorCode = status;
+                return impl->errorCode;
             }
         }
 
@@ -386,50 +333,42 @@ namespace hpg
     /// Get the upstream hf friction value given the downstream depth and the flow.
     /// This will select the proper interpolation/extrapolation routine
     /// and perform the interpolation/extrapolation.
-    int Hpg::GetHf(double flow, double downstream, double& result)
+    int Hpg::InterpHf(double flow, double downstream, double& result)
     {
-        // If there is no flow, then we return the downstream value,
-        // as we are on the no-flow (Z-line).
-        if (! flow)
-        {
-            result = 0.0;
-            return S_OK;
-        }
-
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // Get the Q_lower flow index
         unsigned int curve;
         int status = S_OK;
-        if (HPGFAILURE(status = GetFlowIndex(flow, curve)))
+        if (HPGFAILURE(status = findLowerBracketingCurve(flow, curve)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the first point on the Q_lower curve
         point c1firstp;
-        if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve, c1firstp)))
+        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve, c1firstp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the first point on the Q_upper curve
         point c2firstp;
-        if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve+1, c2firstp)))
+        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve+1, c2firstp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // Get the last point on the Q_lower curve. This is used to determine
         // if we need to perform extrapolation or interpolation.
         point lastp;
-        if (HPGFAILURE(status = GetLastPointOnCurve(flow, curve, lastp)))
+        if (HPGFAILURE(status = getLastPointOnCurve(flow, curve, lastp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         // If our downstream is less than the first point on the upper and lower
@@ -437,15 +376,15 @@ namespace hpg
         if (downstream < c1firstp.x || downstream < c2firstp.x)
         {
 			double f1, f2;
-			if (flow > 0.0)
+			if (flow >= 0.0)
 			{
-				f1 = impl->PosFlows.at(curve);
-				f2 = impl->PosFlows.at(curve+1);
+				f1 = impl->posFlows.at(curve);
+				f2 = impl->posFlows.at(curve+1);
 			}
 			else
 			{
-				f1 = impl->AdvFlows.at(curve);
-				f2 = impl->AdvFlows.at(curve+1);
+				f1 = impl->advFlows.at(curve);
+				f2 = impl->advFlows.at(curve+1);
 			}
 
 			result = linearInterpQ(flow, f1, f2, c1firstp.hf, c2firstp.hf);
@@ -458,8 +397,8 @@ namespace hpg
         {
             if (HPGFAILURE(status = standardExtrapolation(curve, flow, downstream, result)))
             {
-                impl->ErrorCode = status;
-                return impl->ErrorCode;
+                impl->errorCode = status;
+                return impl->errorCode;
             }
         }
 
@@ -468,8 +407,8 @@ namespace hpg
         {
             if (HPGFAILURE(status = standardInterpolation(curve, flow, downstream, result, InterpValue::Interp_Hf)))
             {
-                impl->ErrorCode = status;
-                return impl->ErrorCode;
+                impl->errorCode = status;
+                return impl->errorCode;
             }
         }
 
@@ -479,29 +418,29 @@ namespace hpg
     ///// Get the upstream value on the critical line for the given flow.
     //int Hpg::GetCritUpstream(double flow, double& result)
     //{
-    //    impl->ErrorCode = S_OK;
+    //    impl->errorCode = S_OK;
 
     //    // Get the flow immediately below this flow.
     //    unsigned int curve;
     //    int status = S_OK;
-    //    if (HPGFAILURE(status = GetFlowIndex(flow, curve)))
+    //    if (HPGFAILURE(status = findLowerBracketingCurve(flow, curve)))
     //    {
-    //        impl->ErrorCode = status;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = status;
+    //        return impl->errorCode;
     //    }
 
     //    point c1firstp;
-    //    if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve, c1firstp)))
+    //    if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve, c1firstp)))
     //    {
-    //        impl->ErrorCode = status;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = status;
+    //        return impl->errorCode;
     //    }
 
     //    point c2firstp;
-    //    if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve+1, c2firstp)))
+    //    if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve+1, c2firstp)))
     //    {
-    //        impl->ErrorCode = status;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = status;
+    //        return impl->errorCode;
     //    }
 
     //    // This checks if the Q_lower curve is steep.
@@ -524,13 +463,13 @@ namespace hpg
     //            double flow1 = 0.0, flow2 = 0.0;
     //            if (flow >= 0.0)
     //            {
-    //                flow1 = PosFlows.at(curve);
-    //                flow2 = PosFlows.at(curve+1);
+    //                flow1 = posFlows.at(curve);
+    //                flow2 = posFlows.at(curve+1);
     //            }
     //            else
     //            {
-    //                flow1 = AdvFlows.at(curve);
-    //                flow2 = AdvFlows.at(curve+1);
+    //                flow1 = advFlows.at(curve);
+    //                flow2 = advFlows.at(curve+1);
     //            }
 
     //            double m = (c2firstp.y - c1firstp.y) / (flow2 - flow1);
@@ -550,13 +489,13 @@ namespace hpg
     //            double flow1 = 0.0, flow2 = 0.0;
     //            if (flow >= 0.0)
     //            {
-    //                flow1 = PosFlows.at(curve);
-    //                flow2 = PosFlows.at(curve+1);
+    //                flow1 = posFlows.at(curve);
+    //                flow2 = posFlows.at(curve+1);
     //            }
     //            else
     //            {
-    //                flow1 = AdvFlows.at(curve);
-    //                flow2 = AdvFlows.at(curve+1);
+    //                flow1 = advFlows.at(curve);
+    //                flow2 = advFlows.at(curve+1);
     //            }
 
     //            double m = (c2firstp.y - c1firstp.y) / (flow2 - flow1);
@@ -578,8 +517,8 @@ namespace hpg
 
     //    if (status)
     //    {
-    //        impl->ErrorCode = err::GenericInterpFailed;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = err::GenericInterpFailed;
+    //        return impl->errorCode;
     //    }
     //    else
     //        return S_OK;
@@ -590,29 +529,29 @@ namespace hpg
     ///// given flow.
     //int Hpg::GetCritDownstream(double flow, double& result)
     //{
-    //    impl->ErrorCode = S_OK;
+    //    impl->errorCode = S_OK;
 
     //    // Get the flow immediately below this flow.
     //    unsigned int curve;
     //    int status = S_OK;
-    //    if (HPGFAILURE(status = GetFlowIndex(flow, curve)))
+    //    if (HPGFAILURE(status = findLowerBracketingCurve(flow, curve)))
     //    {
-    //        impl->ErrorCode = status;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = status;
+    //        return impl->errorCode;
     //    }
 
     //    point c1firstp;
-    //    if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve, c1firstp)))
+    //    if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve, c1firstp)))
     //    {
-    //        impl->ErrorCode = status;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = status;
+    //        return impl->errorCode;
     //    }
 
     //    point c2firstp;
-    //    if (HPGFAILURE(status = GetFirstPointOnCurve(flow, curve+1, c2firstp)))
+    //    if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve+1, c2firstp)))
     //    {
-    //        impl->ErrorCode = status;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = status;
+    //        return impl->errorCode;
     //    }
 
     //    // This checks if the Q_lower curve is steep.
@@ -635,13 +574,13 @@ namespace hpg
     //            double flow1 = 0.0, flow2 = 0.0;
     //            if (flow >= 0.0)
     //            {
-    //                flow1 = PosFlows.at(curve);
-    //                flow2 = PosFlows.at(curve+1);
+    //                flow1 = posFlows.at(curve);
+    //                flow2 = posFlows.at(curve+1);
     //            }
     //            else
     //            {
-    //                flow1 = AdvFlows.at(curve);
-    //                flow2 = AdvFlows.at(curve+1);
+    //                flow1 = advFlows.at(curve);
+    //                flow2 = advFlows.at(curve+1);
     //            }
 
     //            double m = (flow2 - flow1) / (c2firstp.x - c1firstp.x);
@@ -661,13 +600,13 @@ namespace hpg
     //            double flow1 = 0.0, flow2 = 0.0;
     //            if (flow >= 0.0)
     //            {
-    //                flow1 = PosFlows.at(curve);
-    //                flow2 = PosFlows.at(curve+1);
+    //                flow1 = posFlows.at(curve);
+    //                flow2 = posFlows.at(curve+1);
     //            }
     //            else
     //            {
-    //                flow1 = AdvFlows.at(curve);
-    //                flow2 = AdvFlows.at(curve+1);
+    //                flow1 = advFlows.at(curve);
+    //                flow2 = advFlows.at(curve+1);
     //            }
 
     //            double m = (flow2 - flow1) / (c2firstp.x - c1firstp.x);
@@ -689,8 +628,8 @@ namespace hpg
 
     //    if (status)
     //    {
-    //        impl->ErrorCode = err::GenericInterpFailed;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = err::GenericInterpFailed;
+    //        return impl->errorCode;
     //    }
     //    else
     //        return S_OK;
@@ -701,7 +640,7 @@ namespace hpg
     ///// given downstream value.
     //int Hpg::GetCritUpFromDown(double flow, double downstream, double& result)
     //{
-    //    impl->ErrorCode = S_OK;
+    //    impl->errorCode = S_OK;
     //    /*======================================================
     //    The math behind this:
 
@@ -726,10 +665,10 @@ namespace hpg
 
     //    // If the flow isn't in the valid HPG flow ranges, then return
     //    // an error.
-    //    if (! IsValidFlow(flow))
+    //    if (! isValidFlow(flow))
     //    {
-    //        impl->ErrorCode = err::InvalidFlow;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = err::InvalidFlow;
+    //        return impl->errorCode;
     //    }
 
     //    int status = S_OK;
@@ -760,8 +699,8 @@ namespace hpg
 
     //    if (status)
     //    {
-    //        impl->ErrorCode = err::GenericInterpFailed;
-    //        return impl->ErrorCode;
+    //        impl->errorCode = err::GenericInterpFailed;
+    //        return impl->errorCode;
     //    }
     //    else
     //        return S_OK;
@@ -790,26 +729,26 @@ namespace hpg
     /// mild, steep, and adverse slope curves.
     int Hpg::standardInterpolation(unsigned int curve, double flow, double input, double& result, InterpValue interpAction)
     {
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
         int status = S_OK;
 
 		double flow1, flow2;
 		double upstream1, upstream2;
 
-        if (flow > 0.0)
+        if (flow >= 0.0)
 		{
-			flow1 = impl->PosFlows.at(curve);
-			flow2 = impl->PosFlows.at(curve + 1);
+			flow1 = impl->posFlows.at(curve);
+			flow2 = impl->posFlows.at(curve + 1);
 		}
         else
 		{
-			flow1 = impl->AdvFlows.at(curve);
-			flow2 = impl->AdvFlows.at(curve + 1);
+			flow1 = impl->advFlows.at(curve);
+			flow2 = impl->advFlows.at(curve + 1);
 		}
 
 		if (interpAction == InterpValue::Interp_Hf)
 		{
-			if (flow > 0.0)
+			if (flow >= 0.0)
 			{
 				upstream1 = impl->SplPosHf.at(curve)(input);
 				upstream2 = impl->SplPosHf.at(curve+1)(input);
@@ -822,7 +761,7 @@ namespace hpg
 		}
 		else if (interpAction == InterpValue::Interp_Volume)
 		{
-			if (flow > 0.0)
+			if (flow >= 0.0)
 			{
 				upstream1 = impl->SplPosVol.at(curve)(input);
 				upstream2 = impl->SplPosVol.at(curve+1)(input);
@@ -835,7 +774,7 @@ namespace hpg
 		}
 		else if (interpAction == InterpValue::Interp_Upstream)
 		{
-			if (flow > 0.0)
+			if (flow >= 0.0)
 			{
 				upstream1 = impl->SplPosUS_QDS.at(curve)(input);
 				upstream2 = impl->SplPosUS_QDS.at(curve+1)(input);
@@ -848,7 +787,7 @@ namespace hpg
 		}
 		else if (interpAction == InterpValue::Interp_Downstream)
 		{
-			if (flow > 0.0)
+			if (flow >= 0.0)
 			{
 				upstream1 = impl->SplPosDS_QUS.at(curve)(input);
 				upstream2 = impl->SplPosDS_QUS.at(curve+1)(input);
@@ -888,27 +827,27 @@ namespace hpg
     /// the given flow.
     int Hpg::interpolateSteepSpecial(unsigned int curve, double flow, double downstream, double& result)
     {
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
         int status = S_OK;
 
         /*
         double critDown;
         if (HPGFAILURE(status = GetCritDownstream(flow, critDown)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
 
         double critUp;
         if (HPGFAILURE(status = GetCritUpstream(flow, critUp)))
         {
-            impl->ErrorCode = status;
-            return impl->ErrorCode;
+            impl->errorCode = status;
+            return impl->errorCode;
         }
         */
 
-        point p1 = impl->PosCritical.at(curve);
-        point p2 = impl->PosCritical.at(curve+1);
+        point p1 = impl->posCritical.at(curve);
+        point p2 = impl->posCritical.at(curve+1);
 
         // Get the point on the c-line that corresponds to the input downstream depth.
         //double pointOnCline = (p2.y - critUp) / (p2.x - critDown) * (downstream - critDown) + critUp;
@@ -935,8 +874,8 @@ namespace hpg
 
         if (status)
         {
-            impl->ErrorCode = err::GenericInterpFailed;
-            return impl->ErrorCode;
+            impl->errorCode = err::GenericInterpFailed;
+            return impl->errorCode;
         }
 
         // Now say that the upstream point that we want is half-way between the
@@ -956,30 +895,30 @@ namespace hpg
 
 		// Get the last point on the curves.
 		point lastp1;
-		if (HPGFAILURE(status = GetLastPointOnCurve(flow, curve, lastp1)))
+		if (HPGFAILURE(status = getLastPointOnCurve(flow, curve, lastp1)))
 		{
-			impl->ErrorCode = status;
-			return impl->ErrorCode;
+			impl->errorCode = status;
+			return impl->errorCode;
 		}
 
 		point lastp2;
-		if (HPGFAILURE(status = GetLastPointOnCurve(flow, curve+1, lastp2)))
+		if (HPGFAILURE(status = getLastPointOnCurve(flow, curve+1, lastp2)))
 		{
-			impl->ErrorCode = status;
-			return impl->ErrorCode;
+			impl->errorCode = status;
+			return impl->errorCode;
 		}
 
 		// Get the flows for each curve.
 		double f1, f2;
 		if (flow > 0.0)
 		{
-			f1 = impl->PosFlows.at(curve);
-			f2 = impl->PosFlows.at(curve+1);
+			f1 = impl->posFlows.at(curve);
+			f2 = impl->posFlows.at(curve+1);
 		}
 		else
 		{
-			f1 = impl->AdvFlows.at(curve);
-			f2 = impl->AdvFlows.at(curve+1);
+			f1 = impl->advFlows.at(curve);
+			f2 = impl->advFlows.at(curve+1);
 		}
 
 		result = linearInterpQ(flow, f1, f2, lastp1.y, lastp2.y);

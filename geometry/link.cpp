@@ -2,6 +2,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "../util/parse.h"
+#include "../xslib/circular.h"
 
 #include "link.h"
 
@@ -10,7 +11,7 @@ namespace geometry
 {
 
     Link::Link(const id_type& theId, const std::string& theName, std::shared_ptr<NodeFactory> theNodeFactory)
-        : xs(std::shared_ptr<xs::CrossSection>(xs::Factory::create(xs::xstype::dummy)))
+        : xs(xs::Factory::create(xs::xstype::dummy))
     { 
         this->name = theName;
         this->id = theId;
@@ -76,7 +77,9 @@ namespace geometry
             return false;
         }
 
-        this->xs = std::shared_ptr<xs::CrossSection>(xs::Factory::create(parts[1]));
+        //this->xs = std::shared_ptr<xs::CrossSection>(xs::Factory::create(parts[1]));
+        this->xs =  std::unique_ptr<xs::CrossSection>(new xs::Circular());// xs::Factory::create(parts[1]));
+        //this->xs = xs::Factory::create(parts[1]);
         vector<string>::const_iterator it = parts.begin();
         it++;
         it++;

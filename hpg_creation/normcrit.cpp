@@ -15,7 +15,7 @@
 const int maxIter = 20;
 
 
-int ComputeNormalDepth(xs::Reach reach, double Q, double g, double ks, double& yN)
+int ComputeNormalDepth(const xs::Reach& reach, double Q, double g, double kn, double& yN)
 {
     double n = reach.getRoughness();
     double d = reach.getMaxDepth();
@@ -23,7 +23,7 @@ int ComputeNormalDepth(xs::Reach reach, double Q, double g, double ks, double& y
 
     std::shared_ptr<xs::CrossSection> xs = reach.getXs();
 
-    double initialGuess = d / 2; // ((n / ks) * Q * pow(M_PI, TWOTHIRDS)) / (pow(0.75 * d, FIVETHIRDS) * Ss);
+    double initialGuess = d / 2; // ((n / kn) * Q * std::pow(M_PI, TWOTHIRDS)) / (std::pow(0.75 * d, FIVETHIRDS) * Ss);
     yN = initialGuess;
 
     bool converged = false;
@@ -36,10 +36,10 @@ int ComputeNormalDepth(xs::Reach reach, double Q, double g, double ks, double& y
         double P = xs->computeWettedPerimiter(y);
         double T = xs->computeTopWidth(y);
         double dPdy = xs->computeDpDy(y);
-        double Rp = pow(A / P, TWOTHIRDS);
+        double Rp = std::pow(A / P, TWOTHIRDS);
 
-        double F = A * Rp - Q * (n/ks) / Ss;
-        double dF = FIVETHIRDS * Rp * T - TWOTHIRDS * pow(A / P, FIVETHIRDS) * dPdy;
+        double F = A * Rp - Q * (n/kn) / Ss;
+        double dF = FIVETHIRDS * Rp * T - TWOTHIRDS * std::pow(A / P, FIVETHIRDS) * dPdy;
 
         double yp = y - F / dF;
 
@@ -66,7 +66,21 @@ int ComputeNormalDepth(xs::Reach reach, double Q, double g, double ks, double& y
 }
 
 
-int ComputeCriticalDepth(xs::Reach reach, double Q, double g, double& yC)
+int ComputeNormalFlow(const xs::Reach& reach, double depth, double g, double kn, double& Q)
+{
+    auto x = reach.getXs();
+
+    double n = reach.getRoughness();
+    double A = x->computeArea(depth);
+    double P = x->computeWettedPerimiter(depth);
+
+    Q = kn / n * std::pow(A / P, TWOTHIRDS) * std::sqrt(reach.getSlope()) * A;
+
+    return 0;
+}
+
+
+int ComputeCriticalDepth(const xs::Reach& reach, double Q, double g, double& yC)
 {
     double d = reach.getMaxDepth();
 
@@ -77,7 +91,7 @@ int ComputeCriticalDepth(xs::Reach reach, double Q, double g, double& yC)
 
     bool converged = false;
     int iterCount = 0;
-    while (!converged && iterCount++ < 20)
+    while (!converged && iterCount++ < 40)
     {
         double y = std::max(std::min(yC, 0.9999 * d), 0.0001 * d);
 
@@ -113,3 +127,12 @@ int ComputeCriticalDepth(xs::Reach reach, double Q, double g, double& yC)
     }
 }
 
+
+int ComputeCriticalFlow(const xs::Reach& reach, double yC, double g, double& Q)
+{
+    // Fr = 1 = V / (g * H), H = A/T
+    double A = reach.getXs()->computeArea(yC);
+    double T = reach.getXs()->computeTopWidth(yC);
+    Q = g * A / T * A;
+    return 0;
+}

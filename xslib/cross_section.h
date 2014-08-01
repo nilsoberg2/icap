@@ -18,6 +18,7 @@ namespace xs
     protected:
         xstype xsType;
     public:
+        virtual ~CrossSection() { }
         virtual bool setParameters(std::vector<std::string>::const_iterator firstPart, std::vector<std::string>::const_iterator end) = 0;
 
         virtual xstype getType() { return this->xsType; }
@@ -34,9 +35,10 @@ namespace xs
     class Factory
     {
     public:
-        static std::shared_ptr<CrossSection> create(xstype xsType);
-        static std::shared_ptr<CrossSection> create(const std::string& type);
-        template<typename XSType> static std::shared_ptr<CrossSection> create();
+        static CrossSection* create(xstype xsType);
+        static CrossSection* create(const std::string& type);
+        template<typename XSType>
+        static CrossSection* create();
     };
 }
 

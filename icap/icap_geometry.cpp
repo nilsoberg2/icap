@@ -10,6 +10,7 @@
 #include "ucf.h"
 
 using namespace geometry;
+namespace fs = boost::filesystem;
 
 
 units::Units* UCS = new units::Units(units::UnitSystem::Units_US);
@@ -105,8 +106,13 @@ bool IcapGeometry::processOptions()
     this->hpgPath = getOption("hpg_path");
     if (!boost::filesystem::exists(this->hpgPath))
     {
-        setErrorMessage("Invalid path to HPG folder '" + this->hpgPath + "'");
-        return false;
+        fs::path parentDir = fs::path(this->geomFilePath).parent_path();
+        this->hpgPath = (parentDir / this->hpgPath).string();
+        if (!boost::filesystem::exists(this->hpgPath))
+        {
+            setErrorMessage("Invalid path to HPG folder '" + this->hpgPath + "'");
+            return false;
+        }
     }
 
     if (!tryParse(getOption("routing_step"), this->routeStep))

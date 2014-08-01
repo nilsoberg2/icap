@@ -11,20 +11,20 @@ namespace hpg
     class Hpg::Impl
     {
     public:
-        unsigned int PosFlowCount;            //< number of positive flows in HPG
-        unsigned int AdvFlowCount;            //< number of adverse flows in HPG
-        std::deque<double> PosFlows;  //< list of flows in HPG
-        std::deque<double> AdvFlows;  //< list of flows in HPG
-        std::deque<hpgvec> PosValues; //< list of vectors of HP curves
-        std::deque<hpgvec> AdvValues; //< list of vectors of HP curves
-        hpgvec PosCritical;           //< critical line for positive flow
-        hpgvec AdvCritical;           //< critical line for adverse flow
-        hpgvec ZeroFlowLine;          //< zero-flow line (for backwater effects)
-        hpgvec NormFlowLine;          //< normal-flow line
-        double MinPosFlow;            //< minimum positive flow in HPG
-        double MaxPosFlow;            //< maximum positive flow in HPG
-        double MinAdvFlow;            //< minimum adverse flow in HPG
-        double MaxAdvFlow;            //< maximum adverse flow in HPG
+        unsigned int posFlowCount;            //< number of positive flows in HPG
+        unsigned int advFlowCount;            //< number of adverse flows in HPG
+        std::deque<double> posFlows;  //< list of flows in HPG
+        std::deque<double> advFlows;  //< list of flows in HPG
+        std::deque<hpgvec> posValues; //< list of vectors of HP curves
+        std::deque<hpgvec> advValues; //< list of vectors of HP curves
+        hpgvec posCritical;           //< critical line for positive flow
+        hpgvec advCritical;           //< critical line for adverse flow
+        //hpgvec ZeroFlowLine;          //< zero-flow line (for backwater effects)
+        //hpgvec NormFlowLine;          //< normal-flow line
+        double minPosFlow;            //< minimum positive flow in HPG
+        double maxPosFlow;            //< maximum positive flow in HPG
+        double minAdvFlow;            //< minimum adverse flow in HPG
+        double maxAdvFlow;            //< maximum adverse flow in HPG
         // Splines are stored here.
         std::deque<magnet::math::Spline> SplPosUS_QDS;       //< spline for US = F(Q, DS) for positive flow
         std::deque<magnet::math::Spline> SplAdvUS_QDS;       //< spline for US = F(Q, DS) for adverse flow
@@ -43,9 +43,9 @@ namespace hpg
         std::deque<magnet::math::Spline>SplPosCritUS_DS;     //< spline for DS = F_crit(US) for positive flow
         std::deque<point> SplPosCritUS_DS_ranges;   //< range of flows for each of the splines in SplPosCritUS_DS
         magnet::math::Spline SplAdvCritUS_DS;  //< spline for DS = F_crit(US) for adverse flow
-        int ErrorCode;
+        int errorCode;
 
-        int     nodeID; /**< the Tunnel ID */
+        std::string nodeId; /**< the Tunnel ID */
         double	dsInvert; /**< downstream channel bottom elevation - used for HPG header */
         bool	dsInvertValid;
         double	usInvert; /**< upstream channel bottom elevation */
@@ -65,7 +65,9 @@ namespace hpg
         double	unsteadyDepthPct; /**< maximum depth in percentage */
         bool	unsteadyDepthPctValid;
 
-        void CopyInto(const Impl* copy)
+        int     version;
+
+        void copyFrom(const Impl* copy)
         {
             this->dsInvertValid = copy->dsInvertValid;
             this->usInvertValid = copy->usInvertValid;
@@ -85,22 +87,23 @@ namespace hpg
             this->roughness = copy->roughness;
             this->maxDepth = copy->maxDepth;
             this->unsteadyDepthPct = copy->unsteadyDepthPct;
-            this->nodeID = copy->nodeID;
+            this->nodeId = copy->nodeId;
 
             // Copy all of the primitives and STL arrays.
-            this->AdvFlowCount = copy->AdvFlowCount;
-            this->PosFlowCount = copy->PosFlowCount;
-            this->AdvFlows = copy->AdvFlows;
-            this->PosFlows = copy->PosFlows;
-            this->AdvValues = copy->AdvValues;
-            this->PosValues = copy->PosValues;
-            this->PosCritical = copy->PosCritical;
-            this->AdvCritical = copy->AdvCritical;
-            this->ErrorCode = copy->ErrorCode;
-            this->MinPosFlow = copy->MinPosFlow;
-            this->MaxPosFlow = copy->MaxPosFlow;
-            this->MinAdvFlow = copy->MinAdvFlow;
-            this->MaxAdvFlow = copy->MaxAdvFlow;
+            this->advFlowCount = copy->advFlowCount;
+            this->posFlowCount = copy->posFlowCount;
+            this->advFlows = copy->advFlows;
+            this->posFlows = copy->posFlows;
+            this->advValues = copy->advValues;
+            this->posValues = copy->posValues;
+            this->posCritical = copy->posCritical;
+            this->advCritical = copy->advCritical;
+            this->errorCode = copy->errorCode;
+            this->minPosFlow = copy->minPosFlow;
+            this->maxPosFlow = copy->maxPosFlow;
+            this->minAdvFlow = copy->minAdvFlow;
+            this->maxAdvFlow = copy->maxAdvFlow;
+            this->version = copy->version;
         }
     };
 }

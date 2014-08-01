@@ -2,10 +2,14 @@
 #define API_H__
 
 
-#ifdef ICAP_EXPORTS
-#define ICAP_API _declspec(dllexport)
+#ifdef _USRDLL
+    #ifdef ICAP_EXPORTS
+    #define ICAP_API _declspec(dllexport)
+    #else
+    #define ICAP_API _declspec(dllimport)
+    #endif
 #else
-#define ICAP_API _declspec(dllimport)
+#define ICAP_API
 #endif
 
 

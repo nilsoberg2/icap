@@ -6,41 +6,41 @@
 namespace hpg
 {
 
-    char* Hpg::GetErrorStr()
+    std::string Hpg::getErrorMessage()
     {
-        if (! impl->ErrorCode)
+        if (! impl->errorCode)
             return "";
-        else if (impl->ErrorCode == err::InvalidFlow)
+        else if (impl->errorCode == err::InvalidFlow)
             return "Interpolation: Attempted to use invalid flow outside valid HPG flow range.";
-        else if (impl->ErrorCode == err::InvalidInput)
+        else if (impl->errorCode == err::InvalidInput)
             return "Interpolation: Attempted to use an input point outside the valid range.";
-        else if (impl->ErrorCode == err::InvalidParam)
+        else if (impl->errorCode == err::InvalidParam)
             return "An invalid parameter was given.";
-        else if (impl->ErrorCode == err::GenericInterpFailed)
+        else if (impl->errorCode == err::GenericInterpFailed)
             return "Interpolation: An unknown failure occurred in interpolation.";
-        else if (impl->ErrorCode == err::InvalidSplineSize)
+        else if (impl->errorCode == err::InvalidSplineSize)
             return "Splines: The number of elements are too few to create a spline(s) with.";
-        else if (impl->ErrorCode == err::GenericSplineError)
+        else if (impl->errorCode == err::GenericSplineError)
             return "Splines: An unknown error occurred.";
-        else if (impl->ErrorCode == err::FileReadFailed)
+        else if (impl->errorCode == err::FileReadFailed)
             return "Load: Couldn't read the given file.";
-        else if (impl->ErrorCode == err::FileWriteFailed)
+        else if (impl->errorCode == err::FileWriteFailed)
             return "Load: Couldn't write to the given file.";
-        else if (impl->ErrorCode == err::InvalidFileFormat)
+        else if (impl->errorCode == err::InvalidFileFormat)
             return "Load: Invalid file format.";
-        else if (impl->ErrorCode == err::CantComputeNormCrit)
+        else if (impl->errorCode == err::CantComputeNormCrit)
             return "Interpolation: Can't compute normal or critical depth.";
-        else if (impl->ErrorCode == error::divergence)
+        else if (impl->errorCode == error::divergence)
             return "Normal/Critical: Solution did not converge.";
-        else if (impl->ErrorCode == error::imaginary)
+        else if (impl->errorCode == error::imaginary)
             return "Normal/Critical: imaginary number encountered.";
         else
             return "Unknown error.";
     }
 
-    int Hpg::GetError()
+    int Hpg::getErrorCode()
     {
-        return impl->ErrorCode;
+        return impl->errorCode;
     }
 
 }

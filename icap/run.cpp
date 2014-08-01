@@ -60,8 +60,8 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
     std::string datetimeBuf = currentDate.toString();
     BOOST_LOG_SEV(m_log, loglevel::info) << datetimeBuf;
     
-    try
-    {
+    //try
+    //{
 
 	/////////////////////////////////////////////////////////////////
 	// INFLOWS TO THE SYSTEM
@@ -240,13 +240,13 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
     
     *elapsedTime = curStep;
 
-    }
-    catch(...)
-    {
-        result = false;
-        BOOST_LOG_SEV(m_log, loglevel::error) << "Exception occured in timestep function at time=" << datetimeBuf;
-        setErrorMessage("Exception occured in timestep function at time=" + datetimeBuf);
-    }
+    //}
+    //catch(...)
+    //{
+    //    result = false;
+    //    BOOST_LOG_SEV(m_log, loglevel::error) << "Exception occured in timestep function at time=" << datetimeBuf;
+    //    setErrorMessage("Exception occured in timestep function at time=" + datetimeBuf);
+    //}
 
     return result;
 }
@@ -361,7 +361,7 @@ bool ICAP::Step_SteadyState(bool useMatrix)
 void ICAP::setInitialMatrixDepthGuess()
 {
     // Loop over every node and set an initial guess.
-    std::shared_ptr<geometry::NodeList> list = m_geometry->getNodeList();
+    geometry::NodeList* list = m_geometry->getNodeList();
     for (int i = 0; i < list->count(); i++)
     {
         if (i == m_sinkNodeIdx)
@@ -389,8 +389,8 @@ bool ICAP::iterateMatrix()
 
     float maxError = 1;
 
-    std::shared_ptr<geometry::LinkList> links = m_geometry->getLinkList();
-    std::shared_ptr<geometry::NodeList> nodes = m_geometry->getNodeList();
+    geometry::LinkList* links = m_geometry->getLinkList();
+    geometry::NodeList* nodes = m_geometry->getNodeList();
 
     Eigen::VectorXf curQ(links->count());
     Eigen::VectorXf curH(nodes->count());
@@ -446,8 +446,8 @@ bool ICAP::setHfAndDE(Eigen::VectorXf& curQ, Eigen::VectorXf& curH)
 {
     bool result = true;
     
-    std::shared_ptr<geometry::LinkList> links = m_geometry->getLinkList();
-    std::shared_ptr<geometry::NodeList> nodes = m_geometry->getNodeList();
+    geometry::LinkList* links = m_geometry->getLinkList();
+    geometry::NodeList* nodes = m_geometry->getNodeList();
 
     int linkCount = links->count();
     int nodeCount = nodes->count();
@@ -504,7 +504,7 @@ bool ICAP::updateOverflows(double routeStep)
 {
     bool result = false;
 
-    std::shared_ptr<geometry::NodeList> nodes = m_geometry->getNodeList();
+    geometry::NodeList* nodes = m_geometry->getNodeList();
     int nodeCount = nodes->count();
 
     for (int i = 0; i < nodeCount; i++)

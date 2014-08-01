@@ -6,13 +6,13 @@
 #include "../Eigen/Dense"
 #include "../time/datetime.h"
 #include "../util/parseable.h"
+#include "../model/model.h"
+#include "../api.h"
 
 #include "hpg.h"
 #include "routing.h"
-#include "debug.h"
 #include "benchmark.h"
 #include "overflow.h"
-#include "model.h"
 #include "pumping.h"
 #include "logging.h"
 #include "output.h"
@@ -20,7 +20,7 @@
 
 
 // Illinois Conveyance Analysis Program
-class ICAP : public Parseable
+class ICAP_API ICAP : public Parseable
 {
 private:
     
@@ -31,11 +31,10 @@ private:
     IcapHpg m_hpgList;
 
     // Object that manages the network topology.
-    std::shared_ptr<IcapGeometry> m_geometry;
-    std::shared_ptr<Model> m_model;
-
-    // Parameters for the normal/critical depth solver.
-    NormCritParams m_ncParams;
+    //std::unique_ptr<IcapGeometry> m_geometry;
+    IcapGeometry* m_geometry;
+    Model* m_model;
+    //std::unique_ptr<Model> m_model;
 
     // This curve stores a pre-computed total system volume curve.
     geometry::Curve m_totalVolumeCurve;
@@ -141,7 +140,7 @@ private:
 
     boost::log::sources::severity_logger<loglevel::SeverityLevel> m_log;
 
-private:
+public:
 
     ///////////////////////////////////////////////////////////////////////////
     // NETWORK FUNCTIONS

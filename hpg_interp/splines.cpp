@@ -10,12 +10,12 @@ namespace hpg
     int Hpg::setupPosSplines()
     {
         int status = S_OK;
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // Create a spline for each positive curve.
-        for (unsigned int i = 0; i < impl->PosValues.size(); i++) {
+        for (unsigned int i = 0; i < impl->posValues.size(); i++) {
             //dprintf("Processing %d\n", i);
-            hpgvec vec = impl->PosValues[i];
+            hpgvec vec = impl->posValues[i];
             unsigned int numValues = (unsigned int)vec.size();
 
             // Check if there are more than the minimum required number
@@ -64,18 +64,18 @@ namespace hpg
             }
         }
 
-        return impl->ErrorCode;
+        return impl->errorCode;
     }
 
     int Hpg::setupAdvSplines()
     {
         int status = S_OK;
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // Create a spline for each adverse curve.
-        for (unsigned int i = 0; i < impl->AdvValues.size(); i++) {
+        for (unsigned int i = 0; i < impl->advValues.size(); i++) {
             //dprintf("Processing -%d\n", i);
-            hpgvec vec = impl->AdvValues[i]; //JJJ
+            hpgvec vec = impl->advValues[i]; //JJJ
             unsigned int numValues = (unsigned int)vec.size();
 
             // Check if there are more than the minimum required number
@@ -120,58 +120,58 @@ namespace hpg
             }
         }
 
-        return impl->ErrorCode;
+        return impl->errorCode;
     }
 
     int Hpg::setupCritPosSplines()
     {
-        if (impl->PosCritical.size() == 0)
+        if (impl->posCritical.size() == 0)
         {
             // return OK because it's OK to not setup these splines if they're not there
             return S_OK;
         }
 
         int status = S_OK;
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // Now, create the critical-line splines.  We create three
         // types: the first being f(Q) = upstream, the second being
         // f(Q) = downstream, and the third being f(downstream) = upstream.
 
-        unsigned int numPosValues = (unsigned int)impl->PosCritical.size();
+        unsigned int numPosValues = (unsigned int)impl->posCritical.size();
 
         // ds <= us == mild, ds > us == steep
         for (int j = 0; j < numPosValues; j++)
         {
-			impl->SplPosCritDS_Q.addPoint(impl->PosFlows.at(j), impl->PosCritical.at(j).x);
-			impl->SplPosCritUS_Q.addPoint(impl->PosFlows.at(j), impl->PosCritical.at(j).y);
+			impl->SplPosCritDS_Q.addPoint(impl->posFlows.at(j), impl->posCritical.at(j).x);
+			impl->SplPosCritUS_Q.addPoint(impl->posFlows.at(j), impl->posCritical.at(j).y);
         }
 
-        return impl->ErrorCode;
+        return impl->errorCode;
     }
 
     int Hpg::setupCritAdvSplines()
 
     {
-        if (impl->AdvCritical.size() == 0)
+        if (impl->advCritical.size() == 0)
         {
             // return OK because it's OK to not setup these splines if they're not there
             return S_OK;
         }
 
         int status = S_OK;
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
-        unsigned int numAdvValues = (unsigned int)impl->AdvCritical.size();
+        unsigned int numAdvValues = (unsigned int)impl->advCritical.size();
 
         // ds <= us == mild, ds > us == steep
         for (int j = 0; j < numAdvValues; j++)
         {
-			impl->SplAdvCritDS_Q.addPoint(impl->AdvFlows.at(j), impl->AdvCritical.at(j).x);
-			impl->SplAdvCritUS_Q.addPoint(impl->AdvFlows.at(j), impl->AdvCritical.at(j).y);
+			impl->SplAdvCritDS_Q.addPoint(impl->advFlows.at(j), impl->advCritical.at(j).x);
+			impl->SplAdvCritUS_Q.addPoint(impl->advFlows.at(j), impl->advCritical.at(j).y);
         }
 
-        return impl->ErrorCode;
+        return impl->errorCode;
     }
 
     /**
@@ -179,32 +179,32 @@ namespace hpg
     * curve and for the critical depth curve.  It should be run after
     * loading/creation has taken place.
     */
-    int Hpg::SetupSplines()
+    int Hpg::setupSplines()
     {
         int status = S_OK;
-        impl->ErrorCode = S_OK;
+        impl->errorCode = S_OK;
 
         // We can't create splines if there aren't any curves!
-        if (! impl->PosValues.size() && ! impl->AdvValues.size())
+        if (! impl->posValues.size() && ! impl->advValues.size())
         {
-            impl->ErrorCode = err::InvalidSplineSize;
-            return impl->ErrorCode;
+            impl->errorCode = err::InvalidSplineSize;
+            return impl->errorCode;
         }
 
-        if (impl->PosValues.size() > 0)
+        if (impl->posValues.size() > 0)
         {
             if (setupPosSplines() != S_OK)
-                return impl->ErrorCode;
+                return impl->errorCode;
             //if (setupCritPosSplines() != S_OK)
-            //    return ErrorCode;
+            //    return errorCode;
         }
 
-        if (impl->AdvValues.size() > 0)
+        if (impl->advValues.size() > 0)
         {
             if (setupAdvSplines() != S_OK)
-                return impl->ErrorCode;
+                return impl->errorCode;
             //if (setupCritAdvSplines() != S_OK)
-            //    return ErrorCode;
+            //    return errorCode;
         }
 
         return S_OK;

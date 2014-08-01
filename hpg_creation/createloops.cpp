@@ -7,6 +7,7 @@
 #include "../hpg/math.hpp"
 #include "../hpg/units.hpp"
 #include "../hpg/exception.hpp"
+#include "normcrit.h"
 //#include "../hpg/error.hpp"
 
 #include "hpg_creator.hpp"
@@ -14,22 +15,28 @@
 using namespace std;
 
 
-std::shared_ptr<hpg::Hpg> HpgCreator::AutoCreateHPG(const xs::Reach& reach)
+std::shared_ptr<hpg::Hpg> HpgCreator::AutoCreateHpg(const xs::Reach& reach)
 {
     // Create an HPG object and fill in the channel geometry.
     std::shared_ptr<hpg::Hpg> hpg = std::shared_ptr<hpg::Hpg>(new hpg::Hpg());
-    hpg->SetDSInvert(reach.getDsInvert());
-    hpg->SetUSInvert(reach.getUsInvert());
+    hpg->setDsInvert(reach.getDsInvert());
+    hpg->setUsInvert(reach.getUsInvert());
 
-    if (reach.getDsStation() != hpg::error::bad_value)
+    if (reach.getDsStation() > hpg::error::bad_value)
     {
-        hpg->SetDSStation(reach.getDsStation());
-        hpg->SetUSStation(reach.getDsStation() + reach.getLength());
+        hpg->setDsStation(reach.getDsStation());
+        hpg->setUsStation(reach.getDsStation() + reach.getLength());
+    }
+    else
+    {
+        hpg->setDsStation(0);
+        hpg->setUsStation(reach.getLength());
     }
 
-    hpg->SetLength(reach.getLength());
-    hpg->SetRoughness(reach.getRoughness());
-    hpg->SetMaxDepth(reach.getMaxDepth());
+    hpg->setLength(reach.getLength());
+    hpg->setRoughness(reach.getRoughness());
+    hpg->setMaxDepth(reach.getMaxDepth());
+    hpg->setMaxDepthFraction(this->maxDepthFrac);
 
     double pressurizedHeight = 1000;
 
@@ -43,27 +50,44 @@ std::shared_ptr<hpg::Hpg> HpgCreator::AutoCreateHPG(const xs::Reach& reach)
         // If we're on the second iteration of the loop, then reverse the flow.
 
         // Compute the maximum and minimum flows for this reach.  This is done using
-        // a bisection method in combination with the ComputeValidHPGCurve method.
-        double maxDepth = 0.0, minDepth = 0.0;
-        double maxFlow = FindMaxFlow(reach, slopeRev, maxDepth);
+        // a bisection method in combination with the computeValidHpgCurve method.
+        double yCritMax;
+        double maxFlow = findMaxFlow(reach, slopeRev, yCritMax);
         if (this->errorCode)
             break;
-        double minFlow = 0;//FindMinFlow(reach, reach.getMaxDepth()*0.005, maxFlow, minDepth);
-        if (this->errorCode)
-            break;
+        //double maxFlow = 0;
+        //if (ComputeNormalFlow(reach, reach.getMaxDepth() * 0.9, this->g, this->kn, maxFlow))
+        //{
+        //    break;
+        //}
 
+        // This loop is to allow the same code to be used for computing fully-pressurized curves.
+        // The first iteration is for curves that are supposed to to for curves that are free-surface
+        // or start out free surface.  For the second iteration, we simply change the min and max flow
+        // variables to start out differently.
         for (int isPress = 0; isPress < 2; isPress++)
         {
-            if (isPress)
-            {
-                minFlow = maxFlow + (maxFlow - minFlow) / 100;
-                auto x = reach.getXs();
-                maxFlow = x->computeArea(x->getMaxDepth()) * 2. * std::sqrt(2. * this->g * pressurizedHeight - reach.getDsInvert());
-            }
+            double maxDepth = yCritMax; //this->maxDepthFrac * reach.getMaxDepth();
+            double minDepth = 0.0;
 
             // Determine the flow spacing.
             deque<double> flows;
-            FindFlowIncrements(reach, slopeRev, minFlow, maxFlow, flows);
+            if (isPress)
+            {
+                double minFlow = maxFlow * 1.02; // 102%
+                auto x = reach.getXs();
+                double headDiff = (pressurizedHeight - reach.getDsInvert());
+                maxFlow = x->computeArea(x->getMaxDepth()) * 2. * std::sqrt(2. * this->g * headDiff); // I pulled the *3 out of nowhere hahaha
+                for (int i = 0; i < 20; i++)
+                {
+                    flows.push_back(minFlow + (maxFlow - minFlow) * (double)(i) / 20.);
+                }
+            }
+            else
+            {
+                findFlowIncrements(reach, slopeRev, minDepth, maxDepth, flows);
+            }
+
             if (flows.size() == 0)
                 continue;
             //if (flows.back() < maxFlow && abs(flows.back() - maxFlow) > 10.0)
@@ -79,11 +103,11 @@ std::shared_ptr<hpg::Hpg> HpgCreator::AutoCreateHPG(const xs::Reach& reach)
             {
                 double curFlow = flows.at(i);
 
-                // Calculate a backwater profile.  ComputeHPGCurve() automatically
+                // Calculate a backwater profile.  computeHpgCurve() automatically
                 // determines slope type (from normal/critical) and calculates
                 // accordingly.
                 hpg::hpgvec curve;
-                bool valid = ComputeValidHPGCurve(reach, curFlow, pressurizedHeight, slopeRev, yNormal, yCritical, curve);
+                bool valid = computeValidHpgCurve(reach, curFlow, pressurizedHeight, slopeRev, yNormal, yCritical, curve);
 
                 // Check if an error occurred.
                 if (valid)
@@ -97,9 +121,9 @@ std::shared_ptr<hpg::Hpg> HpgCreator::AutoCreateHPG(const xs::Reach& reach)
                             hpg->AddCurve(curFlow, curve, (hpg::point)(curve.at(0)));
                     }
                 }
-                else
-                    // There was an error, so don't continue.
-                    break;
+                //else
+                //    // There was an error, so don't continue.
+                //    break;
             }
 
             // Clear the error code so that any valid HPCs get saved.

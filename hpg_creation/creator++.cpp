@@ -14,8 +14,8 @@ HpgCreator::HpgCreator()
     this->maxIterations = 40;
     this->maxIterations = 100;
     this->minCurvePoints = 4;
-
     this->errorCode = 0;
+    this->numSteps = 1000.;
 
     setUnits(HpgUnits::Hpg_English);
 }
