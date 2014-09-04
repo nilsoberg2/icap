@@ -21,7 +21,7 @@ namespace xs
         virtual ~CrossSection() { }
         virtual bool setParameters(std::vector<std::string>::const_iterator firstPart, std::vector<std::string>::const_iterator end) = 0;
 
-        virtual xstype getType() { return this->xsType; }
+        virtual xstype getType() const { return this->xsType; }
         virtual double getMaxDepth() = 0;
 
         virtual double computeArea(double depth) = 0;
@@ -30,11 +30,14 @@ namespace xs
         virtual double computeDpDy(double depth) = 0;
         virtual double computeDaDy(double depth) = 0;
         virtual double computeDtDy(double depth) = 0;
+
+        virtual std::shared_ptr<CrossSection> clone() = 0;
     };
 
     class Factory
     {
     public:
+        static CrossSection* create(const CrossSection* xs);
         static CrossSection* create(xstype xsType);
         static CrossSection* create(const std::string& type);
         template<typename XSType>

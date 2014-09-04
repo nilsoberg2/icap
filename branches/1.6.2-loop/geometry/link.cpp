@@ -154,13 +154,13 @@ namespace geometry
 
     void Link::propogateFlow(double upstreamInflow)
     {
-        this->flow += upstreamInflow;
-        this->outletNode->propogateFlowDownstream(this->flow);
+        variable(variables::LinkFlow) += upstreamInflow;
+        this->outletNode->propogateFlowDownstream(upstreamInflow);
     }
 
     void Link::resetFlow()
     {
-        this->flow = 0;
+        variable(variables::LinkFlow) = 0;
     }
     
     void Link::resetDepth()

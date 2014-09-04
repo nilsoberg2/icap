@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/log/core.hpp>
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -29,20 +30,48 @@ namespace TestGeometryRead
             using namespace std;
             bool status;
 
-            string inputFile = "..\\test\\geometry_test.inp";
-            string reportFile = "..\\test\\report.txt";
-            string outputFile = "..\\test\\output.out";
+            //string inputFile = "..\\test\\geometry_test.inp";
+            //string reportFile = "..\\test\\report.txt";
+            //string outputFile = "..\\test\\output.out";
+            string inputFile = "..\\..\\icap-mex\\lawrence_july.inp";
+            string reportFile = "..\\..\\icap-mex\\report.txt";
+            string outputFile = "..\\..\\icap-mex\\output.out";
+            //This is a test.
+            
+            boost::log::add_file_log("testing.log");
 
             ICAP icap;
-            icap.SetRealTimeStatus(true);
+            icap.EnableRealTimeStatus();
+
             if (!icap.Open(inputFile, reportFile, outputFile, true))
             {
                 Assert::Fail(makeInfo(L"Failed to open icap: ", icap.getErrorMessage()).c_str());
             }
-
+            
             if (!icap.Start(false))
             {
                 Assert::Fail(makeInfo(L"Failed to start icap: ", icap.getErrorMessage()).c_str());
+            }
+
+            icap.AddSource("Melvina");
+
+            for (int i = 0; i < 9; i++)
+            {
+                icap.InitializeZeroFlows();
+                icap.SetCurrentNodeInflow("Melvina", i * 100);
+                icap.SetCurrentNodeHead("Outlet", 380.0);
+
+                double tm;
+                auto retval = icap.Step(&tm, 1, false);
+
+                std::string error = icap.getErrorMessage();
+                Assert::AreEqual(true, retval, std::wstring(error.begin(), error.end()).c_str());
+
+                double val = icap.GetCurrentNodeInflow("Outlet");
+                Assert::AreEqual(val, i * 100.0);
+
+                //val = icap.GetCurrentNodeHead("Outlet");
+                //Assert::AreEqual(val, 380.0);
             }
         }
 

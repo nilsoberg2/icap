@@ -4,19 +4,31 @@
 
 void ICAP::SetCurrentNodeInflow(const std::string& nodeId, var_type flow)
 {
-    m_model->setRealTimeInputFlow(nodeId, flow);
+    m_geometry->setRealTimeInputFlow(nodeId, flow);
+}
+
+
+void ICAP::SetCurrentNodeHead(const std::string& nodeId, var_type head)
+{
+    m_geometry->setRealTimeInputHead(nodeId, head);
 }
 
 
 var_type ICAP::GetCurrentNodeHead(const std::string& nodeId)
 {
-    return m_model->getRealTimeNodeHead(nodeId);
+    return m_geometry->getRealTimeNodeHead(nodeId);
+}
+
+
+var_type ICAP::GetCurrentNodeInflow(const std::string& nodeId)
+{
+    return m_geometry->getRealTimeNodeInflow(nodeId);
 }
 
 
 void ICAP::AddSource(const std::string& nodeId)
 {
-    m_model->addRealTimeInput(nodeId);
+    m_geometry->addRealTimeInput(nodeId);
 }
 
 

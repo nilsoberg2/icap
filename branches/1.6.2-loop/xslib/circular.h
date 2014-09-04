@@ -13,10 +13,12 @@ namespace xs
         double lastDepth;
         double theta;
         double getTheta(double depth);
+        void init();
 
     public:
         Circular();
         Circular(double diameter);
+        Circular(const Circular* rhs);
 
         void setDiameter(double diameter) { this->diameter = diameter; }
         virtual double getMaxDepth() { return this->diameter; }
@@ -30,6 +32,7 @@ namespace xs
         virtual double computeDaDy(double depth);
         virtual double computeDtDy(double depth);
 
+        virtual std::shared_ptr<CrossSection> clone();
     };
 }
 

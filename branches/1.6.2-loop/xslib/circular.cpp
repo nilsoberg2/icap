@@ -12,16 +12,34 @@
 
 namespace xs
 {
+    void Circular::init()
+    {
+        CrossSection::xsType = xstype::circular;
+    }
+
     Circular::Circular()
         : diameter(1)
     {
-        CrossSection::xsType = xstype::circular;
+        init();
     }
 
     Circular::Circular(double diam)
         : diameter(diam)
     {
-        CrossSection::xsType = xstype::circular;
+        init();
+    }
+
+    Circular::Circular(const Circular* rhs)
+    {
+        init();
+        this->diameter = rhs->diameter;
+        this->lastDepth = rhs->lastDepth;
+        this->theta = rhs->theta;
+    }
+
+    std::shared_ptr<CrossSection> Circular::clone()
+    {
+        return std::shared_ptr<Circular>(new Circular(this));
     }
 
     double Circular::getTheta(double y)

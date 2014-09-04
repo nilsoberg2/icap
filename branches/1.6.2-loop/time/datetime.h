@@ -28,6 +28,7 @@ public:
     DateTime(const DateTime& value);
 
     operator double();
+    operator double() const;
     DateTime& operator /=(const double& value);
     DateTime& operator +=(const double& value);
     DateTime& operator +=(const DateTime& value);

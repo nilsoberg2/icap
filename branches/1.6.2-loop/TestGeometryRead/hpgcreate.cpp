@@ -46,7 +46,7 @@ namespace TestGeometryRead
             reach.setRoughness(0.015);
             reach.setDsInvert(0);
             reach.setUsInvert(usInvert);
-            reach.setXs(std::shared_ptr<xs::CrossSection>(new xs::Circular(10)));
+            reach.setXs(std::shared_ptr<xs::CrossSection>(new xs::Circular(30)));
             return reach;
         }
         
@@ -180,7 +180,7 @@ namespace TestGeometryRead
         {
             if (!boost::filesystem::exists(hpgPath))
             {
-                xs::Reach reach = makeReach(1, 500);
+                xs::Reach reach = makeReach(2.66, 1530);
 
                 HpgCreator c;
                 std::shared_ptr<hpg::Hpg> hpgTemp = c.AutoCreateHpg(reach);
@@ -197,6 +197,14 @@ namespace TestGeometryRead
             double expected;
         };
         
+		TEST_METHOD(InitTest)
+		{
+            using namespace std;
+            bool status;
+
+            hpgInit();
+        }
+
 		TEST_METHOD(InterpolateHpgTest)
 		{
             using namespace std;

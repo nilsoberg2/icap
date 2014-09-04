@@ -13,7 +13,7 @@ public:
 
     void setCurrentInflow(double inflowRate) { this->inflow = inflowRate; }
 
-    virtual double getInflow(double dateTime) { return this->inflow; }
+    virtual double getInflow(const DateTime& dateTime) { return this->inflow; }
 };
 
 

@@ -34,7 +34,7 @@ namespace geometry
 
         std::string getInflowNodeName() { return this->inflowNodeName; }
 
-        virtual double getInflow(DateTime dateTime);
+        virtual double getInflow(const DateTime& dateTime);
 
         void setInflowFactor(double flowFactor);
     };

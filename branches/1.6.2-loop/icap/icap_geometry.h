@@ -26,16 +26,19 @@ public:
 
     std::string getHpgPath() { return this->hpgPath; }
     double getRoutingStep() { return this->routeStep; }
+    void enableRealTimeStatus();
 
     ///////////////////////////////////////////////////////////////////////
     // Model interface method.
     virtual void resetTimestep();
-    virtual void startTimestep(DateTime dateTime);
+    virtual void startTimestep(const DateTime& dateTime);
     virtual DateTime getCurrentDateTime();
     virtual void resetDepths();
     virtual void setRealTimeInputFlow(std::string nodeId, var_type flow);
+    virtual void setRealTimeInputHead(std::string nodeId, var_type head);
     virtual void addRealTimeInput(std::string nodeId);
     virtual var_type getRealTimeNodeHead(std::string nodeId);
+    virtual var_type getRealTimeNodeInflow(std::string nodeId);
 
     ///////////////////////////////////////////////////////////////////////
     // Model interface node/link variable access methods.

@@ -18,7 +18,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <PlatformToolset>v110</PlatformToolset>
@@ -90,7 +90,7 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>E:\DEV\Boost\boost_1_55_0;$(SolutionDir)..\model;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;NDEBUG;_WINDOWS;_USRDLL;ICAP_EXPORT_DLL;ICAP_DEBUG;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ICAP_EXPORTS;WIN32;NDEBUG;_WINDOWS;ICAP_EXPORT_DLL;%(PreprocessorDefinitions);ICAP_EXPORTS</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>

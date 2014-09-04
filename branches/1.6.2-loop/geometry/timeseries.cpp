@@ -15,7 +15,7 @@ namespace geometry
     {
     }
 
-    void Timeseries::setStartDateTime(DateTime dateTime)
+    void Timeseries::setStartDateTime(const DateTime& dateTime)
     {
         this->lastDate = dateTime;
     }

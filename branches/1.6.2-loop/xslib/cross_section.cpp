@@ -10,6 +10,18 @@
 
 namespace xs
 {
+    CrossSection* Factory::create(const CrossSection* xs)
+    {
+        if (xs->getType() == xstype::circular)
+        {
+            return new Circular((Circular*)xs);
+        }
+        else
+        {
+            return new Dummy();
+        }
+    }
+
     //std::shared_ptr<CrossSection>
     CrossSection* Factory::create(xstype xsType)
     {

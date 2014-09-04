@@ -7,6 +7,8 @@
 extern "C"
 {
 
+    typedef ICAP* ICAPHandle;
+
 int __stdcall NewICAP()
 {
     return (int)(new ICAP());
@@ -120,7 +122,7 @@ int __stdcall icap_enable_rt_mode(int h)
     if (handle == NULL)
         return 1;
 
-    handle->SetRealTimeStatus(true);
+    handle->EnableRealTimeStatus();
     
     return 0;
 }
@@ -132,8 +134,6 @@ int __stdcall icap_disable_rt_mode(int h)
 	ICAPHandle handle = (ICAPHandle)h;
     if (handle == NULL)
         return 1;
-
-    handle->SetRealTimeStatus(false);
 
     return 0;
 }
@@ -157,6 +157,19 @@ int __stdcall icap_set_node_flow(int h, char* nodeId, double flow)
         return ERROR_VAL;
 
     handle->SetCurrentNodeInflow(nodeId, flow);
+
+    return 0;
+}
+
+int __stdcall icap_set_node_head(int h, char* nodeId, double head)
+{
+	ICAPHandle handle = (ICAPHandle)h;
+    if (handle == NULL)
+        return ERROR_VAL;
+
+    handle->SetCurrentNodeHead(nodeId, head);
+
+    return 0;
 }
 
 
@@ -167,6 +180,16 @@ double __stdcall icap_get_node_head(int h, char* nodeId)
         return ERROR_VAL;
 
     return handle->GetCurrentNodeHead(nodeId);
+}
+
+
+double __stdcall icap_get_node_us_inflows(int h, char* nodeId)
+{
+	ICAPHandle handle = (ICAPHandle)h;
+    if (handle == NULL)
+        return ERROR_VAL;
+
+    return handle->GetCurrentNodeInflow(nodeId);
 }
 
 

@@ -12,8 +12,6 @@
 #endif
 
 
-typedef ICAP* ICAPHandle;
-
 extern "C"
 {
 
@@ -33,7 +31,9 @@ ICAPDLLEXPORT int __stdcall icap_disable_rt_mode(int handle); // disable real-ti
 ICAPDLLEXPORT int __stdcall icap_clear_node_flows(int handle);
 ICAPDLLEXPORT int __stdcall icap_add_source(int handle, char* nodeId);
 ICAPDLLEXPORT int __stdcall icap_set_node_flow(int handle, char* nodeId, double flow);
+ICAPDLLEXPORT int __stdcall icap_set_node_head(int h, char* nodeId, double head);
 ICAPDLLEXPORT double __stdcall icap_get_node_head(int handle, char* nodeId);
+ICAPDLLEXPORT double __stdcall icap_get_node_us_inflows(int handle, char* nodeId);
 
 ICAPDLLEXPORT int __stdcall NewICAP();
 int ICAPDLLEXPORT __stdcall DeleteICAP(int handle);

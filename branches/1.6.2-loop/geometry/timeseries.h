@@ -25,7 +25,7 @@ namespace geometry
     public:
         Timeseries(std::string name);
         bool parseLine(const std::vector<std::string>& parts);
-        void setStartDateTime(DateTime dateTime);
+        void setStartDateTime(const DateTime& dateTime);
     };
 }
 
