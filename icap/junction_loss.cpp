@@ -128,6 +128,7 @@ bool ICAP::computeNodeLosses(const id_type& nodeId)
     float angle = (float)node->computeUpstreamLinksAngle(downIdx, mainIdx, latIdx);
     if (isZero(angle))
     {
+        BOOST_LOG_SEV(m_log, loglevel::debug) << "Unable to calculate junction losses due to zero angle";
         return false;
     }
         

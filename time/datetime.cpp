@@ -41,6 +41,11 @@ DateTime::operator double()
     return impl->datetime;
 }
 
+DateTime::operator double() const
+{
+    return impl->datetime;
+}
+
 DateTime& DateTime::operator /=(const double& value)
 {
     impl->datetime /= value;

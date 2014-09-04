@@ -10,7 +10,7 @@ namespace variables
     {
         NodeDepth,
         NodeFlow,
-        NodeInflow,
+        //NodeInflow,
         NodeLateralInflow, // All inflow coming into the node from an external hydrograph
         NodeOverflow,
         NodeVolume,

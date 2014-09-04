@@ -15,6 +15,18 @@ namespace geometry
         this->storageCurve = NULL;
     }
 
+    var_type StorageUnit::lookupVolume(var_type depth)
+    {
+        if (this->storageCurve == NULL)
+        {
+            return this->funcCoeff * std::pow(depth, this->funcExp) + this->funcConst;
+        }
+        else
+        {
+            return this->storageCurve->integrateUpTo(depth);
+        }
+    }
+
     bool StorageUnit::parseLine(const std::vector<std::string>& parts)
     {
         using namespace std;

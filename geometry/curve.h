@@ -27,6 +27,7 @@ namespace geometry
         Curve(std::string name);
         
         var_type lookup(var_type x) const;
+        var_type integrateUpTo(var_type x) const;
         var_type inverseLookup(var_type y) const;
 
         void addEntry(var_type x, var_type y);

@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SWMM_LIB", "..\icap-swmm-50019\VC2012\SWMM_LIB.vcxproj", "{51502880-6791-4BC6-BFB3-D34FE5A02F05}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestGeometryRead", "..\TestGeometryRead\TestGeometryRead.vcxproj", "{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "geometry", "..\geometry\VC2012\geometry.vcxproj", "{A5ACA214-6A18-4386-AEA4-2A9130AB06CD}"
@@ -29,10 +27,6 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{51502880-6791-4BC6-BFB3-D34FE5A02F05}.Debug|Win32.ActiveCfg = Debug|Win32
-		{51502880-6791-4BC6-BFB3-D34FE5A02F05}.Debug|Win32.Build.0 = Debug|Win32
-		{51502880-6791-4BC6-BFB3-D34FE5A02F05}.Release|Win32.ActiveCfg = Release|Win32
-		{51502880-6791-4BC6-BFB3-D34FE5A02F05}.Release|Win32.Build.0 = Release|Win32
 		{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}.Debug|Win32.ActiveCfg = Debug|Win32
 		{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}.Debug|Win32.Build.0 = Debug|Win32
 		{92F2BE35-5151-49D7-B40C-7CBBD10D5F41}.Release|Win32.ActiveCfg = Release|Win32

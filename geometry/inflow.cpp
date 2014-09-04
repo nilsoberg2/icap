@@ -74,7 +74,7 @@ namespace geometry
     }
 
     
-    double Inflow::getInflow(DateTime dateTime)
+    double Inflow::getInflow(const DateTime& dateTime)
     {
         double tsVal = 0;
         if (this->timeseries != NULL)

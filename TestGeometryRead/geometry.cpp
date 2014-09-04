@@ -7,6 +7,9 @@
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <iostream>
+#include "../xslib/reach.h"
+#include "../hpg_creation/hpg_creator.hpp"
+
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace geometry;
@@ -59,6 +62,35 @@ namespace TestGeometryRead
             Assert::IsTrue(vectorEqual<string>(linkIds, actualLinkIds), L"Link list is not equal");
             Assert::IsTrue(vectorEqual<string>(nodeIds, actualNodeIds), L"Node list is not equal");
             
+		}
+
+		TEST_METHOD(CreateHpgTest)
+		{
+            using namespace std;
+            bool status;
+			Geometry* g = loadGeometry(status);
+            Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
+
+            fs::create_directory("new_hpg");
+
+            const vector<string>& linkIds = g->getLinkIds();
+            const vector<string>& nodeIds = g->getNodeIds();
+
+            for (auto id: linkIds)
+            {
+                auto link = g->getLink(id);
+                xs::Reach reach;
+                reach.setDsInvert(link->getDownstreamInvert());
+                reach.setUsInvert(link->getUpstreamInvert());
+                reach.setLength(link->getLength());
+                reach.setRoughness(link->getRoughness());
+                reach.setXs(link->getXs());
+
+                HpgCreator hpgC;
+                auto hpg = hpgC.AutoCreateHpg(reach);
+                string filePath = (fs::path("new_hpg") / (id + ".txt")).string();
+                hpg->SaveToFile(filePath);
+            }
 		}
 
 		TEST_METHOD(CurveTest)

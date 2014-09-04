@@ -17,6 +17,14 @@ units::Units* UCS = new units::Units(units::UnitSystem::Units_US);
 ucf::Ucf* UCF = new CfsUnitsConversion();
 
 
+void IcapGeometry::enableRealTimeStatus()
+{
+    for (auto iter = beginNode(); iter != endNode(); iter++)
+    {
+        iter->second->clearInflowObjects();
+    }
+}
+
 void IcapGeometry::addRealTimeInput(std::string nodeId)
 {
     boost::algorithm::to_lower(nodeId);
@@ -45,8 +53,21 @@ void IcapGeometry::setRealTimeInputFlow(std::string nodeId, var_type flow)
     this->rtInflowMap[nodeId]->setCurrentInflow(flow);
 }
 
+void IcapGeometry::setRealTimeInputHead(std::string nodeId, var_type head)
+{
+    boost::algorithm::to_lower(nodeId);
+    std::shared_ptr<Node> node = getNode(nodeId);
+    if (node == NULL)
+    {
+        return;
+    }
+    
+    node->variable(variables::NodeDepth) = head - node->getInvert();
+}
+
 var_type IcapGeometry::getRealTimeNodeHead(std::string nodeId)
 {
+    boost::algorithm::to_lower(nodeId);
     std::shared_ptr<Node> node = getNode(nodeId);
     if (node == NULL)
     {
@@ -54,6 +75,18 @@ var_type IcapGeometry::getRealTimeNodeHead(std::string nodeId)
     }
 
     return node->variable(variables::NodeDepth) + node->getInvert();
+}
+
+var_type IcapGeometry::getRealTimeNodeInflow(std::string nodeId)
+{
+    boost::algorithm::to_lower(nodeId);
+    std::shared_ptr<Node> node = getNode(nodeId);
+    if (node == NULL)
+    {
+        return ERROR_VAL;
+    }
+
+    return node->variable(variables::NodeFlow);
 }
 
 
@@ -124,7 +157,7 @@ bool IcapGeometry::processOptions()
     return true;
 }
 
-void IcapGeometry::startTimestep(DateTime dateTime)
+void IcapGeometry::startTimestep(const DateTime& dateTime)
 {
     this->currentDateTime = dateTime;
     for (auto iter = Geometry::beginNode(); iter != Geometry::endNode(); iter++)

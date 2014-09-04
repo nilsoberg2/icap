@@ -97,6 +97,11 @@ bool ICAP::Open(const std::string& inputFile, const std::string& outputFile, con
     //    result = false;
     //}
 
+    if (result && m_rtMode)
+    {
+        m_geometry->enableRealTimeStatus();
+    }
+
     return result;
 }
 
@@ -104,8 +109,6 @@ bool ICAP::Open(const std::string& inputFile, const std::string& outputFile, con
 bool ICAP::Start(bool buildConnMatrix)
 {
     bool result = true;
-
-    m_model = m_geometry;
 
     try
     {
@@ -152,8 +155,8 @@ bool ICAP::Start(bool buildConnMatrix)
     // Compute the initial volume and water depth of the sink node.
     std::shared_ptr<geometry::Node> node = m_geometry->getNode(m_sinkNodeIdx);
     var_type initDepth = node->getInitialDepth();
-    m_model->setNodeVariable(m_sinkNodeIdx, variables::NodeDepth, initDepth);
-    m_model->setNodeVariable(m_sinkNodeIdx, variables::NodeVolume, node->lookupVolume(initDepth));
+    m_geometry->setNodeVariable(m_sinkNodeIdx, variables::NodeDepth, initDepth);
+    m_geometry->setNodeVariable(m_sinkNodeIdx, variables::NodeVolume, node->lookupVolume(initDepth));
 
     if (initDepth > 0.0)
     {
@@ -250,7 +253,7 @@ var_type ICAP::GetNodeWaterElev(const id_type& nodeIdx)
 {
     if (nodeIdx >= 0 && nodeIdx < m_geometry->getNodeList()->count())
     {
-        return m_model->getNodeVariable(nodeIdx, variables::NodeDepth) + m_geometry->getNode(nodeIdx)->getInvert();
+        return m_geometry->getNodeVariable(nodeIdx, variables::NodeDepth) + m_geometry->getNode(nodeIdx)->getInvert();
     }
     else
     {

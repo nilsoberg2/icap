@@ -30,7 +30,7 @@ namespace geometry
         std::vector<std::shared_ptr<Link>> usLinks;
         std::vector<std::shared_ptr<Link>> dsLinks;
 
-        double computeLateralInflow(DateTime dateTime);
+        double computeLateralInflow(const DateTime& dateTime);
 
         std::shared_ptr<Model> theModel;
 
@@ -50,15 +50,15 @@ namespace geometry
         /// The total inflow to this node: all upstream conduit inflows as well
         /// as any lateral inflows.
         /// </summary>
-        var_type nodeInflow;
+        //var_type nodeInflow;
 
         /// <summary>
         /// The lateral inflow to this node only; the sum of all inflows from external
         /// inflows for the given time ste.p    
         /// </summary>
-        var_type lateralInflow;
-        var_type depth;
-        var_type volume;
+        //var_type lateralInflow;
+        //var_type depth;
+        //var_type volume;
 
     protected:
         Node(const id_type& theId, const std::string& theName, NodeType theType);
@@ -128,7 +128,7 @@ namespace geometry
         /// This function takes any external inflows at this node and propogates them downstream
         /// in a steady-state fashion.
         /// </summary>
-        void startInflow(DateTime dateTime);
+        void startInflow(const DateTime& dateTime);
         
         /// <summary>
         /// This function takes an upstream pipe inflow and propogates it downstream to the next

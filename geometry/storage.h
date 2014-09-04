@@ -14,10 +14,11 @@ namespace geometry
         std::shared_ptr<CurveFactory> curveFactory;
         std::shared_ptr<Curve> storageCurve;
 
-    public:
         double funcCoeff;
         double funcExp;
         double funcConst;
+
+    public:
 
         StorageUnit(const id_type& theId, const std::string& theName, std::shared_ptr<CurveFactory> factory);
 
@@ -25,7 +26,7 @@ namespace geometry
 
         const std::shared_ptr<Curve> getStorageCurve() { return this->storageCurve; }
 
-        virtual var_type lookupVolume(var_type depth) { return this->storageCurve->lookup(depth); }
+        virtual var_type lookupVolume(var_type depth);
     };
 }
 

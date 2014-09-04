@@ -52,27 +52,28 @@ namespace geometry
         return this->simData[var];
     }
 
-    void Node::startInflow(DateTime dateTime)
+
+    void Node::startInflow(const DateTime& dateTime)
     {
-        this->lateralInflow = computeLateralInflow(dateTime);
-        this->nodeInflow += this->lateralInflow;
+        double lat = variable(variables::NodeLateralInflow) = computeLateralInflow(dateTime);
+        variable(variables::NodeFlow) += lat;
 
         for (int i = 0; i < this->dsLinks.size(); i++)
         {
-            this->dsLinks[i]->propogateFlow(this->lateralInflow);
+            this->dsLinks[i]->propogateFlow(lat);
         }
     }
 
     void Node::propogateFlowDownstream(double flow)
     {
-        this->nodeInflow += flow;
+        variable(variables::NodeFlow) += flow;
         for (int i = 0; i < this->dsLinks.size(); i++)
         {
             this->dsLinks[i]->propogateFlow(flow);
         }
     }
 
-    double Node::computeLateralInflow(DateTime dateTime)
+    double Node::computeLateralInflow(const DateTime& dateTime)
     {
         double flowRate = 0;
         for (int i = 0; i < this->inflows.size(); i++)
@@ -85,13 +86,13 @@ namespace geometry
 
     void Node::resetFlow()
     {
-        this->nodeInflow = 0;
-        this->lateralInflow = 0;
+        variable(variables::NodeFlow) = 0;
+        variable(variables::NodeLateralInflow) = 0;
     }
 
     void Node::resetDepth()
     {
-        this->depth = 0;
+        variable(variables::NodeDepth) = 0;
     }
 
     void Node::clearInflowObjects()

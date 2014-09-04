@@ -20,13 +20,14 @@ extern "C" double* NodeInflow;             // defined in MASSBAL.C
 
 void ICAP::InitializeZeroFlows()
 {
-    m_model->resetDepths();
+    m_geometry->resetDepths();
+    m_geometry->resetTimestep();
 }
 
 
 void ICAP::InitializeZeroDepths()
 {
-    m_model->resetDepths();
+    m_geometry->resetDepths();
 }
 
 
@@ -36,7 +37,7 @@ void ICAP::InitializeZeroDepths()
 // is only useful for the downstream-most node (reservoir).
 var_type ICAP::getFlowAtNode(const id_type& nodeIdx)
 {
-    return m_model->getNodeVariable(nodeIdx, variables::NodeFlow) + m_model->getNodeVariable(nodeIdx, variables::NodeLateralInflow);
+    return m_geometry->getNodeVariable(nodeIdx, variables::NodeFlow) + m_geometry->getNodeVariable(nodeIdx, variables::NodeLateralInflow);
 }
 
 
@@ -46,7 +47,7 @@ var_type ICAP::computePipeStorage()
     geometry::LinkList* links = m_geometry->getLinkList();
 	for (int i = 0; i < links->count(); i++)
 	{
-		volume += m_model->getLinkVariable(links->id(i), variables::LinkVolume);
+		volume += m_geometry->getLinkVariable(links->id(i), variables::LinkVolume);
 	}
 
 	return volume;
@@ -59,10 +60,10 @@ double ICAP::computePondedPipeStorage(var_type h)
     // as well (e.g. no adverse slope to reservoir but reservoir is on a
     // branch and one of the branches slopes down lower than the res.
 
-    m_model->resetTimestep();
+    m_geometry->resetTimestep();
 
 	// Set zero depth in the reservoir to compute ponded volume.
-    m_model->setNodeVariable(m_sinkNodeIdx, variables::NodeDepth, h);
+    m_geometry->setNodeVariable(m_sinkNodeIdx, variables::NodeDepth, h);
 
     // Route the small depth through the pipe network.
     steadyRoute(m_sinkNodeIdx, true); // true ==> ponded
@@ -136,19 +137,20 @@ var_type ICAP::computeTotalVolumeCurve(geometry::Curve& curve)
 	var_type inc = (maxVal - minVal) / incs;
     var_type curElev = minVal;
 
-    m_model->resetTimestep();
+    m_geometry->resetTimestep();
 
     while (curElev <= (maxVal + std::numeric_limits<double>::epsilon()))
     {
 		//printf("%f\n", curElev);
 	    // Set a very small depth to compute ponded volume.
-	    m_model->setNodeVariable(m_sinkNodeIdx, variables::NodeDepth, curElev);
+	    m_geometry->setNodeVariable(m_sinkNodeIdx, variables::NodeDepth, curElev);
 
         // Route the small depth through the pipe network.
         steadyRoute(m_sinkNodeIdx, true); // true ==> ponded
 
-        curStorage = computePipeStorage() +
-            nodes->get(m_sinkNodeIdx)->lookupVolume(curElev - nodes->get(m_sinkNodeIdx)->getInvert()) + 1e-6;  // + 1e-6 since we don't want it to be zero
+        double temp = computePipeStorage();
+        double temp2 = nodes->get(m_sinkNodeIdx)->lookupVolume(curElev - nodes->get(m_sinkNodeIdx)->getInvert());
+        curStorage = temp + temp2 + 1e-6;  // + 1e-6 since we don't want it to be zero
 
         curve.addEntry(curStorage, curElev);
 

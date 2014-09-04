@@ -31,4 +31,6 @@ void main()
     {
         //Assert::Fail(makeInfo(L"Failed to start icap: ", icap.getErrorMessage()).c_str());
     }
+
+    getchar();
 }

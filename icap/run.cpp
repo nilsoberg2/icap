@@ -13,7 +13,7 @@ bool ICAP::End()
 {
     bool result = true;
 
-    m_model->updateSystemStatistic(statvariables::PumpedVolume, V_P);
+    m_geometry->updateSystemStatistic(statvariables::PumpedVolume, V_P);
 
     m_results.complete();
     m_report.complete();
@@ -42,7 +42,7 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 
 	m_counter++;
     
-    if (m_newRoutingTime > m_totalDuration)
+    if (!m_rtMode && m_newRoutingTime > m_totalDuration)
     {
         *elapsedTime = 0.0;
         return true;
@@ -54,7 +54,7 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 	bool toContinue = true;
     
     double curStep = m_newRoutingTime;
-    DateTime currentDate = m_model->getCurrentDateTime();
+    DateTime currentDate = m_geometry->getCurrentDateTime();
 
     // Format the time at the current timestep.
     std::string datetimeBuf = currentDate.toString();
@@ -69,11 +69,11 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 	// Determine the inflow to the input nodes.
     if (!m_rtMode)
     {
-        m_model->resetTimestep();
+        m_geometry->resetTimestep();
     }
 
 	// Propogate the flows down from the input nodes to the reservoir.
-    m_model->startTimestep(currentDate);
+    m_geometry->startTimestep(currentDate);
 
 
 	/////////////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
     // UCF(FLOW) converts from the user-specified units to CFS
 	double v_it = flow * UCF->flow() * routeStep; // v_it <==> inputVol
 
-    y_r = m_model->getNodeVariable(m_sinkNodeIdx, variables::NodeDepth);
+    y_r = m_geometry->getNodeVariable(m_sinkNodeIdx, variables::NodeDepth);
 
     /////////////////////////////////////////////////////////////////
     // REGIME DETERMINATION
@@ -193,6 +193,7 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 
         if (! toContinue)
         {
+            setErrorMessage("filling failed");
             BOOST_LOG_SEV(m_log, loglevel::error) << "Routing failed at time=" << datetimeBuf << ": (error in mass balance, expected V_I > V_P [ponded/filling regime])";
             return false;
         }
@@ -204,6 +205,7 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 
         if (! toContinue)
         {
+            setErrorMessage("steady failed");
             BOOST_LOG_SEV(m_log, loglevel::error) << "Routing failed at time=" << datetimeBuf << " (routing error: " << m_errorStr << ")";
             return false;
         }
@@ -368,15 +370,15 @@ void ICAP::setInitialMatrixDepthGuess()
             continue;
 
         std::shared_ptr<geometry::Node> node = list->get(i);
-        m_model->setNodeVariable(list->id(i), variables::NodeDepth, 100000);
+        m_geometry->setNodeVariable(list->id(i), variables::NodeDepth, 100000);
 
         geometry::Node::LinkIter iter = node->beginUpstreamLink();
         while (iter != node->endUpstreamLink())
         {
             double diam2 = (*iter)->getMaxDepth() / 2;
-            if (diam2 < m_model->getNodeVariable(i, variables::NodeDepth))
+            if (diam2 < m_geometry->getNodeVariable(i, variables::NodeDepth))
             {
-                m_model->setNodeVariable(list->id(i), variables::NodeDepth, diam2);
+                m_geometry->setNodeVariable(list->id(i), variables::NodeDepth, diam2);
             }
         }
     }
@@ -400,9 +402,9 @@ bool ICAP::iterateMatrix()
 
     // Copy values from previous time step into temp vars.
     for (int i = 0; i < linkCount; i++)
-        curQ(i) = m_model->getLinkVariable(links->id(i), variables::LinkFlow);
+        curQ(i) = m_geometry->getLinkVariable(links->id(i), variables::LinkFlow);
     for (int i = 0; i < nodeCount; i++)
-        curH(i) = m_model->getNodeVariable(nodes->id(i), variables::NodeDepth);
+        curH(i) = m_geometry->getNodeVariable(nodes->id(i), variables::NodeDepth);
 
     // Perform operations until convergence or number of iterations exceeds a given threshold.
     int numIter = 0;
@@ -433,9 +435,9 @@ bool ICAP::iterateMatrix()
     else
     {
         for (int i = 0; i < linkCount; i++)
-            m_model->setLinkVariable(links->id(i), variables::LinkFlow, curQ(i));
+            m_geometry->setLinkVariable(links->id(i), variables::LinkFlow, curQ(i));
         for (int i = 0; i < nodeCount; i++)
-            m_model->setNodeVariable(nodes->id(i), variables::NodeDepth, curH(i));
+            m_geometry->setNodeVariable(nodes->id(i), variables::NodeDepth, curH(i));
     }
 
     return result;
@@ -460,14 +462,14 @@ bool ICAP::setHfAndDE(Eigen::VectorXf& curQ, Eigen::VectorXf& curH)
         const id_type& dsId = links->get(i)->getDownstreamNode()->getId();
         const id_type& usId = links->get(i)->getUpstreamNode()->getId();
 
-        double dsDepth =  m_model->getNodeVariable(dsId, variables::NodeDepth);
-        double usDepth =  m_model->getNodeVariable(usId, variables::NodeDepth);
+        double dsDepth =  m_geometry->getNodeVariable(dsId, variables::NodeDepth);
+        double usDepth =  m_geometry->getNodeVariable(usId, variables::NodeDepth);
 
         double hf = 0;
         if (!m_hpgList.getHf(
             i,
            dsDepth,
-            m_model->getLinkVariable(links->id(i), variables::LinkFlow), hf))
+            m_geometry->getLinkVariable(links->id(i), variables::LinkFlow), hf))
         {
             return false;
         }
@@ -476,7 +478,7 @@ bool ICAP::setHfAndDE(Eigen::VectorXf& curQ, Eigen::VectorXf& curH)
 
         m_matrixRhs(i) = hf + dsDepth - usDepth;
 
-        double flow = m_model->getLinkVariable(links->id(i), variables::LinkFlow);
+        double flow = m_geometry->getLinkVariable(links->id(i), variables::LinkFlow);
         m_matrixRhs(linkCount + dsId) += flow;
         m_matrixRhs(linkCount + usId) -= flow;
     }
@@ -484,7 +486,7 @@ bool ICAP::setHfAndDE(Eigen::VectorXf& curQ, Eigen::VectorXf& curH)
     double totalLatFlow = 0;
     for (int i = 0; i < nodeCount; i++)
     {
-        double latFlow = m_model->getNodeVariable(nodes->id(i), variables::NodeLateralInflow);
+        double latFlow = m_geometry->getNodeVariable(nodes->id(i), variables::NodeLateralInflow);
         m_matrixRhs(linkCount + i) += latFlow;
         totalLatFlow += latFlow;
     }
@@ -514,11 +516,11 @@ bool ICAP::updateOverflows(double routeStep)
         var_type maxDepth = node->getMaxDepth();
         if (node->getCanFlood() && depth > maxDepth)
         {
-            m_model->setNodeVariable(nodes->id(i), variables::NodeOverflow, depth - maxDepth);
-            m_model->updateNodeStatistic(nodes->id(i), statvariables::FloodedNodes, routeStep);
+            m_geometry->setNodeVariable(nodes->id(i), variables::NodeOverflow, depth - maxDepth);
+            m_geometry->updateNodeStatistic(nodes->id(i), statvariables::FloodedNodes, routeStep);
 
             if (! m_overflow.IsInEvent(i))
-                m_model->updateSystemStatistic(statvariables::FloodedNodes, 1.0);
+                m_geometry->updateSystemStatistic(statvariables::FloodedNodes, 1.0);
 
             result = true;
         }
@@ -530,7 +532,7 @@ bool ICAP::updateOverflows(double routeStep)
     }
 
     if (result)
-        m_model->updateSystemStatistic(statvariables::FloodedNodes, 1.0);
+        m_geometry->updateSystemStatistic(statvariables::FloodedNodes, 1.0);
 
     return result;
 }
@@ -571,7 +573,11 @@ bool ICAP::RunSimulation(int sinkNodeIdx)
 }
 
 
-void ICAP::SetRealTimeStatus(bool enabled)
+void ICAP::EnableRealTimeStatus()
 {
-    m_rtMode = enabled;
+    m_rtMode = true;
+    if (m_geometry != NULL)
+    {
+        m_geometry->enableRealTimeStatus();
+    }
 }

@@ -6,7 +6,6 @@
 #include "../Eigen/Dense"
 #include "../time/datetime.h"
 #include "../util/parseable.h"
-#include "../model/model.h"
 #include "../api.h"
 
 #include "hpg.h"
@@ -33,8 +32,7 @@ private:
     // Object that manages the network topology.
     //std::unique_ptr<IcapGeometry> m_geometry;
     IcapGeometry* m_geometry;
-    Model* m_model;
-    //std::unique_ptr<Model> m_model;
+    //std::unique_ptr<Model> m_geometry;
 
     // This curve stores a pre-computed total system volume curve.
     geometry::Curve m_totalVolumeCurve;
@@ -214,7 +212,7 @@ public:
     /// of upstream conduits.  Node depths can be different than conduit depths
     /// because of transition losses in junctions or geometry changes.
     /// </summary>
-    bool steadyRouteNode(const id_type& nodeIdx);
+    bool steadyRouteNode(const id_type& nodeIdx, bool isPonded);
 
     // Do a steady-state routing for a link.
     bool steadyRouteLink(const id_type& linkIdx);
@@ -330,9 +328,10 @@ public:
     // Real-time control functions
 
     /// <summary>
-    /// [FEEDBACK METHOD] Enable or disable real-time control (e.g. feedback).
+    /// [FEEDBACK METHOD] Enable real-time control (e.g. feedback).  Once enabled there
+    /// is no going back.
     /// </summary>
-    void SetRealTimeStatus(bool enabled);
+    void EnableRealTimeStatus();
 
     /// <summary>
     /// [FEEDBACK METHOD] Set the current node inflow (override any inflow objects).
@@ -341,10 +340,22 @@ public:
     void SetCurrentNodeInflow(const std::string& nodeId, var_type flow);
 
     /// <summary>
+    /// [FEEDBACK METHOD] Set the current node inflow (override any inflow objects).
+    /// If the node is invalid then this method does nothing.
+    /// </summary>
+    void SetCurrentNodeHead(const std::string& nodeId, var_type head);
+
+    /// <summary>
     /// [FEEDBACK METHOD] Return the head at the given node.  Returns a value less
     /// than or equal to -99999 if the node is invalid.
     /// </summary>
     var_type GetCurrentNodeHead(const std::string& nodeId);
+
+    /// <summary>
+    /// [FEEDBACK METHOD] Return the total inflow at the given node.  Returns a value less
+    /// than or equal to -99999 if the node is invalid.
+    /// </summary>
+    var_type GetCurrentNodeInflow(const std::string& nodeId);
 
     /// <summary>
     /// [FEEDBACK METHOD] Set a specific node as an input node.

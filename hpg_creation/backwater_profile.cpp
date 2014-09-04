@@ -218,10 +218,10 @@ bool HpgCreator::computeValidHpgCurve(const xs::Reach& reach, double flow, doubl
     using namespace std;
 
     computeHpgCurve(reach, flow, pressurizedHeight, reverseSlope, yNormal, yCritical, curve);
-    OutputDebugStringA(std::to_string(flow).c_str());
-    OutputDebugStringA(" ");
-    OutputDebugStringA(std::to_string(curve.size()).c_str());
-    OutputDebugStringA("\n");
+    //OutputDebugStringA(std::to_string(flow).c_str());
+    //OutputDebugStringA(" ");
+    //OutputDebugStringA(std::to_string(curve.size()).c_str());
+    //OutputDebugStringA("\n");
     //printf("Curve size: %d\n", curve.size());
 
     // We want to clear the error code if there was any, but we got valid points.

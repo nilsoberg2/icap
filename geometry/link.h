@@ -41,7 +41,7 @@ namespace geometry
 
         std::unique_ptr<xs::CrossSection> xs;
         //xs::CrossSection* xs;
-        double flow;
+        //double flow;
         
     public:
         id_type getId() { return this->id; }
@@ -54,6 +54,8 @@ namespace geometry
         var_type getUpstreamInvert() { return this->usInvert; }
         var_type getSlope() { return this->slope; }
         var_type getLength() { return this->length; }
+        var_type getRoughness() { return this->roughness; }
+        std::shared_ptr<xs::CrossSection> getXs() { return this->xs->clone(); }
 
         const std::vector<std::pair<var_type, var_type>>& getVertices() const { return this->vertices; }
 

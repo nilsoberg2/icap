@@ -18,7 +18,7 @@ bool ICAP::steadyRoute(const id_type& sinkNodeIdx, bool ponded)
 {
     using namespace std;
 
-    var_type flow = m_model->getNodeVariable(sinkNodeIdx, variables::NodeFlow);
+    var_type flow = m_geometry->getNodeVariable(sinkNodeIdx, variables::NodeFlow);
     m_stepCount++;
 
     map<id_type, bool> followList;
@@ -43,7 +43,7 @@ bool ICAP::steadyRoute(const id_type& sinkNodeIdx, bool ponded)
         //if (ponded)
         //    toContinue = pondedRouteNode(nodeId);
         //else
-            toContinue = steadyRouteNode(nodeId);
+            toContinue = steadyRouteNode(nodeId, ponded);
 
         if (! toContinue)
             break;
@@ -76,15 +76,15 @@ bool ICAP::steadyRoute(const id_type& sinkNodeIdx, bool ponded)
 /// of upstream conduits.  Node depths can be different than conduit depths
 /// because of transition losses in junctions or geometry changes.
 /// </summary>
-bool ICAP::steadyRouteNode(const id_type& nodeId)
+bool ICAP::steadyRouteNode(const id_type& nodeId, bool isPonded)
 {
     BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing node " << nodeId;
 
     bool okToContinue = true;
 
     std::shared_ptr<geometry::Node> node = m_geometry->getNode(nodeId);
-    var_type flow = m_model->getNodeVariable(nodeId, variables::NodeFlow);
-    var_type depth = m_model->getNodeVariable(nodeId, variables::NodeDepth);
+    var_type flow = m_geometry->getNodeVariable(nodeId, variables::NodeFlow);
+    var_type depth = m_geometry->getNodeVariable(nodeId, variables::NodeDepth);
     
     double downDiam = node->getDownstreamLinkMaxDepth();
     if (downDiam < 0)
@@ -100,19 +100,26 @@ bool ICAP::steadyRouteNode(const id_type& nodeId)
 
     for (auto link: node->getUpstreamLinks())
     {
-        var_type dsInvert = link->getDownstreamInvert();
-        if (!isZero(depth) && depth + node->getInvert() > dsInvert)
+        if (isPonded)
         {
-            link->variable(variables::LinkDsDepth) = depth - dsInvert;
+            link->variable(variables::LinkDsDepth) = depth;
         }
         else
         {
-            link->variable(variables::LinkDsDepth) = 0;
-        }
+            var_type dsInvert = link->getDownstreamInvert();
+            if (!isZero(depth) && depth + node->getInvert() > dsInvert)
+            {
+                link->variable(variables::LinkDsDepth) = depth - dsInvert;
+            }
+            else
+            {
+                link->variable(variables::LinkDsDepth) = 0;
+            }
         
-        if (link->getGeometryType() != xs::xstype::dummy && !isZero(downDiam) && link->getMaxDepth() != downDiam)
-        {
-            geomChanges = true;
+            if (link->getGeometryType() != xs::xstype::dummy && !isZero(downDiam) && link->getMaxDepth() != downDiam)
+            {
+                geomChanges = true;
+            }
         }
     }
 
@@ -124,7 +131,7 @@ bool ICAP::steadyRouteNode(const id_type& nodeId)
     // have flow in them.  We also return if there is only one
     // upstream pipe and there is no change in geometry.
     int degree = node->getDownstreamLinks().size() + node->getUpstreamLinks().size();
-    if (degree < 2 || isZero(flow) || (degree == 2 && !geomChanges))
+    if (isPonded || degree < 2 || isZero(flow) || (degree == 2 && !geomChanges))
     {
         return true;
     }
@@ -241,14 +248,14 @@ bool ICAP::steadyRouteLink(const id_type& linkId)
     if (!m_hpgList.getUpstream(linkId, dsDepth + dsInvert, flow, usDepth))
     {
         BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
-            dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
+            dsDepth << " flow=" << flow << " link=" << m_geometry->getLink(linkId)->getName() << "; error: " << m_hpgList.getErrorMessage();
         okToContinue = false;
     }
 
     if (okToContinue && !m_hpgList.getVolume(linkId, dsDepth + dsInvert, flow, volume))
     {
-        BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for upstream using the parameters dsDepth=" << 
-            dsDepth << " flow=" << flow << " link=" << linkId << "; error: " << m_hpgList.getErrorMessage();
+        BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to query the HPG for volume using the parameters dsDepth=" << 
+            dsDepth << " flow=" << flow << " link=" << m_geometry->getLink(linkId)->getName() << "; error: " << m_hpgList.getErrorMessage();
         okToContinue = false;
     }
 	//}
@@ -258,6 +265,8 @@ bool ICAP::steadyRouteLink(const id_type& linkId)
     if (okToContinue)
     {
         link->variable(variables::LinkUsDepth) = usDepth - usInvert;
+        auto node = link->getUpstreamNode();
+        node->variable(variables::NodeDepth) = usDepth - node->getInvert();
         link->variable(variables::LinkVolume) = volume;
         return true;
     }
@@ -287,6 +296,7 @@ bool ICAP::pondedRouteLink(const id_type& linkId)
     }
 
     link->variable(variables::LinkUsDepth) = dsElev;
+    link->getUpstreamNode()->variable(variables::NodeDepth) = dsElev;
     link->variable(variables::LinkVolume) = volume;
 
     // Set the downstream value to be stored to be DEPTH, not elevation.

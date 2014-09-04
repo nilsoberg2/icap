@@ -17,7 +17,7 @@ class Model
 {
 public:
     virtual void resetTimestep() = 0;
-    virtual void startTimestep(DateTime dateTime) = 0;
+    virtual void startTimestep(const DateTime& dateTime) = 0;
     virtual DateTime getCurrentDateTime() = 0;
     virtual void resetDepths() = 0;
     virtual void addRealTimeInput(std::string nodeId) = 0;

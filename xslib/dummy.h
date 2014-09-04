@@ -21,6 +21,8 @@ namespace xs
         virtual double computeDpDy(double depth) { return 0; }
         virtual double computeDaDy(double depth) { return 0; }
         virtual double computeDtDy(double depth) { return 0; }
+
+        virtual std::shared_ptr<CrossSection> clone() { return std::shared_ptr<Dummy>(new Dummy()); }
     };
 }
 
