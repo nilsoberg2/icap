@@ -41,6 +41,11 @@ inline double profile_func_deriv(double y, solver_params& params, profile_params
 inline void compute_variables(double y, solver_params& params, profile_params& x);
 
 
+void writeArray(FILE* fh, std::unique_ptr<double[]> a, int aSize)
+{
+}
+
+
 
 // This code is based on the following code:
 //      JM Mier, October 2010, UIUC
@@ -149,9 +154,9 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
         yCvalid = false;
     }
 
-    double y_n;
+    double y_n = maxDepth;
     bool yNvalid = true;
-    if (ComputeNormalDepth(reach, flow, g, kn, y_n))
+    if (reverseSlope || ComputeNormalDepth(reach, flow, g, kn, y_n))
     {
         yNvalid = false;
     }
@@ -428,6 +433,36 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
     // at each step minus the average of the first and last cross
     // section areas times the x-step).
     volume = (volumeArea - (lastArea + params.first_area) / 2.0) * fabs(params.dx);
+
+    // Due to numerical solution, sometimes the volume might be slightly larger than the 
+    // full volume, so we bound it here.
+    double fullVolume = params.xs->computeArea(params.xs->getMaxDepth()) * reach.getLength();
+    if (((y2 - maxDepth >= -0.1) && (yInit - maxDepth >= -0.1)) || volume > fullVolume)
+        volume = fullVolume;
+
+    //FILE* fh = fopen("profile.txt", "w");
+    //for (int i = 0; i < nC+1; i++)
+    //{
+    //    if (i++ > 0)
+    //        fprintf(fh, "\t");
+    //    fprintf(fh, "%f", X[i]);
+    //}
+    //fprintf(fh, "\n");
+    //for (int i = 0; i < nC+1; i++)
+    //{
+    //    if (i++ > 0)
+    //        fprintf(fh, "\t");
+    //    fprintf(fh, "%f", Y[i]);
+    //}
+    //fprintf(fh, "\n");
+    //for (int i = 0; i < nC+1; i++)
+    //{
+    //    if (i++ > 0)
+    //        fprintf(fh, "\t");
+    //    fprintf(fh, "%f", Z[i]);
+    //}
+    //fprintf(fh, "\n");
+    //fclose(fh);
 
     // If we terminated early, then return an error.
     if (i < nC)

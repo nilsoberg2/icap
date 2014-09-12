@@ -10,6 +10,7 @@ void ICAP::SetCurrentNodeInflow(const std::string& nodeId, var_type flow)
 
 void ICAP::SetCurrentNodeHead(const std::string& nodeId, var_type head)
 {
+    m_realTimeDsHead = true;
     m_geometry->setRealTimeInputHead(nodeId, head);
 }
 
@@ -42,5 +43,15 @@ void ICAP::SetFlowFactor(var_type flowFactor)
     for (geometry::Geometry::NodeIter iter = m_geometry->beginNode(); iter != m_geometry->endNode(); iter++)
     {
         iter->second->setInflowFactor(flowFactor);
+    }
+}
+
+
+void ICAP::EnableRealTimeStatus()
+{
+    m_realTimeFlows = true;
+    if (m_geometry != NULL)
+    {
+        m_geometry->enableRealTimeStatus();
     }
 }

@@ -127,6 +127,7 @@
     <ClCompile Include="..\overflow.cpp" />
     <ClCompile Include="..\pumping.cpp" />
     <ClCompile Include="..\routing.cpp" />
+    <ClCompile Include="..\Stopwatch.cpp" />
     <ClCompile Include="..\ucf.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -143,6 +144,7 @@
     <ClInclude Include="..\pumping.h" />
     <ClInclude Include="..\routing.h" />
     <ClInclude Include="..\rt_inflow.h" />
+    <ClInclude Include="..\Stopwatch.h" />
     <ClInclude Include="..\ucf.h" />
   </ItemGroup>
   <ItemGroup>

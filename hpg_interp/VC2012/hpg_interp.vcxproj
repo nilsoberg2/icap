@@ -117,8 +117,10 @@
     <ClInclude Include="..\hpg.hpp" />
     <ClInclude Include="..\impl.h" />
     <ClInclude Include="..\point.h" />
-    <ClInclude Include="..\spline.hpp" />
-    <ClInclude Include="..\spline2.hpp" />
+    <ClInclude Include="..\spline-bannerman.hpp" />
+    <ClInclude Include="..\spline-lane.hpp" />
+    <ClInclude Include="..\spline-tk.h" />
+    <ClInclude Include="..\spline.h" />
     <ClInclude Include="..\split.hpp" />
     <ClInclude Include="..\types.h" />
   </ItemGroup>

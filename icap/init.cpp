@@ -23,7 +23,8 @@ ICAP::ICAP()
     V_SysMax = 0.0;
 	m_counter = 0;
     m_regime = 0;
-    m_rtMode = false;
+    m_realTimeFlows = false;
+    m_realTimeDsHead = false;
     m_isFirstMatrixIteration = false;
     m_geometry = NULL;
 }
@@ -97,7 +98,7 @@ bool ICAP::Open(const std::string& inputFile, const std::string& outputFile, con
     //    result = false;
     //}
 
-    if (result && m_rtMode)
+    if (result && m_realTimeFlows)
     {
         m_geometry->enableRealTimeStatus();
     }
@@ -112,17 +113,6 @@ bool ICAP::Start(bool buildConnMatrix)
 
     try
     {
-        // Find all of the inputs to the system.
-        if (!m_rtMode)
-        {
-          //  int sourceCount = findSources(m_sources);
-          //  if (sourceCount == 0)
-          //  {
-		        //BOOST_LOG_SEV(m_log, loglevel::error) << "Unable to find any source nodes";
-          //      return false;
-          //  }
-        }
-
         if (isZero(m_geometry->getNode(m_sinkNodeIdx)->getMaxDepth()))
         {
 		    BOOST_LOG_SEV(m_log, loglevel::error) << "The downstream reservoir max depth must be non-zero";

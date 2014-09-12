@@ -68,7 +68,11 @@ private:
     // This variable is true if the model is in Real-Time mode which means that flows
     // are provided externally on a time-step basis rather than reading TS from the 
     // input files.
-    bool m_rtMode;
+    bool m_realTimeFlows;
+
+    // This variable is true if the model is in Real-Time mode and a downstream head
+    // has been specified.
+    bool m_realTimeDsHead;
 
 
     ///////////////////////////////////////////////////////////////////////////
