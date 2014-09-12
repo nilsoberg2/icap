@@ -22,14 +22,18 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
 
     bool computeFreeOnly = pressurizedHeight < 1e-6;
 
-    double slope = reach.getSlope() * (reverseSlope ? -1. : 1.);
+    //double slope = reach.getSlope();// * (reverseSlope ? -1. : 1.);
     double maxDepth = reach.getMaxDepth();
     double dsInvert = reach.getDsInvert();
+    //if (reverseSlope)
+    //    dsInvert = reach.getUsInvert();
     double usInvert = reach.getUsInvert();
+    //if (reverseSlope)
+    //    usInvert = reach.getDsInvert();
 
     bool yNvalid = false;
     // Normal depth is only defined for positive slope channels.
-    if (slope >= 0.0 && !isZero(flow))
+    if (!reverseSlope && !isZero(flow))
     {
         BENCH_START;
     	
@@ -69,7 +73,7 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
 
 
     // isSteep = true if the channel is steep-slope and the slope is positive.
-    bool isSteep = (yNvalid && yCvalid && yCritical > yNormal && slope >= 0.0);
+    bool isSteep = (yNvalid && yCvalid && yCritical > yNormal && !reverseSlope);
 
     // Set the min/max according to the channel characteristics (steep/mild).
     double yMin, yMax;
@@ -105,7 +109,8 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
     }
     else
     {
-        np = std::min(this->numPoints, std::max(1, (int)std::floor((yMax - yMin) / (0.005 * maxDepth) + 0.5)));
+        // Minimum of 
+        np = std::min(this->numPoints, std::max(1, (int)std::floor((yMax - yMin) / (0.05 * maxDepth) + 0.5)));
     }
 
     // Compute the depth increment in vertical direction.
@@ -115,6 +120,7 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
     // to do the free-surface computations and the second to do the pressurized computations.
     // If the pressurized height is zero, then just do the free-surface computations.
     int freePressLoopActivation = computeFreeOnly ? 1 : 2;
+    double dz = 0;
     for (int i = 0; i < freePressLoopActivation; i++)
     {
         // Starting depth.
@@ -124,6 +130,8 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
             yInit = yMax + dy;
             yMax += pressurizedHeight;
             dy = (yMax - yMin) / this->numPoints;
+            dz = usInvert - dsInvert;
+            isSteep = false; // in pressurized conduits, there is no such thing as a steep conduit
         }
 
         // We iterate until we've reached or exceeded the maximum depth.
@@ -178,7 +186,7 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
                 //                                 //volume));
                 //}
 
-			    else if (slope < 0.0)
+			    else if (reverseSlope)
                 {
 				    curve.push_back(hpg::point(yInit + usInvert,
 											     yComp + dsInvert,

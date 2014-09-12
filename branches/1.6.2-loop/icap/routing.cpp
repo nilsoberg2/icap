@@ -78,13 +78,14 @@ bool ICAP::steadyRoute(const id_type& sinkNodeIdx, bool ponded)
 /// </summary>
 bool ICAP::steadyRouteNode(const id_type& nodeId, bool isPonded)
 {
-    BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing node " << nodeId;
-
     bool okToContinue = true;
 
     std::shared_ptr<geometry::Node> node = m_geometry->getNode(nodeId);
     var_type flow = m_geometry->getNodeVariable(nodeId, variables::NodeFlow);
     var_type depth = m_geometry->getNodeVariable(nodeId, variables::NodeDepth);
+    var_type nodeInvert = node->getInvert();
+
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing node " << nodeId << " flow=" << flow << " depth=" << depth << " ponded=" << isPonded;
     
     double downDiam = node->getDownstreamLinkMaxDepth();
     if (downDiam < 0)
@@ -109,7 +110,7 @@ bool ICAP::steadyRouteNode(const id_type& nodeId, bool isPonded)
             var_type dsInvert = link->getDownstreamInvert();
             if (!isZero(depth) && depth + node->getInvert() > dsInvert)
             {
-                link->variable(variables::LinkDsDepth) = depth - dsInvert;
+                link->variable(variables::LinkDsDepth) = depth + nodeInvert - dsInvert;
             }
             else
             {
@@ -188,8 +189,6 @@ bool ICAP::steadyRouteNode(const id_type& nodeId, bool isPonded)
 
 bool ICAP::steadyRouteLink(const id_type& linkId)
 {
-    BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing link " << linkId;
-
     bool okToContinue = true;
 
     std::shared_ptr<geometry::Link> link = m_geometry->getLink(linkId);
@@ -202,6 +201,8 @@ bool ICAP::steadyRouteLink(const id_type& linkId)
     var_type length = link->getLength();
     var_type dsInvert = link->getDownstreamInvert();
     var_type usInvert = link->getUpstreamInvert();
+
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "Routing link " << linkId << " ds=" << dsDepth << " flow=" << flow;
 
     // Carry the depth across if the link isn't a conduit or doesn't have
     // proper geometry.
@@ -259,6 +260,9 @@ bool ICAP::steadyRouteLink(const id_type& linkId)
         okToContinue = false;
     }
 	//}
+
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "              from hpg us=" << usDepth << " vol=" << volume;
+
 
     // If there wasn't an error, then we carry the interpolated upstream
     // elevation to the upstream nodes.

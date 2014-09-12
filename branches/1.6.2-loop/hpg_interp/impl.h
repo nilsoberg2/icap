@@ -3,7 +3,7 @@
 #include <deque>
 
 #include "hpg.hpp"
-#include "spline.hpp"
+#include "spline.h"
 
 
 namespace hpg
@@ -26,23 +26,21 @@ namespace hpg
         double minAdvFlow;            //< minimum adverse flow in HPG
         double maxAdvFlow;            //< maximum adverse flow in HPG
         // Splines are stored here.
-        std::deque<magnet::math::Spline> SplPosUS_QDS;       //< spline for US = F(Q, DS) for positive flow
-        std::deque<magnet::math::Spline> SplAdvUS_QDS;       //< spline for US = F(Q, DS) for adverse flow
-        //std::deque<devinlane::Spline<double, double>> SplPosDS_QUS;       //< spline for US = F(Q, DS) for positive flow
-        //std::deque<devinlane::Spline<double, double>> SplAdvDS_QUS;       //< spline for US = F(Q, DS) for adverse flow
-        std::deque<magnet::math::Spline> SplPosDS_QUS;       //< spline for US = F(Q, DS) for positive flow
-        std::deque<magnet::math::Spline> SplAdvDS_QUS;       //< spline for US = F(Q, DS) for adverse flow
-        std::deque<magnet::math::Spline> SplPosVol;          //< spline for Volume = F(Q, DS) for positive flow
-        std::deque<magnet::math::Spline> SplAdvVol;          //< spline for Volume = F(Q, DS) for adverse flow
-		std::deque<magnet::math::Spline> SplPosHf;
-		std::deque<magnet::math::Spline> SplAdvHf;
-        magnet::math::Spline SplPosCritUS_Q;   //< spline for Q = F_crit(US) for positive flow
-        magnet::math::Spline SplAdvCritUS_Q;   //< spline for Q = F_crit(US) for adverse flow
-        magnet::math::Spline SplPosCritDS_Q;   //< spline for Q = F_crit(DS) for positive flow
-        magnet::math::Spline SplAdvCritDS_Q;   //< spline for Q = F_crit(DS) for adverse flow
-        std::deque<magnet::math::Spline>SplPosCritUS_DS;     //< spline for DS = F_crit(US) for positive flow
+        std::deque<Spline> SplPosUS_QDS;       //< spline for US = F(Q, DS) for positive flow
+        std::deque<Spline> SplAdvUS_QDS;       //< spline for US = F(Q, DS) for adverse flow
+        std::deque<Spline> SplPosDS_QUS;       //< spline for US = F(Q, DS) for positive flow
+        std::deque<Spline> SplAdvDS_QUS;       //< spline for US = F(Q, DS) for adverse flow
+        std::deque<Spline> SplPosVol;          //< spline for Volume = F(Q, DS) for positive flow
+        std::deque<Spline> SplAdvVol;          //< spline for Volume = F(Q, DS) for adverse flow
+		std::deque<Spline> SplPosHf;
+		std::deque<Spline> SplAdvHf;
+        Spline SplPosCritUS_Q;   //< spline for Q = F_crit(US) for positive flow
+        Spline SplAdvCritUS_Q;   //< spline for Q = F_crit(US) for adverse flow
+        Spline SplPosCritDS_Q;   //< spline for Q = F_crit(DS) for positive flow
+        Spline SplAdvCritDS_Q;   //< spline for Q = F_crit(DS) for adverse flow
+        std::deque<Spline>SplPosCritUS_DS;     //< spline for DS = F_crit(US) for positive flow
         std::deque<point> SplPosCritUS_DS_ranges;   //< range of flows for each of the splines in SplPosCritUS_DS
-        magnet::math::Spline SplAdvCritUS_DS;  //< spline for DS = F_crit(US) for adverse flow
+        Spline SplAdvCritUS_DS;  //< spline for DS = F_crit(US) for adverse flow
         int errorCode;
 
         std::string nodeId; /**< the Tunnel ID */

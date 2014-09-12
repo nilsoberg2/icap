@@ -7,6 +7,7 @@
 #include "icap.h"
 #include "exception.h"
 #include "logging.h"
+#include "Stopwatch.h"
 
 
 bool ICAP::End()
@@ -38,11 +39,16 @@ bool ICAP::Step(double* elapsedTime, bool useMatrix)
 
 bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 {
+    Stopwatch swatch;
+    swatch.set_mode(StopwatchMode::CPU_TIME);
+
+    swatch.start("Step");
+
     bool result = true;
 
 	m_counter++;
     
-    if (!m_rtMode && m_newRoutingTime > m_totalDuration)
+    if (!m_realTimeFlows && m_newRoutingTime > m_totalDuration)
     {
         *elapsedTime = 0.0;
         return true;
@@ -67,7 +73,7 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 	// INFLOWS TO THE SYSTEM
 
 	// Determine the inflow to the input nodes.
-    if (!m_rtMode)
+    if (!m_realTimeFlows)
     {
         m_geometry->resetTimestep();
     }
@@ -175,7 +181,21 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
 	/////////////////////////////////////////////////////////////////
 	// ROUTING
 
-    if (m_regime == Regime_Empty)
+    // If a manual downstream boundary has been specified, then we need to force a steady state
+    // computation.
+    if (m_realTimeDsHead)
+    {
+        BOOST_LOG_SEV(m_log, loglevel::debug) << "Regime: Steady/ForcedDsBoundary";
+        toContinue = Step_SteadyState(useMatrix);
+
+        if (! toContinue)
+        {
+            setErrorMessage("steady/forced failed");
+            BOOST_LOG_SEV(m_log, loglevel::error) << "Routing failed at time=" << datetimeBuf << " (routing error: " << m_errorStr << ")";
+            return false;
+        }
+    }
+    else if (m_regime == Regime_Empty)
     {
         BOOST_LOG_SEV(m_log, loglevel::debug) << "Regime: Empty";
         InitializeZeroDepths();
@@ -250,6 +270,10 @@ bool ICAP::Step(double* elapsedTime, double routeStep, bool useMatrix)
     //    setErrorMessage("Exception occured in timestep function at time=" + datetimeBuf);
     //}
 
+    swatch.stop("Step");
+
+    BOOST_LOG_SEV(m_log, loglevel::debug) << "Step time: " << swatch.get_average_time("Step");
+
     return result;
 }
 
@@ -321,16 +345,18 @@ bool ICAP::Step_SteadyState(bool useMatrix)
 
     m_errorCode = 0;
 
+    std::shared_ptr<geometry::Node> node = m_geometry->getNode(m_sinkNodeIdx);
+
     // Set the downstream boundary condition to be the level pool depth
     // given the current system volume.
-    double elev = getSystemHead(V_I - V_P);
-
-    std::shared_ptr<geometry::Node> node = m_geometry->getNode(m_sinkNodeIdx);
-    double depth = elev - node->getInvert();
-    if (depth < 0.0)
-        depth = 0;
-    node->variable(variables::NodeDepth) = depth;
-    node->variable(variables::NodeVolume) = node->lookupVolume(depth);
+    if (!m_realTimeDsHead)
+    {
+        double depth = getSystemHead(V_I - V_P) - node->getInvert();
+        if (depth < 0.0)
+            depth = 0;
+        node->variable(variables::NodeDepth) = depth;
+        node->variable(variables::NodeVolume) = node->lookupVolume(depth);
+    }
     
     if (useMatrix)
     {
@@ -570,14 +596,4 @@ bool ICAP::RunSimulation(int sinkNodeIdx)
     }
 
     return toContinue;
-}
-
-
-void ICAP::EnableRealTimeStatus()
-{
-    m_rtMode = true;
-    if (m_geometry != NULL)
-    {
-        m_geometry->enableRealTimeStatus();
-    }
 }

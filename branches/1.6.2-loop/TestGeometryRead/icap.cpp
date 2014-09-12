@@ -70,8 +70,19 @@ namespace TestGeometryRead
                 double val = icap.GetCurrentNodeInflow("Outlet");
                 Assert::AreEqual(val, i * 100.0);
 
-                //val = icap.GetCurrentNodeHead("Outlet");
-                //Assert::AreEqual(val, 380.0);
+                val = icap.GetCurrentNodeHead("Outlet");
+                Assert::AreEqual(val, 380.0);
+
+                if (i == 0)
+                {
+                    val = icap.GetCurrentNodeHead("Kildare");
+                    Assert::AreEqual(380.0, val, L"Expected Kildare to be equal to Outlet for zero flow");
+                }
+                else
+                {
+                    val = icap.GetCurrentNodeHead("Kildare");
+                    Assert::AreNotEqual(380.0, val, L"Expected Kildare to be not equal to Outlet for zero flow");
+                }
             }
         }
 

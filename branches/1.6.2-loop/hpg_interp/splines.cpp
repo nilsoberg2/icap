@@ -1,7 +1,7 @@
 #include "hpg.hpp"
 #include "errors.hpp"
 #include "debug.h"
-#include "spline2.hpp"
+#include "spline.h"
 #include "impl.h"
 
 namespace hpg
@@ -21,33 +21,29 @@ namespace hpg
             // Check if there are more than the minimum required number
             // of points for that spline.
             if (numValues >= 2) {
-				magnet::math::Spline spline;
-                //std::vector<double> usY, usX;
-                magnet::math::Spline usSpline;
-                usSpline.setType(magnet::math::Spline::Spline_type::LINEAR);
-				magnet::math::Spline volSpline;
-				magnet::math::Spline hfSpline;
+				SPL_INIT_TEMP(spline, false);
+                SPL_INIT_TEMP(usSpline, false);
+				SPL_INIT_TEMP(volSpline, false);
+				SPL_INIT_TEMP(hfSpline, false);
                 double lastY = 0;
 				for (unsigned int j = 0; j < numValues; j++)
 				{
-					spline.addPoint(vec[j].x, vec[j].y);
+					SPL_ADD_TEMP(spline, vec[j].x, vec[j].y);
                     if (j == 0 || (j > 0 && fabs(lastY - vec[j].y) > 0.0001))
                     {
-                        //usY.push_back(vec[j].y);
-                        //usX.push_back(vec[j].x);
-                        usSpline.addPoint(vec[j].y, vec[j].x);
+                        SPL_ADD_TEMP(usSpline, vec[j].y, vec[j].x);
                     }
                     lastY = vec[j].y;
-					volSpline.addPoint(vec[j].x, vec[j].v);
-					hfSpline.addPoint(vec[j].x, vec[j].hf);
+					SPL_ADD_TEMP(volSpline, vec[j].x, vec[j].v);
+					SPL_ADD_TEMP(hfSpline, vec[j].x, vec[j].hf);
 				}
 
-                //spline.generate();
-                //usSpline.generate();
-                //volSpline.generate();
+                SPL_FINISH_TEMP(spline);
+                SPL_FINISH_TEMP(usSpline);
+                SPL_FINISH_TEMP(volSpline);
+                SPL_FINISH_TEMP(hfSpline);
 
                 impl->SplPosUS_QDS.push_back(spline);
-                //SplPosDS_QUS.push_back(devinlane::Spline<double, double>(usY, usX));
                 impl->SplPosDS_QUS.push_back(usSpline);
 				impl->SplPosVol.push_back(volSpline);
 				impl->SplPosHf.push_back(hfSpline);
@@ -56,11 +52,10 @@ namespace hpg
             // If there aren't enough points, then create a null spline.
             else
             {
-                impl->SplPosUS_QDS.push_back(magnet::math::Spline());
-                //SplPosDS_QUS.push_back(devinlane::Spline<double, double>());
-                impl->SplPosDS_QUS.push_back(magnet::math::Spline());
-				impl->SplPosVol.push_back(magnet::math::Spline());
-				impl->SplPosHf.push_back(magnet::math::Spline());
+                impl->SplPosUS_QDS.push_back(Spline());
+                impl->SplPosDS_QUS.push_back(Spline());
+				impl->SplPosVol.push_back(Spline());
+				impl->SplPosHf.push_back(Spline());
             }
         }
 
@@ -81,28 +76,27 @@ namespace hpg
             // Check if there are more than the minimum required number
             // of points for that spline.
             if (numValues >= 2) {
-				magnet::math::Spline spline;
-                magnet::math::Spline usSpline;
-                usSpline.setType(magnet::math::Spline::Spline_type::LINEAR);
-				magnet::math::Spline volSpline;
-				magnet::math::Spline hfSpline;
+				SPL_INIT_TEMP(spline, false);
+                SPL_INIT_TEMP(usSpline, false);
+				SPL_INIT_TEMP(volSpline, false);
+				SPL_INIT_TEMP(hfSpline, false);
                 double lastY = 0;
 				for (unsigned int j = 0; j < numValues; j++)
 				{
-					spline.addPoint(vec[j].x, vec[j].y);
+					SPL_ADD_TEMP(spline, vec[j].x, vec[j].y);
                     if (j == 0 || (j > 0 && fabs(lastY - vec[j].y) > 0.0001))
                     {
-                        usSpline.addPoint(vec[j].y, vec[j].x);
+                        SPL_ADD_TEMP(usSpline, vec[j].y, vec[j].x);
                     }
                     lastY = vec[j].y;
-					volSpline.addPoint(vec[j].x, vec[j].v);
-					hfSpline.addPoint(vec[j].x, vec[j].hf);
+					SPL_ADD_TEMP(volSpline, vec[j].x, vec[j].v);
+					SPL_ADD_TEMP(hfSpline, vec[j].x, vec[j].hf);
 				}
 
-                
-                //spline.generate();
-                //usSpline.generate();
-                //volSpline.generate();
+                SPL_FINISH_TEMP(spline);
+                SPL_FINISH_TEMP(usSpline);
+                SPL_FINISH_TEMP(volSpline);
+                SPL_FINISH_TEMP(hfSpline);
 
                 impl->SplAdvUS_QDS.push_back(spline);
                 impl->SplAdvDS_QUS.push_back(usSpline);
@@ -113,10 +107,10 @@ namespace hpg
             // If there aren't enough points, then create a null spline.
             else
             {
-                impl->SplAdvUS_QDS.push_back(magnet::math::Spline());
-                impl->SplAdvDS_QUS.push_back(magnet::math::Spline());
-				impl->SplAdvVol.push_back(magnet::math::Spline());
-				impl->SplAdvHf.push_back(magnet::math::Spline());
+                impl->SplAdvUS_QDS.push_back(Spline());
+                impl->SplAdvDS_QUS.push_back(Spline());
+				impl->SplAdvVol.push_back(Spline());
+				impl->SplAdvHf.push_back(Spline());
             }
         }
 
@@ -140,12 +134,18 @@ namespace hpg
 
         unsigned int numPosValues = (unsigned int)impl->posCritical.size();
 
+        SPL_INIT_NOCREATE(SplPosCritDS_Q, false);
+        SPL_INIT_NOCREATE(SplPosCritUS_Q, false);
+
         // ds <= us == mild, ds > us == steep
         for (int j = 0; j < numPosValues; j++)
         {
-			impl->SplPosCritDS_Q.addPoint(impl->posFlows.at(j), impl->posCritical.at(j).x);
-			impl->SplPosCritUS_Q.addPoint(impl->posFlows.at(j), impl->posCritical.at(j).y);
+			SPL_ADD_NOCREATE(SplPosCritDS_Q, impl->posFlows.at(j), impl->posCritical.at(j).x);
+			SPL_ADD_NOCREATE(SplPosCritUS_Q, impl->posFlows.at(j), impl->posCritical.at(j).y);
         }
+
+        SPL_FINISH_NOCREATE(SplPosCritDS_Q, impl->SplPosCritDS_Q);
+        SPL_FINISH_NOCREATE(SplPosCritUS_Q, impl->SplPosCritUS_Q);
 
         return impl->errorCode;
     }
@@ -163,13 +163,19 @@ namespace hpg
         impl->errorCode = S_OK;
 
         unsigned int numAdvValues = (unsigned int)impl->advCritical.size();
+        
+        SPL_INIT_NOCREATE(SplAdvCritDS_Q, false);
+        SPL_INIT_NOCREATE(SplAdvCritUS_Q, false);
 
         // ds <= us == mild, ds > us == steep
         for (int j = 0; j < numAdvValues; j++)
         {
-			impl->SplAdvCritDS_Q.addPoint(impl->advFlows.at(j), impl->advCritical.at(j).x);
-			impl->SplAdvCritUS_Q.addPoint(impl->advFlows.at(j), impl->advCritical.at(j).y);
+			SPL_ADD_NOCREATE(SplAdvCritDS_Q, impl->advFlows.at(j), impl->advCritical.at(j).x);
+			SPL_ADD_NOCREATE(SplAdvCritUS_Q, impl->advFlows.at(j), impl->advCritical.at(j).y);
         }
+
+        SPL_FINISH_NOCREATE(SplAdvCritDS_Q, impl->SplAdvCritDS_Q);
+        SPL_FINISH_NOCREATE(SplAdvCritUS_Q, impl->SplAdvCritUS_Q);
 
         return impl->errorCode;
     }

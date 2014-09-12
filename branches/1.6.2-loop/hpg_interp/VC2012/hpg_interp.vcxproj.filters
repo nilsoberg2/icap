@@ -30,12 +30,6 @@
     <ClInclude Include="..\hpg.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\spline.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\spline2.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\split.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -46,6 +40,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spline-bannerman.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spline-lane.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spline-tk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\spline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
