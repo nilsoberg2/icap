@@ -80,7 +80,7 @@ std::shared_ptr<hpg::Hpg> HpgCreator::AutoCreateHpg(const xs::Reach& reach)
                 maxFlow = x->computeArea(x->getMaxDepth()) * 2. * std::sqrt(2. * this->g * headDiff); // I pulled the *3 out of nowhere hahaha
                 for (int i = 0; i < 20; i++)
                 {
-                    flows.push_back(minFlow + (maxFlow - minFlow) * (double)(i) / 20.);
+                    flows.push_back(minFlow + (maxFlow - minFlow) * (double)(i) / 200.);
                 }
             }
             else
