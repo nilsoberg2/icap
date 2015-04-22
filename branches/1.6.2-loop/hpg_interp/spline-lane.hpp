@@ -69,6 +69,27 @@ namespace devinlane
             return interpolate(x);
         }
     
+        ///////////////////////////////////////////////////////////////////////////////////////
+        // Compatibility functions
+
+        Y at(const X&x) const
+        {
+            return interpolate(x);
+        }
+
+        size_t size() const
+        {
+            return mElements.size();
+        }
+
+        Y operator()(const X& x) const
+        {
+            return interpolate(x);
+        }
+
+        // End compatibility functions
+        ///////////////////////////////////////////////////////////////////////////////////////
+    
         Y interpolate(const X&x) const {
             if (mElements.size() == 0) return Y();
         
