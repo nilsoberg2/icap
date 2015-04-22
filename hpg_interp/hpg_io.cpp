@@ -254,14 +254,14 @@ namespace hpg
         {
             std::string header = saveHeader();
             // Print the header lines
-            fprintf(fh, "HPG %s\n", header.c_str());
-            fprintf(fh, "Downstream depth\tUpstream depth\tWater volume\n");
+            fprintf(fh, "#HPG %s\n", header.c_str());
+            fprintf(fh, "#Downstream depth\tUpstream depth\tWater volume\n");
         }
 
         // Print out the curves to the file
         for (unsigned int i = 0; i < impl->posFlows.size(); i++)
         {
-            fprintf(fh, "Q=%.2f\n", impl->posFlows[i]);
+            fprintf(fh, "Q=%.1f\n", impl->posFlows[i]);
 
             hpgvec vec = impl->posValues[i];
             for (unsigned int j = 0; j < vec.size(); j++)
@@ -275,10 +275,12 @@ namespace hpg
 					fprintf(fh, "%.6f\t%.6f\t%.6f\n", vec[j].x, vec[j].y, vec[j].v);
 				}
 			}
+
+            fprintf(fh, "\n\n");
 		}
         for (unsigned int i = 0; i < impl->advFlows.size(); i++)
         {
-            fprintf(fh, "Q=%.2f\n", impl->advFlows[i]);
+            fprintf(fh, "Q=%.1f\n", impl->advFlows[i]);
 
             hpgvec vec = impl->advValues[i];
             for (unsigned int j = 0; j < vec.size(); j++)
@@ -292,6 +294,8 @@ namespace hpg
 					fprintf(fh, "%.6f\t%.6f\t%.6f\n", vec[j].x, vec[j].y, vec[j].v);
 				}
 			}
+
+            fprintf(fh, "\n\n");
         }
 
         //
