@@ -15,8 +15,8 @@
 #include "../hpg_interp/hpg.hpp"
 #include "../xslib/circular.h"
 #include "../util/math.h"
-#define NORMCRIT_STATIC
-#include "../../../../hpg/oberg/cpp/normcrit/trunk/normcrit.h"
+//#define NORMCRIT_STATIC
+//#include "../../../../hpg/oberg/cpp/normcrit/trunk/normcrit.h"
 
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
