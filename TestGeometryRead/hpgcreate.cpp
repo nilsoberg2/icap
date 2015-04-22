@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <fstream>
 
 #include "../hpg_creation/hpg_creator.hpp"
 #include "../hpg_creation/profile.h"
@@ -216,10 +217,41 @@ namespace TestGeometryRead
             }
             Assert::AreEqual(round((14.040562010087399)*fac), round(yUp*fac), makeInfo(L"Failed adverse test: yUp should be 14.040562010087399 but is ", std::to_string(yUp)).c_str());
 
+  
+            ofstream output("zipiday.txt");
+            for (double q = 1500; q <= 1900; q += 10)
+            {
+                for (double yd = 12; yd <= 15; yd += 0.01)
+                {
+                    ComputeCombinedProfile(reach2, q, yd, nC, false, true, g, kn, maxDepthFrac, yUp, volume, hf);
+                    output << q << "\t" << yd << "\t" << yUp << endl;
+                }
+            }
+            output.close();
+
             
+
+            xs::Reach reach3;
+            reach3.setLength(1364.79);
+            reach3.setRoughness(0.015);
+            reach3.setDsInvert(0);
+            reach3.setUsInvert(3.41);
+            reach3.setXs(std::shared_ptr<xs::CrossSection>(new xs::Circular(13.75)));
             HpgCreator c;
-            std::shared_ptr<hpg::Hpg> hpgTemp = c.AutoCreateHpg(reach2);
+            std::shared_ptr<hpg::Hpg> hpgTemp = c.AutoCreateHpg(reach3);
             hpgTemp->SaveToFile("trialX.txt");
+            
+  
+            //ofstream output("zipiday.txt");
+            //for (double q = 1500; q <= 1900; q += 10)
+            //{
+            //    for (double yd = 12; yd <= 15; yd += 0.01)
+            //    {
+            //        ComputeCombinedProfile(reach2, q, yd, nC, false, true, g, kn, maxDepthFrac, yUp, volume, hf);
+            //        output << q << "\t" << yd << "\t" << yUp << endl;
+            //    }
+            //}
+            //output.close();
 		}
         
         void hpgInit()
