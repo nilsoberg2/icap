@@ -41,14 +41,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(IncludePath);%BOOST%;$(SolutionDir)\..\;$(SolutionDir)..\deps;$(SolutionDir)\..\deps</IncludePath>
+    <IncludePath>$(IncludePath);$(SolutionDir)\..\;$(SolutionDir)\..\deps;$(SolutionDir)\..\deps\boost</IncludePath>
     <ExecutablePath>$(ExecutablePath);$(SolutionDir)\..\deps</ExecutablePath>
-    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps</LibraryPath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps\boost\lib32-msvc-12.0</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps</LibraryPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);;%BOOST%;$(SolutionDir)\..\;$(SolutionDir)..\deps;$(SolutionDir)\..\deps</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps\boost\lib32-msvc-12.0</LibraryPath>
+    <IncludePath>$(IncludePath);$(SolutionDir)\..\;$(SolutionDir)\..\deps;$(SolutionDir)\..\deps\boost</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

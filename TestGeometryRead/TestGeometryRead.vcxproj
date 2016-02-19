@@ -45,12 +45,12 @@
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps</LibraryPath>
     <ExecutablePath>$(ExecutablePath);$(SolutionDir)\..\deps</ExecutablePath>
-    <IncludePath>$(IncludePath);$(SolutionDir)\..\deps</IncludePath>
+    <IncludePath>$(IncludePath);$(SolutionDir)\..\deps\boost</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps</LibraryPath>
-    <IncludePath>$(IncludePath);$(SolutionDir)\..\deps</IncludePath>
+    <IncludePath>$(IncludePath);$(SolutionDir)\..\deps\boost</IncludePath>
     <ExecutablePath>$(ExecutablePath);$(SolutionDir)\..\deps</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
