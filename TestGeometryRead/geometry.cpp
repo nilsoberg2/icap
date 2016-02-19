@@ -28,16 +28,15 @@ namespace TestGeometryRead
             return id1 == id2;
         }
 
-        Geometry* loadGeometry(bool& status)
+        std::shared_ptr<Geometry> loadGeometry(bool& status)
         {
             wchar_t cwd[MAX_PATH];
             _wgetcwd(cwd, MAX_PATH);
-
             std::wstring temp(cwd);
             fs::path filePath(temp.begin(), temp.end());
             filePath = filePath / ".." / "geometry_test.inp";
             
-            Geometry* g = new Geometry();
+            std::shared_ptr<Geometry> g = std::shared_ptr<Geometry>(new Geometry());
             status = g->loadFromFile(filePath.string(), geometry::GeometryFileFormat::FileFormatSwmm5);
             return g;
         }
@@ -46,7 +45,7 @@ namespace TestGeometryRead
 		{
             using namespace std;
             bool status;
-			Geometry* g = loadGeometry(status);
+			std::shared_ptr<Geometry> g = loadGeometry(status);
             Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
 
             const vector<string>& linkIds = g->getLinkIds();
@@ -68,10 +67,15 @@ namespace TestGeometryRead
 		{
             using namespace std;
             bool status;
-			Geometry* g = loadGeometry(status);
+			std::shared_ptr<Geometry> g = loadGeometry(status);
             Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
 
-            fs::create_directory("new_hpg");
+            wchar_t cwd[MAX_PATH];
+            _wgetcwd(cwd, MAX_PATH);
+            std::wstring temp(cwd);
+            fs::path dirPath(temp.begin(), temp.end());
+            dirPath = dirPath / ".." / "hpgs";
+            fs::create_directory(dirPath);
 
             const vector<string>& linkIds = g->getLinkIds();
             const vector<string>& nodeIds = g->getNodeIds();
@@ -97,7 +101,7 @@ namespace TestGeometryRead
 		{
             using namespace std;
             bool status;
-			Geometry* g = loadGeometry(status);
+			std::shared_ptr<Geometry> g = loadGeometry(status);
             Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
 
             std::shared_ptr<Node> node = g->getNode("outlet");
@@ -120,7 +124,7 @@ namespace TestGeometryRead
 		{
             using namespace std;
             bool status;
-			Geometry* g = loadGeometry(status);
+			std::shared_ptr<Geometry> g = loadGeometry(status);
             Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
 
             Assert::IsTrue(g->hasOption("hpg_path"));
@@ -140,7 +144,7 @@ namespace TestGeometryRead
 		{
             using namespace std;
             bool status;
-			Geometry* g = loadGeometry(status);
+			std::shared_ptr<Geometry> g = loadGeometry(status);
             Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
 
             DateTime start = g->getStartDateTime();

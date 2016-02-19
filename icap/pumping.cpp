@@ -18,7 +18,7 @@ Pumping::Pumping()
 }
 
 
-bool Pumping::initializeSettings(geometry::Geometry* geometry)
+bool Pumping::initializeSettings(std::shared_ptr<geometry::Geometry> geometry)
 {
     if (geometry->hasOption("pumping_ts"))
     {

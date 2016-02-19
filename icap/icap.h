@@ -31,7 +31,7 @@ private:
 
     // Object that manages the network topology.
     //std::unique_ptr<IcapGeometry> m_geometry;
-    IcapGeometry* m_geometry;
+    std::shared_ptr<IcapGeometry> m_geometry;
     //std::unique_ptr<Model> m_geometry;
 
     // This curve stores a pre-computed total system volume curve.

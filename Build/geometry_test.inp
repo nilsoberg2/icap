@@ -12,8 +12,7 @@
   REPORT_STEP             00:05:00
 
 [EXTENDED_OPTIONS]
-  HPG_PATH                "lawrence hpgs"
-  DUMMY                   'lawrence hpgs'
+  HPG_PATH                "hpgs"
   PUMPING_RATE            5
   DAYS_BEFORE_PUMPING     0
   PUMPING_THRESHOLD       5

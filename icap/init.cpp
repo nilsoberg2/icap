@@ -32,7 +32,7 @@ ICAP::ICAP()
 ICAP::~ICAP()
 {
     cleanup();
-    delete m_geometry;
+    //delete m_geometry;
 }
 
 
@@ -268,10 +268,11 @@ var_type ICAP::GetNodeFlow(const id_type& nodeIdx)
 // Load the input file and 
 bool ICAP::loadInputFile(const std::string& inputFile)
 {
-    m_geometry = new IcapGeometry();
+    m_geometry = std::shared_ptr<IcapGeometry>(new IcapGeometry());
     if (!m_geometry->loadFromFile(inputFile, geometry::FileFormatSwmm5))
     {
         BOOST_LOG_SEV(m_log, loglevel::error) << m_geometry->getErrorMessage();
+        setErrorMessage("Unable to load geometry: " + m_geometry->getErrorMessage());
         return false;
     }
 
@@ -291,6 +292,7 @@ bool ICAP::loadHpgs(const std::string& hpgPath)
     if (! m_hpgList.loadHpgs(hpgPath, m_geometry->getLinkList()))
     {   
         BOOST_LOG_SEV(m_log, loglevel::error) << "HPG's failed to load: " << m_hpgList.getErrorMessage();
+        setErrorMessage("HPG's failed to load: " + m_hpgList.getErrorMessage());
         return false;
     }
 

@@ -33,7 +33,8 @@ namespace geometry
 
 
     class Geometry : public CurveFactory, public NodeFactory, public TimeseriesFactory,
-        public NodeList_helper, public LinkList_helper, public Parseable, public Options
+        public NodeList_helper, public LinkList_helper, public Parseable, public Options,
+        public std::enable_shared_from_this<Geometry>
     {
     private:
         class Impl;
@@ -108,6 +109,9 @@ namespace geometry
         typedef std::map<id_type, std::shared_ptr<Link>>::iterator LinkIter;
         LinkIter beginLink();
         LinkIter endLink();
+
+    private:
+        std::shared_ptr<Link> Geometry::getOrCreateLink(std::string linkId);
     };
 
 }

@@ -35,7 +35,7 @@ namespace hpg
         //
         // Parse up the header line and obtain attributes.
         //
-        this->loadHeader(fh);
+        if (!this->loadHeader(fh)) return false;
 
         // If there isn't anything else to read, this file is empty and
         // we return true (true because the HPG is valid, it's just empty).
@@ -148,7 +148,7 @@ namespace hpg
         svec parts;
         wiess_split(line.c_str(), " ", parts, true);
 
-        if (parts.at(0) != "HPG")
+        if (parts.at(0) != "HPG" && parts.at(0) != "#HPG")
         {
             impl->errorCode = err::InvalidFileFormat;
             fh.close();

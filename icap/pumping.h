@@ -30,7 +30,7 @@ private:
 public:
     Pumping();
 
-    bool initializeSettings(geometry::Geometry* geometry);
+    bool initializeSettings(std::shared_ptr<geometry::Geometry> geometry);
 
     var_type computePumpedVolume(var_type flowAtRes, double routeStep, DateTime currentDate);
 

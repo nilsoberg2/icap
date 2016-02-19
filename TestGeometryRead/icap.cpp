@@ -33,9 +33,9 @@ namespace TestGeometryRead
             //string inputFile = "..\\test\\geometry_test.inp";
             //string reportFile = "..\\test\\report.txt";
             //string outputFile = "..\\test\\output.out";
-            string inputFile = "..\\..\\icap-mex\\lawrence_july.inp";
-            string reportFile = "..\\..\\icap-mex\\report.txt";
-            string outputFile = "..\\..\\icap-mex\\output.out";
+            string inputFile = "..\\geometry_test.inp";
+            string reportFile = "..\\test\\report.txt";
+            string outputFile = "..\\test\\output.out";
             //This is a test.
             
             boost::log::add_file_log("testing.log");

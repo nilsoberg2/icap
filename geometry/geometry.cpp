@@ -29,7 +29,8 @@ namespace geometry
     class Geometry::Impl
     {
     public:
-        std::shared_ptr<Geometry> parent;
+        //std::shared_ptr<Geometry> parent;
+        Geometry* parent;
 
         std::map<std::string, FileSection> sectionNameMap;
         std::map<id_type, std::shared_ptr<Link>> linkMap; // Need to be deleted in dtor
@@ -57,7 +58,7 @@ namespace geometry
         FileSection parseSectionLine(std::string line);
         bool parseDataLine(FileSection curSection, std::string line);
 
-        std::shared_ptr<Link> getOrCreateLink(std::string name);
+        //std::shared_ptr<Link> getOrCreateLink(std::string name);
 
         // Do not delete Inflow objects, that is taken care of by Node.
         std::shared_ptr<Inflow> createInflow();
@@ -196,7 +197,8 @@ namespace geometry
         : impl(new Impl())
     {
         populateSectionNameMap(impl->sectionNameMap);
-        impl->parent = std::shared_ptr<Geometry>(this);
+        //impl->parent = shared_from_this(); // std::shared_ptr<Geometry>(this);
+        impl->parent = this;
     }
 
     //template<typename T, typename T2>
@@ -464,7 +466,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Conduit)
         {
-            std::shared_ptr<Link> link = getOrCreateLink(parts[0]);
+            std::shared_ptr<Link> link = parent->getOrCreateLink(parts[0]);
             if (!link->parseLine(parts))
             {
                 errorMsg = "Unable to parse link '" + parts[0] + "': " + link->getErrorMessage();
@@ -473,7 +475,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Xsection)
         {
-            std::shared_ptr<Link> link = getOrCreateLink(parts[0]);
+            std::shared_ptr<Link> link = parent->getOrCreateLink(parts[0]);
             if (!link->parseXsection(parts))
             {
                 errorMsg = "Unable to parse link cross section '" + parts[0] + "': " + link->getErrorMessage();
@@ -535,7 +537,7 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Vertex)
         {
-            std::shared_ptr<Link> link = getOrCreateLink(parts[0]);
+            std::shared_ptr<Link> link = parent->getOrCreateLink(parts[0]);
             link->parseVertexLine(parts);
         }
 
@@ -614,7 +616,8 @@ namespace geometry
             std::shared_ptr<Node> theNode = NULL;
             if (impl->objectTypeMap[nodeId] == FileSection::File_Storage)
             {
-                theNode = std::shared_ptr<Node>(new StorageUnit(impl->nodeMap.size(), nodeId, std::shared_ptr<CurveFactory>(this)));
+                //theNode = std::shared_ptr<Node>(new StorageUnit(impl->nodeMap.size(), nodeId, std::shared_ptr<CurveFactory>(this)));
+                theNode = std::shared_ptr<Node>(new StorageUnit(impl->nodeMap.size(), nodeId, shared_from_this()));
             }
             else
             {
@@ -631,26 +634,27 @@ namespace geometry
         }
     }
 
-    std::shared_ptr<Link> Geometry::Impl::getOrCreateLink(std::string linkId)
+    std::shared_ptr<Link> Geometry::getOrCreateLink(std::string linkId)
     {
         using namespace std;
 
-        if (this->linkIdMap.count(linkId) > 0)
+        if (impl->linkIdMap.count(linkId) > 0)
         {
-            return this->linkMap[this->linkIdMap[linkId]];
+            return impl->linkMap[impl->linkIdMap[linkId]];
         }
         else
         {
             std::shared_ptr<Link> theLink = NULL;
-            if (this->objectTypeMap[linkId] == FileSection::File_Conduit)
+            if (impl->objectTypeMap[linkId] == FileSection::File_Conduit)
             {
-                theLink = std::shared_ptr<Link>(new Link(this->linkMap.size(), linkId, dynamic_pointer_cast<NodeFactory>(this->parent)));
+                /*theLink = std::shared_ptr<Link>(new Link(impl->linkMap.size(), linkId, dynamic_pointer_cast<NodeFactory>(this)));*/
+                theLink = std::shared_ptr<Link>(new Link(impl->linkMap.size(), linkId, shared_from_this()));
             }
 
             if (theLink != NULL)
             {
-                this->linkIdMap.insert(make_pair(linkId, this->linkMap.size()));
-                this->linkMap.insert(make_pair(this->linkMap.size(), theLink));
+                impl->linkIdMap.insert(make_pair(linkId, impl->linkMap.size()));
+                impl->linkMap.insert(make_pair(impl->linkMap.size(), theLink));
             }
 
             return theLink;
