@@ -95,20 +95,20 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseDll|Win32'">icap</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName);%BOOST%</LibraryPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);%BOOST%</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\..\deps</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
-    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName);%BOOST%</LibraryPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);%BOOST%</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\..\deps</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName);%BOOST%</LibraryPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);%BOOST%</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\..\deps</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDll|Win32'">
-    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName);%BOOST%</LibraryPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);%BOOST%</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)\..\deps;$(SolutionDir)\$(ConfigurationName)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\..\deps</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
