@@ -29,7 +29,7 @@ namespace hpg
 				for (unsigned int j = 0; j < numValues; j++)
 				{
 					SPL_ADD_TEMP(spline, vec[j].x, vec[j].y);
-                    if (j == 0 || (j > 0 && fabs(lastY - vec[j].y) > 0.0001))
+                    if (j == 0 || (j > 0 && (vec[j].y - lastY) > 0.0001))
                     {
                         SPL_ADD_TEMP(usSpline, vec[j].y, vec[j].x);
                     }

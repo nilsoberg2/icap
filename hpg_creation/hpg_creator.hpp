@@ -57,7 +57,7 @@ public:
     void findFlowIncrements(const xs::Reach& reach, bool reverseSlope, double minDepth, double maxDepth, std::deque<double> &flows);
     void findFlowIncrementsByFlow(const xs::Reach& reach, bool reverseSlope, double minFlow, double maxFlow, std::deque<double> &flows);
 
-private:
+public:
     //HPG * AutoCreateHPG2(double diameter, double length, double roughness, double slope, double dsInvert, long nodeID = -1, double dsStation = hpg::error::bad_value);
 
     //double FindCriticalFlow(const xs::Reach& reach, double depth);

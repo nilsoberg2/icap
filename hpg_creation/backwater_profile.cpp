@@ -74,6 +74,8 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
 
     // isSteep = true if the channel is steep-slope and the slope is positive.
     bool isSteep = (yNvalid && yCvalid && yCritical > yNormal && !reverseSlope);
+    //TODO: fix this in the future; right now we assume mild-slope computations
+    isSteep = false;
 
     // Set the min/max according to the channel characteristics (steep/mild).
     double yMin, yMax;

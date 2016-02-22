@@ -92,7 +92,7 @@ namespace TestGeometryRead
 
                 HpgCreator hpgC;
                 auto hpg = hpgC.AutoCreateHpg(reach);
-                string filePath = (fs::path("new_hpg") / (id + ".txt")).string();
+                string filePath = (dirPath / (id + ".txt")).string();
                 hpg->SaveToFile(filePath);
             }
 		}

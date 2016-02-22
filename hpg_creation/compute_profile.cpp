@@ -46,12 +46,14 @@ void writeArray(FILE* fh, std::unique_ptr<double[]> a, int aSize)
 }
 
 
+#define USE_MIER_METHOD
+
+
 
 // This code is based on the following code:
 //      JM Mier, October 2010, UIUC
 //      Based on previous version by JM Mier, November 2007, UIUC
 //      JM Mier, UIUC, September 2013 - Modified to include English units
-
 int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, bool freeOnly, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach);
 
 int ComputeFreeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach)
@@ -63,6 +65,191 @@ int ComputeCombinedProfile(const xs::Reach& reach, double flow, double yInit, in
 {
     return ComputeProfile(reach, flow, yInit, nC, isSteep, reverseSlope, false, g, kn, maxDepthFrac, yUp, volume, hf_reach);
 }
+
+
+#ifndef USE_MIER_METHOD
+
+
+int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, bool freeOnly, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach)
+{
+    int ErrorCode = 0;
+    hf_reach = 0;
+    volume = 0;
+    profile_error_code = 0;
+
+    // Shortcuts for reach properties.
+    double slope = reach.getSlope() * (reverseSlope ? -1. : 1.);
+    double length = reach.getLength();
+    double maxDepth = reach.getMaxDepth() * maxDepthFrac;
+
+    solver_params params;
+    params.xs = reach.getXs();
+    params.curIter = 0;
+    params.maxIter = 50;
+    params.L = length;
+    params.N = reach.getRoughness();
+    params.S = slope;
+    params.Q = flow;
+    params.kn = kn;
+    params.g = g;
+    params.isSteep = (isSteep ? -1 : 1); // this is a factor so we can use the same code for computing steep/mild
+    params.first_area = -1.0;
+    params.dx = length / nC;
+    if (isSteep)
+        params.dx = -params.dx; // make the x-increment negative if it's steep so we can use the same code for computing steep/mild
+
+    profile_params x1;
+    double volumeArea = 0.0, lastArea = 0.0;
+    double curX = 0.0;
+    x1.Z = 0.0;
+    if (isSteep)
+        curX = length; // start in the x-direction from the top of the reach if the reach is steep
+    if (isSteep || slope < 0.0)
+        x1.Z = length*fabs(slope); // start in the z-direction from the top of the reach if the reach is steep or adverse
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Create profile variables
+    using namespace std;
+    double* X_ = new double[nC + 1];
+    double* Y_ = new double[nC + 1];
+    double* Z_ = new double[nC + 1];
+    double* V_ = new double[nC + 1];
+    double* Sf_ = new double[nC + 1];
+    double* PoG_ = new double[nC + 1];
+    double* H_ = new double[nC + 1];
+    bool* e2_ = new bool[nC + 1];
+    bool* p2_ = new bool[nC + 1];
+
+    std::fill(X_, X_ + nC + 1, 0.);
+    std::fill(Y_, Y_ + nC + 1, 0.);
+    std::fill(Z_, Z_ + nC + 1, 0.);
+    std::fill(V_, V_ + nC + 1, 0.);
+    std::fill(Sf_, Sf_ + nC + 1, 0.);
+    std::fill(PoG_, PoG_ + nC + 1, 0.);
+    std::fill(H_, H_ + nC + 1, 0.);
+    std::fill(e2_, e2_ + nC + 1, false);
+    std::fill(p2_, p2_ + nC + 1, false);
+
+    unique_ptr<double[]> X(X_);
+    unique_ptr<double[]> Y(Y_);
+    unique_ptr<double[]> Z(Z_);
+    unique_ptr<double[]> V(V_);
+    unique_ptr<double[]> Sf(Sf_);
+    unique_ptr<double[]> PoG(PoG_);
+    unique_ptr<double[]> H(H_);
+    unique_ptr<bool[]> e2(e2_);
+    unique_ptr<bool[]> p2(p2_);
+
+    params.E_last = params.E;
+    params.Sf_last = params.Sf;
+
+    hf_reach = 0;
+
+    // We need to pre-cast the pointer so we can make things cleaner later.
+    solver_params* params_ptr = (solver_params*)&params;
+
+    double yComp = yInit;
+    double yMax = diameter * UnsteadyDepth;
+    double fn, dfn;
+
+    // This loop just saves the result of the last step.  We could instead
+    // save all of the steps, effectively giving us the water surface profile.
+    // However, we elect not to do that.
+    int i = 0;
+    int iterCount = 0;
+    for (i = 0; i < numComputations; i++)
+    {
+        curX += params.dx;
+        curZ += slope * params.dx;
+        params.curZ = curZ;
+
+        ErrorCode = 0;
+        profile_error_code = 0;
+        fn = 1.0;
+        double yComp_last = yComp;
+        iterCount = 0;
+
+        // This is the actual solver for the given upstream point.  We need
+        // to iterate until the solution converges or we've reached the max
+        // number of iterations (divergence).
+        while (fabs(fn) > ConvergenceFactor && iterCount < params.maxIter)
+        {
+            // These functions contain the equations and math for the solution.
+            fn = profile_func(yComp, params_ptr);
+            dfn = profile_func_deriv(yComp, params_ptr);
+
+            yComp = yComp - fn/dfn;
+
+            // If the solution went past the max depth, then stop.
+            if (yComp > yMax)
+            {
+                ErrorCode = hpg::error::at_max_depth;
+                break;
+            }
+            // If the solution went to zero or negative depth, then stop.
+            else if (yComp < ConvergenceFactor || profile_error_code == ZERO_AREA)
+            {
+                ErrorCode = hpg::error::at_min_depth;
+                break;
+            }
+            // If there was another error (imaginary solution) then stop.
+            else if (profile_error_code)
+            {
+                break;
+            }
+
+            iterCount++;
+        }
+
+        double sfAvg = (params.Sf + params.Sf_last) * 0.5;
+        hf_reach += sfAvg * fabs(params.dx);
+
+        // Save the results of this step for the next step.
+        params.E_last = params.E;
+        params.Sf_last = params.Sf;
+        lastArea = params.A;
+        volumeArea += params.A;
+
+        if (profile_error_code)
+        {
+            ErrorCode = profile_error_code;
+            break;
+        }
+        else if (ErrorCode)
+        {
+            break;
+        }
+        else if (params.curIter >= params.maxIter)
+        {
+            ErrorCode = hpg::error::divergence;
+            break;
+        }
+    }
+
+    // Compute the volume (the sum of the areas of the cross section
+    // at each step minus the average of the first and last cross
+    // section areas times the x-step).
+    volume = (volumeArea - (lastArea + params.first_area) / 2.0) * fabs(params.dx);
+
+    // If we terminated early, then return an error.
+    if (i < numComputations && ErrorCode == 0)
+    {
+        return hpg::error::at_max_depth;
+    }
+
+    // If there was an error, then return it.
+    else if (ErrorCode != 0)
+        return ErrorCode;
+
+    // Otherwise we successfully solved for a point.
+    else
+    {
+        return 0;
+    }
+}
+
+
+#else
 
 int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bool isSteep, bool reverseSlope, bool freeOnly, double g, double kn, double maxDepthFrac, double& yUp, double& volume, double& hf_reach)
 {
@@ -440,29 +627,29 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
     if (((y2 - maxDepth >= -0.1) && (yInit - maxDepth >= -0.1)) || volume > fullVolume)
         volume = fullVolume;
 
-    //FILE* fh = fopen("profile.txt", "w");
-    //for (int i = 0; i < nC+1; i++)
-    //{
-    //    if (i++ > 0)
-    //        fprintf(fh, "\t");
-    //    fprintf(fh, "%f", X[i]);
-    //}
-    //fprintf(fh, "\n");
-    //for (int i = 0; i < nC+1; i++)
-    //{
-    //    if (i++ > 0)
-    //        fprintf(fh, "\t");
-    //    fprintf(fh, "%f", Y[i]);
-    //}
-    //fprintf(fh, "\n");
-    //for (int i = 0; i < nC+1; i++)
-    //{
-    //    if (i++ > 0)
-    //        fprintf(fh, "\t");
-    //    fprintf(fh, "%f", Z[i]);
-    //}
-    //fprintf(fh, "\n");
-    //fclose(fh);
+    FILE* fh = fopen("profile.txt", "w");
+    for (int i = 0; i < nC+1; i++)
+    {
+        if (i > 0)
+            fprintf(fh, "\t");
+        fprintf(fh, "%f", X[i]);
+    }
+    fprintf(fh, "\n");
+    for (int i = 0; i < nC+1; i++)
+    {
+        if (i > 0)
+            fprintf(fh, "\t");
+        fprintf(fh, "%f", Y[i]);
+    }
+    fprintf(fh, "\n");
+    for (int i = 0; i < nC+1; i++)
+    {
+        if (i > 0)
+            fprintf(fh, "\t");
+        fprintf(fh, "%f", Z[i]);
+    }
+    fprintf(fh, "\n");
+    fclose(fh);
 
     // If we terminated early, then return an error.
     if (i < nC)
@@ -483,6 +670,8 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
         return 0;
     }
 }
+
+#endif
 
 
 // This function computes the variables (theta, wetted perimeter, etc.)

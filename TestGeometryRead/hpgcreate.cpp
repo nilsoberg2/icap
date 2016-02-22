@@ -40,17 +40,17 @@ namespace TestGeometryRead
             return id1 == id2;
         }
 
-        xs::Reach makeReach(double usInvert, double length)
+        xs::Reach makeReach(double usInvert, double length, double diameter = 10)
         {
             xs::Reach reach;
             reach.setLength(length);
             reach.setRoughness(0.015);
             reach.setDsInvert(0);
             reach.setUsInvert(usInvert);
-            reach.setXs(std::shared_ptr<xs::CrossSection>(new xs::Circular(10)));
+            reach.setXs(std::shared_ptr<xs::CrossSection>(new xs::Circular(diameter)));
             return reach;
         }
-        
+
         //void testReach(xs::Reach& reach, double* Qlist, double* targetNormalList, double* targetCriticalList, int nP);
         //void testReach1();
         //void testReach2();
@@ -123,6 +123,53 @@ namespace TestGeometryRead
 		}
 
 #define round(x) floor(x+0.5)
+#define DBOUT( s )            \
+        {                             \
+   std::ostringstream os_;    \
+   os_ << s;                   \
+   OutputDebugStringA( os_.str().c_str() );  \
+        }
+
+        TEST_METHOD(ComputeCurveTest)
+        {
+            using namespace std;
+            bool status;
+
+            double dsInv = 373.29;
+            xs::Reach reach = makeReach(376.73, 664.318, 13.75);
+            reach.setDsInvert(dsInv);
+
+
+            double yN;
+            int error = ComputeNormalDepth(reach, 6.4, g, kn, yN);
+            //Assert::AreEqual(0.521109, yN);
+            Assert::IsTrue(fabs(yN - 0.521109) < 1e-6, L"Bad normal");
+
+            int nC = 202;
+            double maxDepthFrac = 1;
+            double yUp, volume, hf;
+            double yInit = 0.532724;
+            if (ComputeCombinedProfile(reach, 6.4, yInit, nC, false, false, g, kn, maxDepthFrac, yUp, volume, hf))
+            {
+                Assert::Fail(L"Failed to converge to solution for q=6.4 on steep reach");
+            }
+
+            //Assert::AreEqual(yN, yUp);
+            Assert::IsTrue(fabs(yUp - 0.521109) < 1e-5);
+
+            //double yUp2;
+            //if (ComputeCombinedProfile(reach, 6.4, yInit + 0.5, nC, false, false, g, kn, maxDepthFrac, yUp2, volume, hf))
+            //{
+            //    Assert::Fail(L"Failed to converge to solution for q=6.4 on steep reach");
+            //}
+
+            //hpg::hpgvec curve;
+            //double yn, yc;
+            //HpgCreator cc;
+            //bool result = cc.computeValidHpgCurve(reach, 6.4, 1000, false, yn, yc, curve);
+
+            //Assert::AreEqual(373.812913, curve.at(0).x);
+        }
 
 		TEST_METHOD(ComputeProfileTest)
 		{
