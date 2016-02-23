@@ -1,0 +1,24 @@
+#       Build/Debug/
+#       Build/ICAP-2012.opensdf
+#       Build/ICAP-2012.sdf
+#       Build/ICAP-2012.v12.suo
+#       Build/IcapExe/Debug/
+#       TestGeometryRead/Debug/
+#       geometry/VC2012/Debug/
+#       hpg_creation/VC2012/Debug/
+#       hpg_interp/VC2012/Debug/
+#       icap/VC2012/Debug/
+#       model/VC2012/Debug/
+#       time/VC2012/Debug/
+#       util/VC2012/Debug/
+#       xslib/VC2012/Debug/
+
+*.sdf
+*.suo
+*.opensdf
+*Debug/
+*Release/
+deps/boost
+Build/hpgs
+*.user
+Build/ipch

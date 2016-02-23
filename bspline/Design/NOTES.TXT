@@ -1,0 +1,159 @@
+
+To find "optimum" number of nodes, we want to maximize number
+of data points per node interval (which means maximizing the 
+interval size), while maximizing the number of nodes per 
+wavelength, which means minimizing the interval size.  
+
+Calculation of P should only loop over the basis functions
+nearby each point X[J] which will have a contribution to the matrix
+entry, then take advantage of symmetry to avoid redundant
+calculations.
+
+No use in keeping track of order of the X values, since we are doing 
+all calculations along X first and mapping from X to the nearby nodes,
+rather than have to map from a node to the nearby X values.
+
+We should be able to use the "recursive" solution from the Ooyama paper by
+first performing Gaussian elimination to conver the P+Q matrix to an upper
+diagonal matrix.  Pivoting should be unnecessary, since the diagonal should
+have the larger values and always be non-zero.  The diagonalized matrix can
+be used to solve against each B vector using the recursive method.  In
+fact, since the E vectors do not depend upon the B vector, only the F
+vector, we can compute E ahead of time also.  Problem: need B vector when
+performing the gaussian elimination, so use LU factoring limited to the
+diagonal bands.
+
+Only the diagonals of P+Q should be stored, rather than
+the full square matrix: hence the BandedMatrix template class.
+
+The BSplineSolver can either keep a reference to M and use it back-solve
+for a given b, else it can forget M after it has generated the e and f
+vectors (keeping the M elements needed for f in f, possibly as their
+inverse).  Then a Solver would not need any further reference to M and can
+still solve for given b vectors, but ultimately it requires more
+multiplications than using M directly.  (Access to M may be slow enough to
+warrant using the private vectors instead.)
+
+The problem with solver keeping a reference to Q, when it is copied in the
+construction of a BSpline subclass, it will still refer to the Q in the
+BSplineBase class, rather than the new copy of BSplineBaseP in the subclass
+object.  At least using a default constructor in baseP set the reference to
+the new Q without calling upper().
+
+Deriving the least squares between the actual and approximated u(x) results
+in a set of linear equations for A independent of DX.  This makes sense,
+since we could have divided both sides of the (P+Q)a = b equation by DX
+without affecting the solution.  Oops, we still need to divide Q, or at
+least not include DX in the elements of Q.  Oops again, it seems to work
+without dividing Q, though I don't know what the implications are for the
+stability of the linear system.  Mathematically it makes sense since the
+least squares is just the addition of the derivative constraint, which can
+be minimized (i.e., set to zero) separately.
+
+We're getting 524568 calls to Basis with parameters 2 15 < wdir.  Refining
+addP() more closely brings it down to 132075.  Much better.  Looping over X
+to sum B elements results in 19024 calls.  Even better.  Refining range of
+Basis calls in evaluate gets us to 17781.  That looks like the smallest
+I'll get it.  Besides the fortran call to invmtx, the i/o is dominating the
+process time.
+
+It looks like the fortran code calculates alpha as 
+
+	Z2 = YSDCPI**K, where YSDCPI = YDCWL/(PI2*DYN)
+
+In other words, if alpha is Z2, alpha includes deltax.
+
+FORTRAN code calculates the QNRBG array first.  It might be useful for
+BSpline to do the same, with each object having its own copy of the beta
+parameters and Q quadratures in place, depending upon the choice for
+boundary condition types, since they need to be computed for types other
+than 0, 1, and 2 which is all that's supported now.
+
+It would be interesting to feed the data before and after smoothing through
+a fourier transform to see the effects of the derivative constraint.
+
+Remove the index vector for the LU factor() and solve() routines and from
+the bspline base.
+ --> Done.
+
+Add a BSpline constructor which takes the same arguments as a Base,
+constructs the base, then performs the usual spline construction.  Avoids
+copying the base, and it can still be used to apply() to new curves.
+ --> Done.
+
+How would we apply new curves with perhaps missing y values at some of the
+nodes?  We could always recalculate the base and return a spline with a
+different base, if necessary.  Else we could interpolate in simple cases?
+Just set it to zero?  Could we break up the curve into segments, and smooth
+them separately, perhaps with boundary conditions at the endpoints to
+account for the missing value?
+
+To be rigorous, I need to be able to prove that I only need to calculate
+the LU factorization on the diagonal bands, and that pivoting is
+unnecessary because the diagonal will always dominate.  Ooyama casually
+mentions this in the paper I think.
+
+Might be nice to include the banded solvers in BandedMatrix instead of a
+separate header file.  Also, try subclassing vector<> to add an operator()
+so that the solver routines can be re-written without the [] and -1
+offsets.
+
+Try doc++ now that bspline is a template.
+
+Should the template parameter be just for the types which are smoothed and
+returned?  Do the actual matrix calculations always as doubles?  Or take
+two template parameters, one for the data domain and one for the
+computation domain?  Can the second default to the same type as the first?
+Should the node coefficients be the element type or the computation type?
+
+Find some way to use gnu make to import dependencies and rules rather than
+performing sub-makes or depends?  Perform the hierarchy without actually
+running recursive makes?  I.e. every directory or component has a target as
+its name and a rule for making that target.  If the rules all use some
+directory variable to find their directory and include that variable in all
+of their rules, then the rules can be directory independent and executed
+anywhere.
+
+To include the implementation, include .cxx, which defines the DLL symbol
+to nothing if not yet defined before including bspline.h.  To include as a
+dll, include the .h, which defaults to defining import and does not include
+implementation.  To build the dll, define DLL symbol to export before
+including .h.
+
+Add rules to lib unix Makefile to build a bspline library which includes
+the float and double implementation modules.
+
+
+[P + yQ] A = B
+
+A is the column matrix of the coefficients Am, m = 0 to M.
+
+According to Ooyama, the elements of the (M+1)x(M+1) square matrix Q are
+the derivative constraints applied to the continuous function u(x) which we
+are trying to determine.  Thus we can use the continuous representation to
+evaluate each the non-zero integrals, which occur only for the elements
+where Qij where |i-j| < 4.  Along the diagonal of Q, for i,j >= 2 and
+i,j <= M-2, we can copy a symmetric 4x4 sub-matrix along the diagonal
+(i,i) for 2 <= i <= M-2.
+
+	[  R0   R1   R2   R3 ]
+	[  R1   R0   R1   R2 ]
+	[  R2   R1   R0   R1 ]
+        [  R3   R2   R1   R0 ]
+
+Rn is the product of the Kth derivative of Psi-sub-i and Psi-sub-j,
+where n = |i-j|.  Since for m = 2 to M-2 Psi equals Phi(x-xm/deltax),
+
+	     
+			   (k)       (k)
+	Rn = { integral [Phi  (u)][Phi  (u+n)] du over infinity } * deltax
+	     		    
+
+For example, for the 1st derivative, R0 = { 1.5 } * deltax.
+
+So we need to calculate Fn, 0 <= n <= 3, for the integral portion of Rn,
+which can be stored as a constant array.  From that we can generate the
+elements of R and Q by multiplying by the particular deltax of the dataset
+being smoothed.
+
+

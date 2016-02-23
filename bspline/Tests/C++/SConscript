@@ -1,0 +1,32 @@
+# -*- python -*-
+import os
+import sys
+
+tools = ['default',]
+env = Environment(tools = tools)
+# provide two paths for CPP and the linker, since
+# sometimes BSpline will be the top level scons
+# directory, and other times BSpline will live 
+# one directory down within another project.
+
+if sys.platform == 'win32':
+    env.Append(CCFLAGS=['/EHsc','/Zi'])
+else:
+    env.Append(CCFLAGS=['-g',])
+env.AppendUnique(CPPPATH=['#/',])
+env.AppendUnique(CPPPATH=['#/BSpline',])
+
+# some linkers don't like missing library search paths:
+env.AppendUnique(LIBPATH=['#/BSpline', ])
+if os.path.exists('#/BSpline/BSpline'):
+   env.AppendUnique(LIBPATH=['#/BSpline/BSpline', ])
+env.AppendUnique(LIBS=['bspline',])
+
+sources = Split('''
+bspline.cpp
+options.cpp
+''')
+
+bspline = env.Program('bspline', sources)
+
+env.Default(bspline)
