@@ -61,7 +61,42 @@ namespace TestGeometryRead
             Assert::IsTrue(vectorEqual<string>(linkIds, actualLinkIds), L"Link list is not equal");
             Assert::IsTrue(vectorEqual<string>(nodeIds, actualNodeIds), L"Node list is not equal");
             
-		}
+        }
+
+        TEST_METHOD(Create40_1HpgTest)
+        {
+            using namespace std;
+            bool status;
+            std::shared_ptr<Geometry> g = loadGeometry(status);
+            Assert::IsTrue(status, makeInfo(L"Failed to load geometry file: ", g->getErrorMessage()).c_str());
+
+            wchar_t cwd[MAX_PATH];
+            _wgetcwd(cwd, MAX_PATH);
+            std::wstring temp(cwd);
+            fs::path dirPath(temp.begin(), temp.end());
+            dirPath = dirPath / ".." / "hpgs";
+            fs::create_directory(dirPath);
+
+            const vector<string>& linkIds = g->getLinkIds();
+            const vector<string>& nodeIds = g->getNodeIds();
+
+            string id = "40-1";
+            //for (auto id : linkIds)
+            //{
+                auto link = g->getLink(id);
+                xs::Reach reach;
+                reach.setDsInvert(link->getDownstreamInvert());
+                reach.setUsInvert(link->getUpstreamInvert());
+                reach.setLength(link->getLength());
+                reach.setRoughness(link->getRoughness());
+                reach.setXs(link->getXs());
+
+                HpgCreator hpgC;
+                auto hpg = hpgC.AutoCreateHpg(reach);
+                string filePath = (dirPath / (id + ".txt")).string();
+                hpg->SaveToFile(filePath);
+            //}
+        }
 
 		TEST_METHOD(CreateHpgTest)
 		{

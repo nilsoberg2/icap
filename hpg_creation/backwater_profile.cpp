@@ -112,7 +112,7 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
     else
     {
         // Minimum of 
-        np = std::min(this->numPoints, std::max(1, (int)std::floor((yMax - yMin) / (0.05 * maxDepth) + 0.5)));
+        np = std::min(this->numPoints, std::max(1, (int)std::floor((yMax - yMin) / (0.03 * maxDepth) + 0.5)));
     }
 
     // Compute the depth increment in vertical direction.

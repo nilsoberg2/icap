@@ -36,14 +36,14 @@ int ComputeNormalDepth(const xs::Reach& reach, double Q, double g, double kn, do
         double P = xs->computeWettedPerimiter(y);
         double T = xs->computeTopWidth(y);
         double dPdy = xs->computeDpDy(y);
-        double Rp = std::pow(A / P, TWOTHIRDS);
+        double Rp = A / P; // std::pow(A / P, TWOTHIRDS);
 
-        double F = A * Rp - Q * (n/kn) / Ss;
-        double dF = FIVETHIRDS * Rp * T - TWOTHIRDS * std::pow(A / P, FIVETHIRDS) * dPdy;
+        double F = A * std::pow(Rp, TWOTHIRDS) - Q * (n/kn) / Ss;
+        double dF = -TWOTHIRDS * std::pow(A / P, FIVETHIRDS) * dPdy + FIVETHIRDS * std::pow(Rp, TWOTHIRDS) * T;
 
         double yp = y - F / dF;
 
-        if (std::abs(yp - y) < 1e-6)
+        if (std::abs(yp - y) < 1e-4)
         {
             converged = true;
             yN = std::max(std::min(yp, 0.9999 * d), 0.0001 * d);

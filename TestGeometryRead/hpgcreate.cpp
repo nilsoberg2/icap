@@ -61,9 +61,18 @@ namespace TestGeometryRead
             using namespace std;
             bool status;
 
-            testReach1();
-            testReach2();
-            testReach3();
+            double realYn = 0.522926705597983;
+
+            double q = 6.4479441556280959;
+            xs::Reach reach = makeReach(3.44, 664.318, 13.75);
+            double yN;
+            int error = ComputeNormalDepth(reach, q, g, kn, yN);
+            //Assert::IsTrue(isZero(yN - realYn, 1e20), L"Failed normal depth");
+            Assert::AreEqual(yN, realYn, L"Failed normal depth");
+
+            //testReach1();
+            //testReach2();
+            //testReach3();
         }
 
         void testReach1()
@@ -135,27 +144,49 @@ namespace TestGeometryRead
             using namespace std;
             bool status;
 
+            double Q = 2629.2;
+
             double dsInv = 373.29;
             xs::Reach reach = makeReach(376.73, 664.318, 13.75);
             reach.setDsInvert(dsInv);
 
-
             double yN;
-            int error = ComputeNormalDepth(reach, 6.4, g, kn, yN);
+            int error = ComputeNormalDepth(reach, Q, g, kn, yN);
             //Assert::AreEqual(0.521109, yN);
-            Assert::IsTrue(fabs(yN - 0.521109) < 1e-6, L"Bad normal");
+            //Assert::IsTrue(fabs(yN - 0.522926705597983) < 1e-10, L"Bad normal");
 
-            int nC = 202;
+            int nC = 1000;
             double maxDepthFrac = 1;
             double yUp, volume, hf;
-            double yInit = 0.532724;
-            if (ComputeCombinedProfile(reach, 6.4, yInit, nC, false, false, g, kn, maxDepthFrac, yUp, volume, hf))
+            double yInit = 11.338342;
+            if (ComputeCombinedProfile(reach, Q, yInit, nC, false, false, g, kn, maxDepthFrac, yUp, volume, hf))
             {
                 Assert::Fail(L"Failed to converge to solution for q=6.4 on steep reach");
             }
 
+            //double Q = 6.4479441556280959;
+
+            //double dsInv = 373.29;
+            //xs::Reach reach = makeReach(376.73, 664.318, 13.75);
+            //reach.setDsInvert(dsInv);
+
+
+            //double yN;
+            //int error = ComputeNormalDepth(reach, Q, g, kn, yN);
+            ////Assert::AreEqual(0.521109, yN);
+            //Assert::IsTrue(fabs(yN - 0.522926705597983) < 1e-10, L"Bad normal");
+
+            //int nC = 1000;
+            //double maxDepthFrac = 1;
+            //double yUp, volume, hf;
+            //double yInit = 1.9240159294823829;
+            //if (ComputeCombinedProfile(reach, Q, yInit, nC, false, false, g, kn, maxDepthFrac, yUp, volume, hf))
+            //{
+            //    Assert::Fail(L"Failed to converge to solution for q=6.4 on steep reach");
+            //}
+
             //Assert::AreEqual(yN, yUp);
-            Assert::IsTrue(fabs(yUp - 0.521109) < 1e-5);
+            //Assert::IsTrue(fabs(yUp - 0.521109) < 1e-5);
 
             //double yUp2;
             //if (ComputeCombinedProfile(reach, 6.4, yInit + 0.5, nC, false, false, g, kn, maxDepthFrac, yUp2, volume, hf))
