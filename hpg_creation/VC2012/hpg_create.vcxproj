@@ -121,6 +121,7 @@
     <ClCompile Include="..\backwater_profile.cpp" />
     <ClCompile Include="..\benchmark.cpp" />
     <ClCompile Include="..\compute_profile.cpp" />
+    <ClCompile Include="..\compute_profile_oberg.cpp" />
     <ClCompile Include="..\createloops.cpp" />
     <ClCompile Include="..\creator++.cpp" />
     <ClCompile Include="..\discharge_stuff.cpp" />
