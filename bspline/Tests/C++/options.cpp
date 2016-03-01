@@ -38,6 +38,9 @@
 //    - Added PARSE_POS control flag and POSITIONAL return value.
 // ^^**************************************************************************
 
+#define _CRT_SECURE_NO_WARNINGS
+
+
 #ifdef USE_STDIO
 # include <stdio.h>
 #else

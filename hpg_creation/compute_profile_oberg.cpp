@@ -40,7 +40,7 @@ inline double profile_func(double y, solver_params* params_in);
 inline double profile_func_deriv(double y, solver_params* params_in);
 inline void compute_variables(double y, profile_params* params);
 
-
+/*
 // This is an attempt to be more modular...
 double ComputeProfile(double diameter, double length, double slope, double roughness,
     double flow, double yInit, int numComputations, bool isSteep, double& volume, double& hf_reach)
@@ -274,3 +274,4 @@ inline double profile_func_deriv(double y, solver_params* params_in)
     return dfn;
 }
 
+*/

@@ -14,6 +14,7 @@
  *************************************************************************/
 
 #include "BSpline.h"
+#include "..\..\hpg_interp\spline-tk.h"
 
 #include "options.h"
 #include <iostream>
@@ -70,7 +71,7 @@ void parseCommandLine(int argc,
                       char * const argv[],
                       std::string& infile,
                       std::string& outfile,
-                      int& step,
+                      double& step,
                       double& wavelength,
                       int& bc,
                       int& num_nodes,
@@ -124,7 +125,7 @@ void parseCommandLine(int argc,
         case 's':
             {
                 if (optarg)
-                    step = atoi(optarg);
+                    step = atof(optarg);
                 else
                     err++;
                 break;
@@ -195,7 +196,7 @@ int main(int argc,
 {
     std::string infile;
     std::string outfile;
-    int step;
+    double step;
     double wavelength;
     int bc;
     int num_nodes;
@@ -253,7 +254,7 @@ int main(int argc,
         if (++i == 1) {
             base = f;
         }
-        f -= base;
+        //f -= base;
 
         if (*instream >> g) {
             x.push_back(f);
@@ -262,35 +263,50 @@ int main(int argc,
             break;
     }
 
-    // Subsample the arrays
-    vector<datum>::iterator xi = x.begin(), yi = y.begin();
-    vector<datum>::iterator xo = x.begin(), yo = y.begin();
-    if (step > 1) {
-        while (xo < x.end() && yo < y.end()) {
-            *xi++ = *xo;
-            *yi++ = *yo;
-            xo += step;
-            yo += step;
-        }
-        x.resize(xi - x.begin());
-        y.resize(yi - y.begin());
-    }
+    //// Subsample the arrays
+    //vector<datum>::iterator xi = x.begin(), yi = y.begin();
+    //vector<datum>::iterator xo = x.begin(), yo = y.begin();
+    //if (step > 1) {
+    //    while (xo < x.end() && yo < y.end()) {
+    //        *xi++ = *xo;
+    //        *yi++ = *yo;
+    //        xo += step;
+    //        yo += step;
+    //    }
+    //    x.resize(xi - x.begin());
+    //    y.resize(yi - y.begin());
+    //}
 
-    // Create our bspline base on the X vector with a simple 
-    // wavelength.
-    if (debug)
-        SplineT::Debug(1);
-    SplineT spline(&x[0],
-                   x.size(),
-                    &y[0],
-                   wavelength,
-                   bc,
-                   num_nodes);
-    if (spline.ok()) {
-        // And finally write the curve to a file
-        DumpSpline(x, y, spline, outstream, debug);
-    } else
-        cerr << "Spline setup failed." << endl;
+    if (true)
+    {
+        tk::spline s;
+        s.set_points(x, y);    // X needs to be sorted, strictly increasing
+        double start = x[0];
+        while (start < x[x.size() - 1])
+        {
+            *outstream << start << ", " << s(start) << ", 0, 0" << endl;
+            start += step;
+        }
+    }
+    else
+    {
+        // Create our bspline base on the X vector with a simple 
+        // wavelength.
+        if (debug)
+            SplineT::Debug(1);
+        SplineT spline(&x[0],
+            x.size(),
+            &y[0],
+            wavelength,
+            bc,
+            num_nodes);
+        if (spline.ok()) {
+            // And finally write the curve to a file
+            DumpSpline(x, y, spline, outstream, debug);
+        }
+        else
+            cerr << "Spline setup failed." << endl;
+    }
 
 #if OOYAMA
     // Need to copy the data into float arrays for vic().
