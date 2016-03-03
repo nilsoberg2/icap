@@ -1,5 +1,5 @@
 exe = '..\..\..\Build\Debug\driver.exe';
-filePath = '../../../Build/pointsxy2.txt';
+filePath = '../../../Build/pointsxy.txt';
 %-s 0.1 -i ../../../Build/pointsxy.txt -o test.txt -w 0 -b 2
 
 fid = fopen(filePath);

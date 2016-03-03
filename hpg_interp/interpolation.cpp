@@ -36,7 +36,7 @@ namespace hpg
 
         // Get the first point on the Q_upper curve
         point c2firstp;
-        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve+1, c2firstp)))
+        if (HPGFAILURE(status = getFirstPointOnCurve(flow, curve + 1, c2firstp)))
         {
             impl->errorCode = status;
             return impl->errorCode;
@@ -59,7 +59,7 @@ namespace hpg
         if (flow >= 0.0)
         {
             steepC1 = isCurveSteep(curve);
-            steepC2 = isCurveSteep(curve+1);
+            steepC2 = isCurveSteep(curve + 1);
         }
 
         // This tests to see if Q_lower is steep.
@@ -75,18 +75,18 @@ namespace hpg
                 // for the result.
                 if (downstream < c1firstp.x)
                 {
-					double flow1, flow2;
-					if (flow >= 0.0)
-					{
-						flow1 = impl->posFlows.at(curve);
-						flow2 = impl->posFlows.at(curve + 1);
-					}
-					else
-					{
-						flow1 = impl->advFlows.at(curve);
-						flow2 = impl->advFlows.at(curve + 1);
-					}
-					upstream = linearInterp(flow, flow1, c1firstp.y, flow2, c2firstp.y);
+                    double flow1, flow2;
+                    if (flow >= 0.0)
+                    {
+                        flow1 = impl->posFlows.at(curve);
+                        flow2 = impl->posFlows.at(curve + 1);
+                    }
+                    else
+                    {
+                        flow1 = impl->advFlows.at(curve);
+                        flow2 = impl->advFlows.at(curve + 1);
+                    }
+                    upstream = linearInterp(flow, flow1, c1firstp.y, flow2, c2firstp.y);
                 }
 
                 // Else, if our downstream is less than the first point (critical)
@@ -160,18 +160,18 @@ namespace hpg
                 // bounding curve, then use the upstream critical depth.
                 if (downstream < c1firstp.x || downstream < c2firstp.x)
                 {
-					double flow1, flow2;
-					if (flow >= 0.0)
-					{
-						flow1 = impl->posFlows.at(curve);
-						flow2 = impl->posFlows.at(curve + 1);
-					}
-					else
-					{
-						flow1 = impl->advFlows.at(curve);
-						flow2 = impl->advFlows.at(curve + 1);
-					}
-					upstream = linearInterp(flow, flow1, c1firstp.y, flow2, c2firstp.y);
+                    double flow1, flow2;
+                    if (flow >= 0.0)
+                    {
+                        flow1 = impl->posFlows.at(curve);
+                        flow2 = impl->posFlows.at(curve + 1);
+                    }
+                    else
+                    {
+                        flow1 = impl->advFlows.at(curve);
+                        flow2 = impl->advFlows.at(curve + 1);
+                    }
+                    upstream = linearInterp(flow, flow1, c1firstp.y, flow2, c2firstp.y);
                 }
 
                 // If our downstream more than the downstream point for the last
@@ -201,7 +201,7 @@ namespace hpg
 
         return S_OK;
     }
-    
+
     //int Hpg::GetDownstreamExactFlow(double flow, double upstream, double& result)
     //{
     //    if (fabs(flow) < 0.00001)
@@ -776,8 +776,14 @@ namespace hpg
 		{
 			if (flow >= 0.0)
 			{
-				upstream1 = impl->SplPosUS_QDS.at(curve)(input);
-				upstream2 = impl->SplPosUS_QDS.at(curve+1)(input);
+                //if (input >= impl->dsInvert + impl->maxDepth)
+                //{
+                //}
+                //else
+                //{
+                    upstream1 = impl->SplPosUS_QDS.at(curve)(input);
+                    upstream2 = impl->SplPosUS_QDS.at(curve + 1)(input);
+                //}
 			}
 			else
 			{

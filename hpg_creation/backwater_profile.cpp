@@ -159,15 +159,26 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
     std::vector<double> yDownElevations;
     double point10p = (yMax - yMin) * 0.1;
     double pointYmax = yMax - point10p;
-    double pointDy = (pointYmax - yMin) / np;
+    double dy = (pointYmax - yMin) / np;
     for (int i = 0; i < np; i++)
     {
-        yDownElevations.push_back(yMin + i * pointDy);
+        yDownElevations.push_back(yMin + i * dy);
     }
-    pointDy = point10p / np;
+    dy = point10p / np;
     for (int i = 0; i < np; i++)
     {
-        yDownElevations.push_back(pointYmax + i * pointDy);
+        yDownElevations.push_back(pointYmax + i * dy);
+    }
+    //dy = (pressurizedHeight - yMax) / this->numPoints;
+    if (!computeFreeOnly)
+    {
+        for (int i = 0; i < this->numPoints; i++)
+        {
+            double i_np = (double)i / (double)this->numPoints;
+            double temp = 1.0 - 1.0 / (double)this->numPoints;
+            double y = yMax + std::log10(1.0 - i_np * i_np * i_np) / std::log10(1 - temp * temp * temp) * (pressurizedHeight - yMax);
+            yDownElevations.push_back(y);
+        }
     }
 
     // Compute the depth increment in vertical direction.
@@ -176,112 +187,111 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
     // If the user specified a pressurized height, then we do two executions of the loop, the first
     // to do the free-surface computations and the second to do the pressurized computations.
     // If the pressurized height is zero, then just do the free-surface computations.
-    int freePressLoopActivation = computeFreeOnly ? 1 : 2;
-    double dz = 0;
-    for (int i = 0; i < freePressLoopActivation; i++)
+    //int freePressLoopActivation = computeFreeOnly ? 1 : 2;
+    //double dz = 0;
+    //for (int i = 0; i < freePressLoopActivation; i++)
+    //{
+    // Starting depth.
+    double yInit = yMin;
+    // Pressurized computation switch
+    //if (i > 0)
+    //{
+    //    yInit = yMax; // +dy;
+    //    yMax += pressurizedHeight;
+    //    double dy = (yMax - yMin) / this->numPoints;
+    //    dz = usInvert - dsInvert;
+    //    isSteep = false; // in pressurized conduits, there is no such thing as a steep conduit
+    //    yDownElevations.clear();
+    //    for (int i = 0; i < this->numPoints; i++)
+    //    {
+    //        yDownElevations.push_back(yInit + i * dy);
+    //    }
+    //}
+
+    // Add a point here that makes yNormal
+    if (isSteep)
     {
-        // Starting depth.
-        double yInit = yMin;
-        // Pressurized computation switch
-        if (i > 0)
+        curve.push_back(hpg::point(yDthatMakesSteepYNormal + dsInvert, yNormal + usInvert, volume, hf_reach));
+    }
+
+    // We iterate until we've reached or exceeded the maximum depth.
+    int count = 0;
+    //while (std::abs(yInit - yMax) > this->convergenceTol && yInit <= yMax)
+    /*for (int i = 0; i < yDownElevations*/
+    for (auto yInit : yDownElevations)
+    {
+        this->errorCode = 0;
+
+        // Now compute the point (downstream -> upstream if mild or
+        // adverse, upstream -> downstream if steep).
+        if (computeFreeOnly)
         {
-            yInit = yMax; // +dy;
-            yMax += pressurizedHeight;
-            double dy = (yMax - yMin) / this->numPoints;
-            dz = usInvert - dsInvert;
-            isSteep = false; // in pressurized conduits, there is no such thing as a steep conduit
-            yDownElevations.clear();
-            for (int i = 0; i < this->numPoints; i++)
-            {
-                yDownElevations.push_back(yInit + i * dy);
-            }
+            this->errorCode = ComputeFreeProfile(reach, flow, yInit, this->numSteps, false, reverseSlope, this->g, this->kn, this->maxDepthFrac, yComp, volume, hf_reach);
+        }
+        else
+        {
+            this->errorCode = ComputeCombinedProfile(reach, flow, yInit, this->numSteps, false, reverseSlope, this->g, this->kn, this->maxDepthFrac, yComp, volume, hf_reach);
         }
 
-        // Add a point here that makes yNormal
-        if (isSteep)
+        // If the solution went imaginary, did not converge, or reached
+        // the maximum pipe depth and not enough points were found, then
+        // terminate early.  If there was another error (at_min_depth)
+        // then continue to the next higher depth.
+        if (this->errorCode)
         {
-            curve.push_back(hpg::point(yDthatMakesSteepYNormal + dsInvert, yNormal + usInvert, volume, hf_reach));
+            if (this->errorCode == hpg::error::imaginary)
+                break;
+            else if (this->errorCode == hpg::error::divergence)
+                break;
+            else if (this->errorCode == hpg::error::at_max_depth && count < this->minCurvePoints)
+                break;
         }
 
-        // We iterate until we've reached or exceeded the maximum depth.
-        int count = 0;
-        //while (std::abs(yInit - yMax) > this->convergenceTol && yInit <= yMax)
-        /*for (int i = 0; i < yDownElevations*/
-        for (auto yInit : yDownElevations)
+        // If there was no error, then add the point to the curve.
+        if (! this->errorCode)
         {
-            this->errorCode = 0;
+            //if (isSteep)
+            //{
+            //    curve.push_back(hpg::point(yComp + dsInvert,
+            //                                 yInit + usInvert,
+            //                                 volume,
+											    //hf_reach));
+            //}
+			//else if (slope < 0.0)
+            //{
+			//	curve.push_back(hpg::point(yComp + dsInvert,
+			//								 //yInit + dsInvert+(length*slope),
+            //                                 //volume));
+            //}
 
-            // Now compute the point (downstream -> upstream if mild or
-            // adverse, upstream -> downstream if steep).
-            if (computeFreeOnly)
+			//else
+            if (reverseSlope)
             {
-                this->errorCode = ComputeFreeProfile(reach, flow, yInit, this->numSteps, false, reverseSlope, this->g, this->kn, this->maxDepthFrac, yComp, volume, hf_reach);
+				curve.push_back(hpg::point(yInit + usInvert,
+											    yComp + dsInvert,
+                                                volume,
+											    hf_reach));
             }
+
             else
             {
-                this->errorCode = ComputeCombinedProfile(reach, flow, yInit, this->numSteps, false, reverseSlope, this->g, this->kn, this->maxDepthFrac, yComp, volume, hf_reach);
-            }
-
-            // If the solution went imaginary, did not converge, or reached
-            // the maximum pipe depth and not enough points were found, then
-            // terminate early.  If there was another error (at_min_depth)
-            // then continue to the next higher depth.
-            if (this->errorCode)
-            {
-                if (this->errorCode == hpg::error::imaginary)
-                    break;
-                else if (this->errorCode == hpg::error::divergence)
-                    break;
-                else if (this->errorCode == hpg::error::at_max_depth && count < this->minCurvePoints)
-                    break;
-            }
-
-            // If there was no error, then add the point to the curve.
-            if (! this->errorCode)
-            {
-                //if (isSteep)
+                // If the curve type is mild, or if (the curve type is steep && the computed value > yNormal)
+                // We don't want to store the cases where the upstream is yNormal because there is no change there.
+                // When interpolating the HPG if the y_d < y_d_firstCurvePoint we return the y_u_firstCurvePoint.
+                // Since above we find the point at which the downstream starts to influence the upstream (e.g.
+                // there is no change from S1 to S2 within the regime [HG]) and use that as our starting point
+                // we shouldn't have to check for this but it's here none the less for documentation purposes.
+                //if (!isSteep || yComp > yNormal + std::numeric_limits<double>::epsilon()*10)
                 //{
-                //    curve.push_back(hpg::point(yComp + dsInvert,
-                //                                 yInit + usInvert,
-                //                                 volume,
-											     //hf_reach));
+                    curve.push_back(hpg::point(yInit + dsInvert, yComp + usInvert, volume, hf_reach));
                 //}
-			    //else if (slope < 0.0)
-                //{
-			    //	curve.push_back(hpg::point(yComp + dsInvert,
-			    //								 //yInit + dsInvert+(length*slope),
-                //                                 //volume));
-                //}
-
-			    //else
-                if (reverseSlope)
-                {
-				    curve.push_back(hpg::point(yInit + usInvert,
-											     yComp + dsInvert,
-                                                 volume,
-											     hf_reach));
-                }
-
-                else
-                {
-                    // If the curve type is mild, or if (the curve type is steep && the computed value > yNormal)
-                    // We don't want to store the cases where the upstream is yNormal because there is no change there.
-                    // When interpolating the HPG if the y_d < y_d_firstCurvePoint we return the y_u_firstCurvePoint.
-                    // Since above we find the point at which the downstream starts to influence the upstream (e.g.
-                    // there is no change from S1 to S2 within the regime [HG]) and use that as our starting point
-                    // we shouldn't have to check for this but it's here none the less for documentation purposes.
-                    //if (!isSteep || yComp > yNormal + std::numeric_limits<double>::epsilon()*10)
-                    //{
-                        curve.push_back(hpg::point(yInit + dsInvert, yComp + usInvert, volume, hf_reach));
-                    //}
-                }
-
-                count++;
             }
 
-            // Go to the next depth.
-            //yInit = yInit + dy;
+            count++;
         }
+
+        // Go to the next depth.
+        //yInit = yInit + dy;
     }
 }
 
