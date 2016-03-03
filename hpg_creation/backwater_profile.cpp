@@ -89,7 +89,7 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
             // Find the point at which the downstream starts to influence the upstream (e.g. there
             // is no change from S1 profile to S2 [HJ present]).
             double yInit = yNormal;
-            double dy = 0.025; // small dy to find the point we are trying to find
+            double dy = 0.05; // small dy to find the point we are trying to find
             double yComp = yNormal;
             double yDlast = yNormal;
             // We iterate until we've reached or exceeded the maximum depth.
@@ -122,6 +122,8 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
             {
                 yMin = yInit;
                 yDthatMakesSteepYNormal = yDlast;
+                //yDthatMakesSteepYNormal = (yInit - yNormal) / 2.0;
+                //this->errorCode = ComputeCombinedProfile(reach, flow, yDthatMakesSteepYNormal, this->numSteps, false, reverseSlope, this->g, this->kn, this->maxDepthFrac, yComp, volume, hf_reach);
             }
         }
         else
@@ -154,8 +156,22 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
         np = std::min(this->numPoints, std::max(1, (int)std::floor((yMax - yMin) / (0.01 * maxDepth) + 0.5)));
     }
 
+    std::vector<double> yDownElevations;
+    double point10p = (yMax - yMin) * 0.1;
+    double pointYmax = yMax - point10p;
+    double pointDy = (pointYmax - yMin) / np;
+    for (int i = 0; i < np; i++)
+    {
+        yDownElevations.push_back(yMin + i * pointDy);
+    }
+    pointDy = point10p / np;
+    for (int i = 0; i < np; i++)
+    {
+        yDownElevations.push_back(pointYmax + i * pointDy);
+    }
+
     // Compute the depth increment in vertical direction.
-    double dy = (yMax - yMin) / np;
+    //double dy = (yMax - yMin) / np;
 
     // If the user specified a pressurized height, then we do two executions of the loop, the first
     // to do the free-surface computations and the second to do the pressurized computations.
@@ -169,11 +185,16 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
         // Pressurized computation switch
         if (i > 0)
         {
-            yInit = yMax + dy;
+            yInit = yMax; // +dy;
             yMax += pressurizedHeight;
-            dy = (yMax - yMin) / this->numPoints;
+            double dy = (yMax - yMin) / this->numPoints;
             dz = usInvert - dsInvert;
             isSteep = false; // in pressurized conduits, there is no such thing as a steep conduit
+            yDownElevations.clear();
+            for (int i = 0; i < this->numPoints; i++)
+            {
+                yDownElevations.push_back(yInit + i * dy);
+            }
         }
 
         // Add a point here that makes yNormal
@@ -184,7 +205,9 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
 
         // We iterate until we've reached or exceeded the maximum depth.
         int count = 0;
-        while (std::abs(yInit - yMax) > this->convergenceTol && yInit <= yMax)
+        //while (std::abs(yInit - yMax) > this->convergenceTol && yInit <= yMax)
+        /*for (int i = 0; i < yDownElevations*/
+        for (auto yInit : yDownElevations)
         {
             this->errorCode = 0;
 
@@ -257,7 +280,7 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
             }
 
             // Go to the next depth.
-            yInit = yInit + dy;
+            //yInit = yInit + dy;
         }
     }
 }

@@ -201,7 +201,7 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
     {
         yNvalid = false;
     }
-    
+
     X[0] = 0;
     if (!isZero(flow))
         Y[0] = std::max(y_c, yInit);
@@ -273,7 +273,9 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
         isFull = true;
     }
 
-    bool isSuper = false;
+    bool isSuper = y_n < y_c;
+    bool passedThroughJump = false;
+
     int i = 0;
     for (i = 1; i < nC + 1; i++)
     {
@@ -341,6 +343,15 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
             // number of iterations (divergence).
             bool converged = false;
             bool solutionNotChanging = false;
+
+            // If we've passed through a hydraulic jump then we don't want to solve anymore, we need
+            // to use normal depth.
+            if (isSuper && passedThroughJump)
+            {
+                converged = true;
+                y2 = y_n;
+            }
+
             while (!converged && iterCount < params.maxIter)
             {
                 // These functions contain the equations and math for the solution.
@@ -374,7 +385,7 @@ int ComputeProfile(const xs::Reach& reach, double flow, double yInit, int nC, bo
 
             if (iterCount >= params.maxIter || solutionNotChanging)
             {
-                isSuper = true;
+                passedThroughJump = isSuper && true;
                 y2 = y_n; // **THIS CONDITION WILL HAVE TO CHANGE WHEN THE SUPERCRITICAL LOGIC IS FULLY IMPLEMENTED**
                 compute_variables(y_n, params, x2);
                 Sf2 = x2.Sf;

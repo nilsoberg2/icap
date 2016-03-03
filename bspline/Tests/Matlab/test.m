@@ -11,7 +11,7 @@ fclose(fid);
 cutoffs = 0; %[0 : 2 : 100];
 bcs = [2];
 
-step = 0.05;
+step = 0.01;
 
 path1 = getenv('PATH');
 
