@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\datetime.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\timefuncs.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\datetime.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\timespan.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\timefuncs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{7ee673c1-ab95-4fc3-9e8b-96185b86eb12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{93443aff-0a6a-465b-b9c6-1ba69b057baa}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
