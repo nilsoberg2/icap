@@ -71,15 +71,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\datetime.cpp" />
     <ClCompile Include="..\timefuncs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\datetime.h" />
     <ClInclude Include="..\timefuncs.h" />
+    <ClInclude Include="..\timespan.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

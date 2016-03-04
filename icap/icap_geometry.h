@@ -18,6 +18,8 @@ private:
     DateTime currentDateTime;
     std::string hpgPath;
     double routeStep;
+    double reportStep;
+    bool freeSurfaceOnlyComputations;
 
 protected:
     virtual bool processOptions();
@@ -26,6 +28,8 @@ public:
 
     std::string getHpgPath() { return this->hpgPath; }
     double getRoutingStep() { return this->routeStep; }
+    double getReportStep() { return this->reportStep; }
+    bool freeSurfaceOnly() { return this->freeSurfaceOnlyComputations; }
     void enableRealTimeStatus();
 
     ///////////////////////////////////////////////////////////////////////

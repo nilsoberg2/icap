@@ -71,9 +71,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\math.h" />
     <ClInclude Include="..\parse.h" />
     <ClInclude Include="..\parseable.h" />

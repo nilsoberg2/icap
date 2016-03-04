@@ -39,7 +39,8 @@ namespace geometry
         std::map<id_type, std::shared_ptr<Node>> nodeMap; // Need to be deleted in dtor
         std::map<std::string, std::shared_ptr<Curve>> curveMap; // Need to be deleted in dtor
         std::map<std::string, std::shared_ptr<Timeseries>> tsMap; // Need to be deleted in dtor
-        std::map<std::string, FileSection> objectTypeMap;
+        std::map<std::string, FileSection> objectTypeMapNode;
+        std::map<std::string, FileSection> objectTypeMapLink;
         std::map<std::string, std::shared_ptr<Option>> options;
 
         std::map<std::string, id_type> nodeIdMap;
@@ -408,9 +409,19 @@ namespace geometry
 
                 if (parts.size() > 1)
                 {
-                    if (this->objectTypeMap.count(parts[0]) == 0)
+                    if (curSection == FileSection::File_Conduit)
                     {
-                        this->objectTypeMap.insert(make_pair(parts[0], curSection));
+                        if (this->objectTypeMapLink.count(parts[0]) == 0)
+                        {
+                            this->objectTypeMapLink.insert(make_pair(parts[0], curSection));
+                        }
+                    }
+                    else
+                    {
+                        if (this->objectTypeMapNode.count(parts[0]) == 0)
+                        {
+                            this->objectTypeMapNode.insert(make_pair(parts[0], curSection));
+                        }
                     }
                 }
             }
@@ -466,6 +477,10 @@ namespace geometry
         }
         else if (curSection == FileSection::File_Conduit)
         {
+            if (parts[0] == "207")
+            {
+                double a = 1;
+            }
             std::shared_ptr<Link> link = parent->getOrCreateLink(parts[0]);
             if (!link->parseLine(parts))
             {
@@ -614,7 +629,7 @@ namespace geometry
         else
         {
             std::shared_ptr<Node> theNode = NULL;
-            if (impl->objectTypeMap[nodeId] == FileSection::File_Storage)
+            if (impl->objectTypeMapNode[nodeId] == FileSection::File_Storage)
             {
                 //theNode = std::shared_ptr<Node>(new StorageUnit(impl->nodeMap.size(), nodeId, std::shared_ptr<CurveFactory>(this)));
                 theNode = std::shared_ptr<Node>(new StorageUnit(impl->nodeMap.size(), nodeId, shared_from_this()));
@@ -645,7 +660,7 @@ namespace geometry
         else
         {
             std::shared_ptr<Link> theLink = NULL;
-            if (impl->objectTypeMap[linkId] == FileSection::File_Conduit)
+            if (impl->objectTypeMapLink[linkId] == FileSection::File_Conduit)
             {
                 /*theLink = std::shared_ptr<Link>(new Link(impl->linkMap.size(), linkId, dynamic_pointer_cast<NodeFactory>(this)));*/
                 theLink = std::shared_ptr<Link>(new Link(impl->linkMap.size(), linkId, shared_from_this()));

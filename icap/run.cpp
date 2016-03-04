@@ -563,37 +563,37 @@ bool ICAP::updateOverflows(double routeStep)
     return result;
 }
 
-
-bool ICAP::RunSimulation(int sinkNodeIdx)
-{
-    using namespace std;
-    
-    double curStep = 0.0;
-    double initDepth = m_geometry->getNode(sinkNodeIdx)->getInitialDepth();
-
-    double deltaT = 0;
-    if (!tryParse(m_geometry->getOption("routing_step"), deltaT))
-    {
-        return false;
-    }
-
-    // Compute the initial volume and water depth of the sink node.
-    std::shared_ptr<geometry::Node> node = m_geometry->getNode(sinkNodeIdx);
-    double volume = node->lookupVolume(initDepth);
-    node->variable(variables::NodeDepth) = initDepth;
-
-    // Now iterate over each timestep and route the system for that step.
-    bool toContinue = true;
-    int iterCount = 0;
-    while (curStep <= m_totalDuration)
-    {
-        if (! Step(&curStep, deltaT, false) )
-        {
-            toContinue = false;
-            break;
-        }
-        iterCount++;
-    }
-
-    return toContinue;
-}
+//
+//bool ICAP::RunSimulation(int sinkNodeIdx)
+//{
+//    using namespace std;
+//    
+//    double curStep = 0.0;
+//    double initDepth = m_geometry->getNode(sinkNodeIdx)->getInitialDepth();
+//
+//    double deltaT = 0;
+//    if (!tryParse(m_geometry->getOption("routing_step"), deltaT))
+//    {
+//        return false;
+//    }
+//
+//    // Compute the initial volume and water depth of the sink node.
+//    std::shared_ptr<geometry::Node> node = m_geometry->getNode(sinkNodeIdx);
+//    double volume = node->lookupVolume(initDepth);
+//    node->variable(variables::NodeDepth) = initDepth;
+//
+//    // Now iterate over each timestep and route the system for that step.
+//    bool toContinue = true;
+//    int iterCount = 0;
+//    while (curStep <= m_totalDuration)
+//    {
+//        if (! Step(&curStep, deltaT, false) )
+//        {
+//            toContinue = false;
+//            break;
+//        }
+//        iterCount++;
+//    }
+//
+//    return toContinue;
+//}

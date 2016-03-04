@@ -31,9 +31,9 @@ namespace hpg
 					SPL_ADD_TEMP(spline, vec[j].x, vec[j].y);
                     if (j == 0 || (j > 0 && (vec[j].y - lastY) > 0.0001))
                     {
+                        lastY = vec[j].y;
                         SPL_ADD_TEMP(usSpline, vec[j].y, vec[j].x);
                     }
-                    lastY = vec[j].y;
 					SPL_ADD_TEMP(volSpline, vec[j].x, vec[j].v);
 					SPL_ADD_TEMP(hfSpline, vec[j].x, vec[j].hf);
 				}
@@ -44,7 +44,9 @@ namespace hpg
                 SPL_FINISH_TEMP(hfSpline);
 
                 impl->SplPosUS_QDS.push_back(spline);
+                //// When creating this spline, the values that are not in ascending order are removed.
                 impl->SplPosDS_QUS.push_back(usSpline);
+                //impl->SplPosDS_QUS.push_back(Spline());
 				impl->SplPosVol.push_back(volSpline);
 				impl->SplPosHf.push_back(hfSpline);
             }

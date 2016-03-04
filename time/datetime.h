@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "timespan.h"
 
 namespace Format
 {
@@ -14,6 +15,7 @@ namespace Format
         D_M_Y,
     };
 }
+
 
 class DateTime
 {
@@ -33,12 +35,14 @@ public:
     DateTime& operator +=(const double& value);
     DateTime& operator +=(const DateTime& value);
     DateTime operator +(const DateTime& value) const;
+    TimeSpan operator -(const DateTime& value) const;
     DateTime& operator =(const DateTime& value);
     DateTime& operator =(const double& value);
     bool operator ==(const DateTime& value) const;
     
     static bool tryParseDate(std::string str, DateTime& theDateTime, Format::DateFormat format = Format::M_D_Y);
     static bool tryParseTime(std::string str, DateTime& theDateTime);
+    static bool tryParseTime(std::string str, TimeSpan& timeSpan);
 
     std::string toString() const;
     std::wstring toUnicodeString() const;
@@ -48,10 +52,6 @@ public:
     DateTime addMinutes(int minutes);
     DateTime addSeconds(int seconds);
 };
-
-
-#define SECS_PER_DAY	86400.0
-#define MSEC_PER_DAY    86400000.0
 
 
 #endif//DATETIME_H__

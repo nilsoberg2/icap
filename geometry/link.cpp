@@ -28,7 +28,7 @@ namespace geometry
     {
         using namespace std;
 
-        if (parts.size() < 7 || this->nodeFactory == NULL)
+        if (parts.size() < 7 || !this->nodeFactory)
         {
             setErrorMessage("At least 7 parts are required for CONDUIT line");
             return false;
@@ -77,8 +77,8 @@ namespace geometry
             return false;
         }
 
-        //this->xs = std::shared_ptr<xs::CrossSection>(xs::Factory::create(parts[1]));
-        this->xs =  std::unique_ptr<xs::CrossSection>(new xs::Circular());// xs::Factory::create(parts[1]));
+        this->xs = std::unique_ptr<xs::CrossSection>(xs::Factory::create(parts[1]));
+        //this->xs =  std::unique_ptr<xs::CrossSection>(new xs::Circular());// xs::Factory::create(parts[1]));
         //this->xs = xs::Factory::create(parts[1]);
         vector<string>::const_iterator it = parts.begin();
         it++;

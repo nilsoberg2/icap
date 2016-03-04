@@ -233,6 +233,7 @@
     <ClInclude Include="..\..\api.h" />
     <ClInclude Include="..\..\type.h" />
     <ClInclude Include="..\benchmark.h" />
+    <ClInclude Include="..\constants.h" />
     <ClInclude Include="..\hpg.h" />
     <ClInclude Include="..\icap.h" />
     <ClInclude Include="..\icap_geometry.h" />

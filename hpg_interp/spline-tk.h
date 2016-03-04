@@ -246,6 +246,9 @@ void spline::set_points(const std::vector<double>& x,
    {
        if (!(m_x[i] < m_x[i + 1]))
        {
+           m_x.erase(m_x.begin() + i + 1);
+           m_y.erase(m_y.begin() + i + 1);
+           // This is ignored in release code
            assert(false);
        }
    }

@@ -27,6 +27,11 @@ ICAP::ICAP()
     m_realTimeDsHead = false;
     m_isFirstMatrixIteration = false;
     m_geometry = NULL;
+    m_reportStep = 60;
+    m_routeStep = 60;
+    m_reportTime = 0;
+    m_newRoutingTime = 0;
+    m_totalDuration = 0;
 }
 
 ICAP::~ICAP()
@@ -35,6 +40,11 @@ ICAP::~ICAP()
     //delete m_geometry;
 }
 
+
+double ICAP::GetTotalDuration()
+{
+    return (m_geometry->getEndDateTime() - m_geometry->getStartDateTime()).getTotalSeconds();
+}
 
 int ICAP::GetLinkCount()
 {
@@ -60,6 +70,8 @@ void ICAP::InitializeLog(loglevel::SeverityLevel level, std::string logFilePath)
 bool ICAP::Open(const std::string& inputFile, const std::string& outputFile, const std::string& reportFile, bool loadhpgs)
 {
     bool result = true;
+
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= loglevel::SeverityLevel::error);
 
     //try
     {
@@ -123,7 +135,10 @@ bool ICAP::Start(bool buildConnMatrix)
     {
     }
 
+    m_routeStep = m_geometry->getRoutingStep();
+    m_reportStep = m_geometry->getReportStep();
     m_stepCount = 0;
+    m_totalDuration = GetTotalDuration();
 
 	// Compute the ponded pipe volume
 	V_PondMax = computePondedPipeStorage();

@@ -112,14 +112,14 @@ private:
     ///////////////////////////////////////////////////////////////////////////
     // TIME METHODS
 
-    // Current routing time (milliseconds)
+    // Current routing time (seconds)
     double m_newRoutingTime;
     double m_totalDuration;
 
     // Routing timestep (seconds)
     double m_routeStep;
 
-    // Current reporting time (milliseconds)
+    // Current reporting time (seconds)
     double m_reportTime;
 
     // Reporting timestep (seconds)
@@ -142,7 +142,7 @@ private:
 
     boost::log::sources::severity_logger<loglevel::SeverityLevel> m_log;
 
-public:
+private:
 
     ///////////////////////////////////////////////////////////////////////////
     // NETWORK FUNCTIONS
@@ -308,7 +308,7 @@ public:
     int GetLinkCount();
 
     // Run an entire simulation.
-    bool RunSimulation(int sinkNodeIdx);
+    //bool RunSimulation(int sinkNodeIdx);
 
 	// Save total volume curve
 	void SaveTotalVolumeCurve(const std::string& file);
@@ -371,6 +371,8 @@ public:
 
     // Set the flow factor (scale factor on all of the constant flows)
     void SetFlowFactor(var_type flowFactor);
+
+    double GetTotalDuration();
 };
 
 

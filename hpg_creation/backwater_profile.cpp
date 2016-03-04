@@ -181,32 +181,8 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
         }
     }
 
-    // Compute the depth increment in vertical direction.
-    //double dy = (yMax - yMin) / np;
-
-    // If the user specified a pressurized height, then we do two executions of the loop, the first
-    // to do the free-surface computations and the second to do the pressurized computations.
-    // If the pressurized height is zero, then just do the free-surface computations.
-    //int freePressLoopActivation = computeFreeOnly ? 1 : 2;
-    //double dz = 0;
-    //for (int i = 0; i < freePressLoopActivation; i++)
-    //{
     // Starting depth.
     double yInit = yMin;
-    // Pressurized computation switch
-    //if (i > 0)
-    //{
-    //    yInit = yMax; // +dy;
-    //    yMax += pressurizedHeight;
-    //    double dy = (yMax - yMin) / this->numPoints;
-    //    dz = usInvert - dsInvert;
-    //    isSteep = false; // in pressurized conduits, there is no such thing as a steep conduit
-    //    yDownElevations.clear();
-    //    for (int i = 0; i < this->numPoints; i++)
-    //    {
-    //        yDownElevations.push_back(yInit + i * dy);
-    //    }
-    //}
 
     // Add a point here that makes yNormal
     if (isSteep)
@@ -216,8 +192,6 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
 
     // We iterate until we've reached or exceeded the maximum depth.
     int count = 0;
-    //while (std::abs(yInit - yMax) > this->convergenceTol && yInit <= yMax)
-    /*for (int i = 0; i < yDownElevations*/
     for (auto yInit : yDownElevations)
     {
         this->errorCode = 0;
@@ -250,48 +224,18 @@ void HpgCreator::computeHpgCurve(const xs::Reach& reach, double flow, double pre
         // If there was no error, then add the point to the curve.
         if (! this->errorCode)
         {
-            //if (isSteep)
-            //{
-            //    curve.push_back(hpg::point(yComp + dsInvert,
-            //                                 yInit + usInvert,
-            //                                 volume,
-											    //hf_reach));
-            //}
-			//else if (slope < 0.0)
-            //{
-			//	curve.push_back(hpg::point(yComp + dsInvert,
-			//								 //yInit + dsInvert+(length*slope),
-            //                                 //volume));
-            //}
-
-			//else
             if (reverseSlope)
             {
-				curve.push_back(hpg::point(yInit + usInvert,
-											    yComp + dsInvert,
-                                                volume,
-											    hf_reach));
+				curve.push_back(hpg::point(yInit + usInvert, yComp + dsInvert, volume, hf_reach));
             }
 
             else
             {
-                // If the curve type is mild, or if (the curve type is steep && the computed value > yNormal)
-                // We don't want to store the cases where the upstream is yNormal because there is no change there.
-                // When interpolating the HPG if the y_d < y_d_firstCurvePoint we return the y_u_firstCurvePoint.
-                // Since above we find the point at which the downstream starts to influence the upstream (e.g.
-                // there is no change from S1 to S2 within the regime [HG]) and use that as our starting point
-                // we shouldn't have to check for this but it's here none the less for documentation purposes.
-                //if (!isSteep || yComp > yNormal + std::numeric_limits<double>::epsilon()*10)
-                //{
-                    curve.push_back(hpg::point(yInit + dsInvert, yComp + usInvert, volume, hf_reach));
-                //}
+                curve.push_back(hpg::point(yInit + dsInvert, yComp + usInvert, volume, hf_reach));
             }
 
             count++;
         }
-
-        // Go to the next depth.
-        //yInit = yInit + dy;
     }
 }
 
@@ -310,11 +254,6 @@ bool HpgCreator::computeValidHpgCurve(const xs::Reach& reach, double flow, doubl
     using namespace std;
 
     computeHpgCurve(reach, flow, pressurizedHeight, reverseSlope, yNormal, yCritical, curve);
-    //OutputDebugStringA(std::to_string(flow).c_str());
-    //OutputDebugStringA(" ");
-    //OutputDebugStringA(std::to_string(curve.size()).c_str());
-    //OutputDebugStringA("\n");
-    //printf("Curve size: %d\n", curve.size());
 
     // We want to clear the error code if there was any, but we got valid points.
     if ((!this->errorCode ||

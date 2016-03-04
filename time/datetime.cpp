@@ -71,6 +71,12 @@ DateTime DateTime::operator +(const DateTime& value) const
     return dt;
 }
 
+TimeSpan DateTime::operator -(const DateTime& value) const
+{
+    return TimeSpan((this->impl->datetime - value.impl->datetime) * SECS_PER_DAY);
+}
+
+
 DateTime& DateTime::operator =(const DateTime& value)
 {
     this->impl->datetime = value.impl->datetime;
@@ -284,6 +290,27 @@ bool DateTime::tryParseTime(std::string str, DateTime& dt)
     if ((hr >= 0) && (min >= 0) && (sec >= 0))
     {
         dt.impl->datetime = t;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DateTime::tryParseTime(std::string str, TimeSpan& dt)
+{
+    const char* s = str.c_str();
+    int  n, hr, min = 0, sec = 0;
+
+    n = sscanf(s, "%d:%d:%d", &hr, &min, &sec);
+    if (n == 0)
+        return false;
+
+    double t = encodeTime(hr, min, sec);
+    if ((hr >= 0) && (min >= 0) && (sec >= 0))
+    {
+        dt.setTotalSeconds(t * SECS_PER_DAY);
         return true;
     }
     else

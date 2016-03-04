@@ -92,12 +92,29 @@ var_type IcapGeometry::getRealTimeNodeInflow(std::string nodeId)
 
 bool IcapGeometry::processOptions()
 {
+    this->freeSurfaceOnlyComputations = false;
+    this->routeStep = 1;
+
     std::vector<std::string> options = getOptionNames();
 
-    if (!hasOption("start_date") || !hasOption("start_time") || !hasOption("end_date") || !hasOption("end_time") ||
-        !hasOption("flow_units") || !hasOption("flow_units") || !hasOption("hpg_path") || !hasOption("routing_step"))
+    std::vector<std::string> reqs;
+    
+    reqs.push_back("start_date");
+    reqs.push_back("start_time");
+    reqs.push_back("end_date");
+    reqs.push_back("end_time");
+    reqs.push_back("flow_units");
+    reqs.push_back("hpg_path");
+    reqs.push_back("routing_step");
+    reqs.push_back("report_step");
+
+    for (auto req : reqs)
     {
-        return false;
+        if (!hasOption(req))
+        {
+            setErrorMessage("Unable to find option " + req);
+            return false;
+        }
     }
 
     if (getOption("flow_units") != "cfs")
@@ -130,7 +147,7 @@ bool IcapGeometry::processOptions()
         return false;
     }
 
-    if (!DateTime::tryParseTime(getOption("end_time"), this->startTime))
+    if (!DateTime::tryParseTime(getOption("end_time"), this->endTime))
     {
         setErrorMessage("Unable to parse option end_time");
         return false;
@@ -152,6 +169,24 @@ bool IcapGeometry::processOptions()
     {
         setErrorMessage("Non-numeric invalid routing_step option is provided.");
         return false;
+    }
+
+    TimeSpan dt;
+    if (!DateTime::tryParseTime(getOption("report_step"), dt))
+    {
+        setErrorMessage("Non-numeric invalid report_step option is provided.");
+        return false;
+    }
+    this->reportStep = dt.getTotalSeconds();
+
+    if (hasOption("free_surface_only"))
+    {
+        std::string opt(getOption("free_surface_only"));
+        boost::algorithm::to_lower(opt);
+        if (opt == "true")
+        {
+            this->freeSurfaceOnlyComputations = true;
+        }
     }
 
     return true;
