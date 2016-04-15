@@ -211,6 +211,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\IcapExe\main.cpp" />
     <ClCompile Include="..\benchmark.cpp" />
     <ClCompile Include="..\debug.cpp" />
     <ClCompile Include="..\flows_storage.cpp" />
@@ -248,17 +249,17 @@
     <ClInclude Include="..\ucf.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\geometry\VC2012\geometry.vcxproj">
+      <Project>{a5aca214-6a18-4386-aea4-2a9130ab06cd}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\model\VC2012\model.vcxproj">
       <Project>{91158745-111b-4fde-851c-f1b4d5d639af}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\time\VC2012\time.vcxproj">
+      <Project>{857877dd-d42a-4307-94d2-ebdd1e45b305}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\util\VC2012\util.vcxproj">
       <Project>{b2cd04c4-e86b-498e-9846-7fc10637837c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\geometry\VC2012\geometry.vcxproj">
-      <Project>{a5aca214-6a18-4386-aea4-2a9130ab06cd}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\time\VC2012\time.vcxproj">
-      <Project>{857877dd-d42a-4307-94d2-ebdd1e45b305}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

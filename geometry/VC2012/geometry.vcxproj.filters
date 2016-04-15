@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\curve.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\fileSection.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\geometry.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\inflow.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\link.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\node.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\option.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\storage.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\timeseries.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\curve.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\curve_factory.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\element_iterator.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\file_section.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\geometry.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inflow.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\junction.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\link.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\link_list.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\node.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\node_factory.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\node_list.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\option.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\options.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\storage.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\timeseries.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\timeseries_factory.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{e6571a43-3525-43cc-881e-5ec708e8ac36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{5979e7e0-5309-406e-b0d4-4aeeee946d3d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

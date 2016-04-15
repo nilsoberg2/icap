@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\backwater_profile.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\benchmark.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compute_profile.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compute_profile_oberg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\createloops.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\creator++.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\discharge_stuff.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\normcrit.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vb_interfaces.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\benchmark.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\debug.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hpg_creator.hpp">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\mannings_math.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\normcrit.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\profile.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{62fdc4ab-7bdb-475a-8ce7-5dde16dd78eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{93634c82-3d03-4131-8080-12ca0b6a1106}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,27 @@
+==============================================================================
+ICAP Readme
+==============================================================================
+
+The ICAP project is divided up into a number of libraries, as follows:
+
+    geometry    -- represents a parsed pipe network and includes a number of
+                   interfaces for accessing elements of the geometry without
+                   requiring access to the entire object.
+    hpg_create  -- provides code for computing HPGs.
+    hpg_interp  -- provides code for interpolating HPGs.
+    icap        -- this contains the main model execution code.  Depending on
+                   the project configuration, this will compile to a DLL or
+                   to a console-based EXE.
+    model       -- provides an interface that represents a computation model
+                   and associated elements.  In addition, contains data type
+                   metadata.
+    time        -- a library for working with dates and times.
+    util        -- utility functions.
+    xslib       -- contains abstract cross-section object and some common
+                   implementations for common pipe cross-sectional geometry.
+
+In addition, a unit test project is included which has some basic unit tests
+for verifying computational integrity.
+
+The wiki directory contains binary releases as well as examples and tutorial
+data and images for the wiki.

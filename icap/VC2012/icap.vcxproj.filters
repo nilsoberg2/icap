@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\benchmark.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\debug.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\flows_storage.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hpg.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\icap_console.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\icap_geometry.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\icap_interface.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\init.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\junction_loss.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\network.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\overflow.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pumping.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\routing.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rt.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\run.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Stopwatch.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ucf.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\IcapExe\main.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\api.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\benchmark.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\constants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hpg.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\icap.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\icap_geometry.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\icap_interface.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\logging.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\output.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\overflow.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pumping.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\routing.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rt_inflow.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Stopwatch.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\type.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ucf.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{ac45fbd7-17ec-4424-9a14-de365e9178dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{8b997bf2-82c3-40b0-b466-a86f911c70f6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
