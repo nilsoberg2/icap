@@ -52,9 +52,7 @@
     <ClCompile Include="..\ucf.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\IcapExe\main.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
+    <ClCompile Include="..\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\api.h">

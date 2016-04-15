@@ -22,3 +22,7 @@ deps/boost
 Build/hpgs
 *.user
 Build/ipch
+*DebugExe/
+*DebugDLL/
+*ReleaseExe/
+*ReleaseDLL/
